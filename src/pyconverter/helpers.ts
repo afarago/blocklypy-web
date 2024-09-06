@@ -1,18 +1,20 @@
-import {
-  AWAIT_PLACEHOLDER,
-  CONST_CM,
-  CONST_INCHES,
-  CONST_ROTATIONS,
-  CONST_DEGREES,
-  CONST_SECONDS,
-  debug,
-} from './utils';
-//import { round2 } from './converters';
+import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
 import { BlockValue } from './blockvalue';
 import { round2 } from './converters';
+import { Imports } from './imports';
+
+interface HelperFunctionDefintion {
+  py_fn?: string;
+  py_dependencies?: string[];
+  local_fn?: (...args: any[]) => any;
+  local_dynamic_fn?: (...args: any[]) => any;
+  local_fn_condition?: (args: any[]) => boolean;
+  is_enabled?: boolean;
+}
+//TODO separate is_enabled from the rest of the properties
 
 export class Helpers {
-  static REGISTRY = {
+  static REGISTRY: Record<string, HelperFunctionDefintion> = {
     // const
     convert_time: {
       py_fn: `
@@ -66,7 +68,12 @@ def float_safe(value, default=0):
     try: return float(value)
     except: return default
 `,
-      local_fn_condition: args => args.every(arg => typeof arg === 'number'),
+      local_fn_condition: args =>
+        args.every(
+          arg =>
+            typeof arg === 'number' ||
+            (typeof arg === 'string' && String(parseFloat(arg)) === arg)
+        ),
       local_fn: value => parseFloat(value),
     },
     str: {
@@ -79,7 +86,12 @@ def int_safe(value, default=0):
     try: return int(value)
     except: return default
 `,
-      local_fn_condition: args => args.every(arg => typeof arg === 'number'),
+      local_fn_condition: args =>
+        args.every(
+          arg =>
+            typeof arg === 'number' ||
+            (typeof arg === 'string' && String(parseFloat(arg)) === arg)
+        ),
       local_fn: value => parseInt(value),
     },
     event_task: {
@@ -206,13 +218,13 @@ def convert_ussensor_distance(value, unit):
     elif unit == "%": return 2000 * value / 100
     else: return value`,
     },
-    num_eval: {
-      local_fn: BlockValue.num_eval,
-      local_dynamic_fn: BlockValue.num_eval,
-    },
+    //!! num_eval: {
+    //   local_fn: BlockValue.num_eval,
+    //   local_dynamic_fn: BlockValue.num_eval,
+    // },
   };
 
-  static get(fn_name, ...args) {
+  static get(fn_name: string, ...args: any[]) {
     const fn_item = this.REGISTRY[fn_name];
 
     if (fn_item) {
@@ -220,7 +232,8 @@ def convert_ussensor_distance(value, unit):
       if (fn_item.local_fn) {
         const allow_local =
           args.every(elem => !BlockValue.is_dynamic(elem)) &&
-          (!fn_item.local_fn_condition || fn_item.local_fn_condition(args));
+          (!fn_item.local_fn_condition ||
+            fn_item.local_fn_condition(args.map(arg => BlockValue.value(arg))));
         if (allow_local) {
           const expr = fn_item.local_fn(
             ...args.map(arg => BlockValue.value(arg))
@@ -254,7 +267,7 @@ def convert_ussensor_distance(value, unit):
     );
   }
 
-  static py_register(fn_name) {
+  static py_register(fn_name: string) {
     const fn_item = Helpers.REGISTRY[fn_name];
     if (fn_item?.py_fn) fn_item.is_enabled = true;
   }
@@ -263,9 +276,7 @@ def convert_ussensor_distance(value, unit):
     const codes = Object.values(Helpers.REGISTRY)
       .filter(elem => elem.is_enabled)
       .map(elem => {
-        let lines = elem.py_fn;
-        if (typeof lines === 'string') lines = lines.trim().split('\r\n');
-        return lines;
+        return elem.py_fn?.trim().split('\r\n');
       })
       .flat();
 

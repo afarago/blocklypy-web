@@ -1,7 +1,7 @@
-import { default as fs } from 'fs';
-import { fileURLToPath } from 'url';
-import { ProjectConverter } from './projectconverter';
+import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 
 try {
   // const __FILE__ = path.join(__dirname, '2/proj1.llsp3');
@@ -17,9 +17,18 @@ try {
   );
   const file = fs.readFileSync(__FILE__);
 
-  const converter = new ProjectConverter();
-  const retval = await converter.convert(file);
-  console.log(retval);
+  // const retval = await converter.convert(file);
+  // console.log(retval);
+  convertFlipperProjectToPython(file).then(retval => {
+    // write a project.json to the local dir for debug
+    // const data_pretty = JSON.stringify(retval.projectJson, null, 2);
+    // fs.writeFileSync(
+    //   path.join(__dirname, '..', 'temp', 'project.json'),
+    //   data_pretty
+    // );
+
+    console.log(retval.pycode);
+  });
 } catch (err) {
-  console.log('>>', err); //!!
+  console.error('::ERROR::', err);
 }

@@ -1,7 +1,7 @@
 import express from 'express';
 import fileUpload, { UploadedFile } from 'express-fileupload';
 import { Request, Response } from 'express';
-import { ProjectConverter } from './projectconverter';
+import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 
 const app = express();
 const port = 3000;
@@ -21,9 +21,8 @@ export const handleFileUpload = async (req: Request, res: Response) => {
 
   try {
     const file = req.files.file as UploadedFile;
-    const converter = new ProjectConverter();
     const fileData = file.data as Buffer;
-    const retval = await converter.convert(fileData);
+    const retval = await convertFlipperProjectToPython(fileData);
 
     res.send(retval);
   } catch (err) {

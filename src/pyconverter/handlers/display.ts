@@ -1,7 +1,8 @@
-import { Helpers } from '../helpers';
-import { AWAIT_PLACEHOLDER, debug } from '../utils';
 import { Block } from '../block';
-import { BlockValue } from 'src/blockvalue';
+import { BlockValue } from '../blockvalue';
+import { Helpers } from '../helpers';
+import { AWAIT_PLACEHOLDER } from '../utils';
+import { BlockHandlersType, OperatorHandlersType } from './handlers';
 //!! import { convert_matrix } from '../converters';
 
 function flipperdisplay_ledSetBrightness(block: Block) {
@@ -56,19 +57,24 @@ function flipperdisplay_displayOff(block: Block) {
   }
 }
 
-export const Handlers = {
-  flipperdisplay_displayOff: flipperdisplay_displayOff,
-  flipperlight_lightDisplayOff: flipperdisplay_displayOff,
-  flipperdisplay_centerButtonLight: flipperdisplay_centerButtonLight,
-  flipperlight_centerButtonLight: flipperdisplay_centerButtonLight,
-  // flipperdisplay_ledImage: flipperdisplay_ledImage,
-  // flipperlight_lightDisplayImageOn: flipperdisplay_ledImage,
-  // flipperdisplay_ledImageFor: flipperdisplay_ledImageFor,
-  // flipperlight_lightDisplayImageOnForTime: flipperdisplay_ledImageFor,
-  flipperdisplay_ledText: flipperdisplay_ledText,
-  flipperlight_lightDisplayText: flipperdisplay_ledText,
-  flipperdisplay_ledOn: flipperdisplay_ledOn,
-  flipperlight_lightDisplaySetPixel: flipperdisplay_ledOn,
-  flipperdisplay_ledSetBrightness: flipperdisplay_ledSetBrightness,
-  flipperlight_lightDisplaySetBrightness: flipperdisplay_ledSetBrightness,
-};
+export default function display() {
+  const blockHandlers: BlockHandlersType = {
+    flipperdisplay_displayOff: flipperdisplay_displayOff,
+    flipperlight_lightDisplayOff: flipperdisplay_displayOff,
+    flipperdisplay_centerButtonLight: flipperdisplay_centerButtonLight,
+    flipperlight_centerButtonLight: flipperdisplay_centerButtonLight,
+    // flipperdisplay_ledImage: flipperdisplay_ledImage,
+    // flipperlight_lightDisplayImageOn: flipperdisplay_ledImage,
+    // flipperdisplay_ledImageFor: flipperdisplay_ledImageFor,
+    // flipperlight_lightDisplayImageOnForTime: flipperdisplay_ledImageFor,
+    flipperdisplay_ledText: flipperdisplay_ledText,
+    flipperlight_lightDisplayText: flipperdisplay_ledText,
+    flipperdisplay_ledOn: flipperdisplay_ledOn,
+    flipperlight_lightDisplaySetPixel: flipperdisplay_ledOn,
+    flipperdisplay_ledSetBrightness: flipperdisplay_ledSetBrightness,
+    flipperlight_lightDisplaySetBrightness: flipperdisplay_ledSetBrightness,
+  };
+  const operationHandlers: OperatorHandlersType = null;
+
+  return { blockHandlers, operationHandlers };
+}

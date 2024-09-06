@@ -1,5 +1,5 @@
 {
   "watch": ["./", "./testdata"],
   "ext": "ts, css, json, llsp3, llsp, lms",
-  "ignore": ["./project.json"]
+  "ignore": ["./project.json", "./dist/**", "./temp/**"]
 }
