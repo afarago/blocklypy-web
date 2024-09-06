@@ -357,7 +357,7 @@ function getMessageName(stack: Block[]): string {
 }
 
 function getCommentForBlock(block: Block) {
-  const comment = block._root.comments[block.comment]?.text;
+  const comment = block._root.comments[block._block.comment]?.text;
   return comment?.replace(/[\r\n]/g, ' ');
 }
 
