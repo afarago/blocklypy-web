@@ -9,7 +9,7 @@ import { processOperation } from './operator';
 function control_forever(block: Block) {
   const sub_code = pyconverter.process_stack(block.substacks[0]);
 
-  return [`while True:`, ...sub_code];
+  return ['while True:', ...sub_code];
 }
 
 function control_repeat(block: Block) {
@@ -25,13 +25,10 @@ function control_repeat(block: Block) {
 function control_repeat_until(block: Block) {
   const condition_block = block.get_inputAsBlock('CONDITION');
   const condition_value = processOperation(condition_block);
-  const code_condition = condition_block
-    ? `not (${condition_value.raw})`
-    : `False`;
 
   const sub_code = pyconverter.process_stack(block.substacks[0]);
 
-  return [`while ${code_condition}:`, ...sub_code];
+  return [`while ${condition_value.raw}:`, ...sub_code];
 }
 
 function control_wait(block: Block) {
@@ -65,12 +62,10 @@ function control_if_and_if_else(block: Block) {
 function control_wait_until(block: Block) {
   const condition_block = block.get_inputAsBlock('CONDITION');
   const condition_value = processOperation(condition_block);
-  const code_condition = condition_block
-    ? `not (${condition_value.raw})`
-    : 'False';
+
   const sub_code = pyconverter.process_stack(null); // empty substack -> results in pass
 
-  return [`while ${code_condition}:`, ...sub_code];
+  return [`while ${condition_value.raw}:`, ...sub_code];
 }
 
 export default function control() {
