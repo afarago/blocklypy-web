@@ -20,12 +20,15 @@ try {
   // const retval = await converter.convert(file);
   // console.log(retval);
   convertFlipperProjectToPython(file).then(retval => {
-    // write a project.json to the local dir for debug
-    // const data_pretty = JSON.stringify(retval.projectJson, null, 2);
-    // fs.writeFileSync(
-    //   path.join(__dirname, '..', 'temp', 'project.json'),
-    //   data_pretty
-    // );
+    const DEBUG_WRITE_PROJECT_JSON = !false;
+    if (DEBUG_WRITE_PROJECT_JSON) {
+      // write a project.json to the local dir for debug
+      const data_pretty = JSON.stringify(retval.projectJson, null, 2);
+      fs.writeFileSync(
+        path.join(__dirname, '..', 'temp', 'project.json'),
+        data_pretty
+      );
+    }
 
     console.log(retval.pycode);
   });

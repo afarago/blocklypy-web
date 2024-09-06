@@ -1,12 +1,12 @@
 import * as Helpers from './helpers';
 
 export class BlockValue {
-  private _value: string | number;
+  private _value: string | number | boolean;
   private _is_dynamic: boolean;
   private _is_variable: boolean;
   private _is_string: boolean;
   constructor(
-    value: string | number,
+    value: string | number | boolean,
     is_dynamic = false,
     is_variable = false,
     is_string = false

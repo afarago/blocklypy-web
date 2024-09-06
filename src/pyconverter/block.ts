@@ -1,16 +1,21 @@
 import { BlockValue } from './blockvalue';
 import { processOperation } from './handlers/operator';
-import { JsonBlock } from './utils';
+import * as Scratch from './scratch';
 import * as Variables from './variables';
 
+// more information on scratch file format is ref:https://en.scratch-wiki.info/wiki/Scratch_File_Format
 export class Block {
-  _root: JsonBlock;
-  _block: JsonBlock;
+  _root: Scratch.ScratchTarget;
+  _block: Scratch.ScratchBlock;
   _id: string;
   comment: string;
   substacks: Block[][] = [];
 
-  constructor(rawblock: JsonBlock, id: string, root: JsonBlock) {
+  constructor(
+    rawblock: Scratch.ScratchBlock,
+    id: string,
+    root: Scratch.ScratchTarget
+  ) {
     this._block = rawblock;
     this._root = root;
     this._id = id;
@@ -60,63 +65,64 @@ export class Block {
 
     if (!input) return null;
 
-    const input_type = input[0];
-    if (input_type !== 2) return undefined;
+    if (input[0] !== Scratch.ShadowState.NOSHADOW) return;
+    // if (typeof input.value !== 'string') return;
     //throw new Error('Input is not a stack or blocks');
-    return this.getById(input[1]);
+
+    return this.getById(input[1] as string);
   }
 
   get_input(name: string): BlockValue {
     try {
       const input = this._block.inputs[name];
-
       if (!input) return null;
 
-      const input_type = input[0];
-      switch (input_type) {
-        case 1:
+      switch (input[0]) {
+        case Scratch.ShadowState.SHADOW:
           {
             const is_reference = typeof input[1] === 'string';
-            const is_direct_value = typeof input[1] === 'object';
+            const is_direct_value = Array.isArray(input[1]);
             if (is_reference) {
-              const block2 = this.getById(input[1]);
-              //!!assert(block2);
-              //!!assert(typeof block2 === 'object');
+              const block2 = this.getById(input[1] as string);
+              if (!block2 || typeof block2 !== 'object') return null;
 
-              const first_field = Object.values(
-                block2?._block.fields
-              )[0] as any[];
+              const first_field = Object.values(block2?._block.fields)[0];
               const first_field_value = first_field[0];
               return first_field_value !== null
                 ? new BlockValue(first_field_value)
                 : null;
             } else if (is_direct_value) {
-              const value_array = input[1];
+              const value_array = input[1] as Scratch.BlockValueArray;
               if (value_array === null) return null;
 
               const value_type = value_array[0]; // 4 = value, 5 = wait-duration-sec, 6 = times, 10 = string, 11 = message (name, ref) //!!
-              const is_string = value_type === 10 || value_type === 11;
+              const is_string =
+                value_type === Scratch.BlockValueType.STRING ||
+                value_type === Scratch.BlockValueType.BROADCAST;
               const value_value =
-                value_type === 10 || value_type === 11
-                  ? value_array[1]
-                  : parseFloat(value_array[1]);
+                value_type === Scratch.BlockValueType.STRING ||
+                value_type === Scratch.BlockValueType.BROADCAST
+                  ? value_array[1].toString()
+                  : parseFloat(value_array[1].toString());
               return new BlockValue(value_value, false, false, is_string);
             }
           }
           break;
-        case 2:
-          throw new Error('Input is a stack or blocks, use get_inputAsBlock');
-        case 3:
+        case Scratch.ShadowState.NOSHADOW:
+          throw new Error('Input is a blocks, use get_inputAsBlock');
+        case Scratch.ShadowState.OBSCURED:
           {
             const ref = input[1];
-            const ref_type = typeof ref;
-            if (ref_type === 'string') {
-              const block2 = this.getById(ref);
+            if (typeof ref === 'string') {
+              const block2 = this.getById(ref.toString());
               const op = processOperation(block2);
               return op;
-            } else if (ref_type === 'object') {
+            } else if (typeof ref === 'object' && Array.isArray(ref)) {
               //!! assert(ref[0] === 12 || ref[0] === 13);
-              const var_name = Variables.convert(ref[1], ref[0] === 13);
+              const var_name = Variables.convert(
+                ref[1].toString(),
+                ref[0] === Scratch.BlockValueType.LIST
+              );
               // const var_ref = ref[2]
               return new BlockValue(var_name, true, true);
             }
@@ -158,10 +164,8 @@ export class Block {
           return;
         }
 
-        const substack = block._block.inputs[name];
-        if (!substack) return;
-        // input {type = 2}
-        const substack_id = substack[1];
+        const substack_id = block._block.inputs[name]?.[1];
+        if (!substack_id || typeof substack_id !== 'string') return;
         const substackBlock = block.getById(substack_id);
         if (substackBlock) block.substacks.push(this.buildStack(substackBlock));
       };

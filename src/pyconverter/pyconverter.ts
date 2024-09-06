@@ -4,10 +4,10 @@ import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import * as Helpers from './helpers';
 import * as Imports from './imports';
+import { ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
-  JsonBlock,
   get_divider,
   indent_code,
 } from './utils';
@@ -31,7 +31,7 @@ const DEBUG_SKIP_HELPERS = false;
 
 let isAsyncNeeded = false;
 
-export function convertFlipperProgramToPython(projectData: JsonBlock) {
+export function convertFlipperProgramToPython(projectData: ScratchProject) {
   const root_target = projectData.targets[1];
 
   // ========================
@@ -267,10 +267,10 @@ function getPycodeForStackGroups(
   return stacks;
 }
 
-function getTopLevelStacks(root_target: JsonBlock) {
+function getTopLevelStacks(root_target: ScratchTarget) {
   return Object.entries(root_target.blocks)
-    .filter(([id, block]: [string, any]) => block.topLevel && !block.shadow)
-    .map(([id, block]: [string, any]) => {
+    .filter(([id, block]) => block.topLevel && !block.shadow)
+    .map(([id, block]) => {
       return Block.buildStack(new Block(block, id, root_target));
     });
 }
@@ -341,14 +341,7 @@ function getMessageName(stack: Block[]): string {
 }
 
 function getCommentForBlock(block: Block) {
-  //TODO: optimize
-  const commentBlock = Array.from(Object.values(block._root.comments)).filter(
-    (elem: any) => {
-      return elem.blockId === block._id;
-    }
-  )?.[0] as any;
-  const comment = commentBlock?.text;
-
+  const comment = block._root.comments[block.comment]?.text;
   return comment?.replace(/[\r\n]/g, ' ');
 }
 

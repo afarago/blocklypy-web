@@ -1,5 +1,3 @@
-export type JsonBlock = any;
-
 export const INDENT = '    ';
 export const ASYNC_PLACEHOLDER = '$$ASYNC$$';
 export const AWAIT_PLACEHOLDER = '$$AWAIT$$';
