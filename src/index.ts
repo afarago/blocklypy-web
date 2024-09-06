@@ -1,19 +1,18 @@
-import { ProjectConverter } from './pyconverter/projectconverter';
+import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 
 function handleFileUpload(file: File) {
   const reader = new FileReader();
   reader.addEventListener('load', event => {
     const input = event.target.result as ArrayBuffer;
-    const converter = new ProjectConverter();
-    converter.convert(input).then((output: string) => {
+    convertFlipperProjectToPython(input).then(retval => {
       const outputArea = document.getElementById('output');
-      outputArea.innerText = output;
+      outputArea.innerText = retval.pycode;
     });
   });
   reader.readAsArrayBuffer(file);
 }
 
-const dropArea = document.getElementById('upload-area');
+const dropArea = document.body; //document.getElementById('upload-area');
 dropArea.addEventListener('dragover', event => {
   event.stopPropagation();
   event.preventDefault();

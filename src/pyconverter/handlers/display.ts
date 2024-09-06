@@ -1,14 +1,18 @@
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import { Helpers } from '../helpers';
+import { convert_matrix } from '../converters';
+import * as Helpers from '../helpers';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import { BlockHandlersType, OperatorHandlersType } from './handlers';
-//!! import { convert_matrix } from '../converters';
+import * as Variables from '../variables';
+
+let global_pixel_brightness = 100;
+// TODO: later on add possibility to set variable/expr for global brightness
 
 function flipperdisplay_ledSetBrightness(block: Block) {
   const brightness = block.get_input('BRIGHTNESS');
-  return [`# setting hub brightness to ${brightness.raw}%`];
-  //TODO: - only for icons...
+  global_pixel_brightness = Number(brightness.value);
+  return [`# setting hub icon display brightness to ${brightness.raw}%`];
 }
 
 function flipperdisplay_ledOn(block: Block) {
@@ -30,21 +34,23 @@ function flipperdisplay_ledText(block: Block) {
   return [`${AWAIT_PLACEHOLDER}hub.display.text(${expr})`];
 }
 
-// function flipperdisplay_ledImageFor(block: Block) {
-//   const value = Helpers.get('convert_time', block.get_input('VALUE'));
-//   const matrix = block.get_input('MATRIX');
+function flipperdisplay_ledImageFor(block: Block) {
+  const value = Helpers.get('convert_time', block.get_input('VALUE'));
+  const matrix = block.get_input('MATRIX');
 
-//   return [
-//     `hub.display.icon(${convert_matrix(matrix.value)})`,
-//     `${AWAIT_PLACEHOLDER}wait(${value.raw})`,
-//     `hub.display.off()`,
-//   ];
-// }
+  return [
+    `hub.display.icon(${convert_matrix(matrix.value?.toString(), global_pixel_brightness)})`,
+    `${AWAIT_PLACEHOLDER}wait(${value.raw})`,
+    'hub.display.off()',
+  ];
+}
 
-// function flipperdisplay_ledImage(block: Block) {
-//   const matrix = block.get_input('MATRIX');
-//   return [`hub.display.icon(${convert_matrix(matrix.value)})`];
-// }
+function flipperdisplay_ledImage(block: Block) {
+  const matrix = block.get_input('MATRIX');
+  return [
+    `hub.display.icon(${convert_matrix(matrix.value?.toString(), global_pixel_brightness)})`,
+  ];
+}
 
 function flipperdisplay_centerButtonLight(block: Block) {
   const color = Helpers.get('convert_color', block.get_input('COLOR'));
@@ -63,10 +69,10 @@ export default function display() {
     flipperlight_lightDisplayOff: flipperdisplay_displayOff,
     flipperdisplay_centerButtonLight: flipperdisplay_centerButtonLight,
     flipperlight_centerButtonLight: flipperdisplay_centerButtonLight,
-    // flipperdisplay_ledImage: flipperdisplay_ledImage,
-    // flipperlight_lightDisplayImageOn: flipperdisplay_ledImage,
-    // flipperdisplay_ledImageFor: flipperdisplay_ledImageFor,
-    // flipperlight_lightDisplayImageOnForTime: flipperdisplay_ledImageFor,
+    flipperdisplay_ledImage: flipperdisplay_ledImage,
+    flipperlight_lightDisplayImageOn: flipperdisplay_ledImage,
+    flipperdisplay_ledImageFor: flipperdisplay_ledImageFor,
+    flipperlight_lightDisplayImageOnForTime: flipperdisplay_ledImageFor,
     flipperdisplay_ledText: flipperdisplay_ledText,
     flipperlight_lightDisplayText: flipperdisplay_ledText,
     flipperdisplay_ledOn: flipperdisplay_ledOn,

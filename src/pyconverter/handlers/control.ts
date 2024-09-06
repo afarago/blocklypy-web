@@ -1,6 +1,6 @@
 import { Block } from '../block';
-import { Helpers } from '../helpers';
-import { Imports } from '../imports';
+import * as Helpers from '../helpers';
+import * as Imports from '../imports';
 import * as pyconverter from '../pyconverter';
 import { AWAIT_PLACEHOLDER, indent_code } from '../utils';
 import { BlockHandlersType, OperatorHandlersType } from './handlers';

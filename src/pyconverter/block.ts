@@ -1,22 +1,24 @@
 import { BlockValue } from './blockvalue';
-import { processOperation } from './pyconverter';
+import { processOperation } from './handlers/operator';
 import { JsonBlock } from './utils';
-import { Variables } from './variables';
+import * as Variables from './variables';
 
 export class Block {
-  private _root: JsonBlock;
+  _root: JsonBlock;
   _block: JsonBlock;
-  //_id: string;
+  _id: string;
+  comment: string;
   substacks: Block[][] = [];
 
-  constructor(rawblock: JsonBlock, root: JsonBlock) {
+  constructor(rawblock: JsonBlock, id: string, root: JsonBlock) {
     this._block = rawblock;
     this._root = root;
+    this._id = id;
   }
 
   getById(blockId: string) {
     const rawblock = this._root.blocks[blockId];
-    return rawblock ? new Block(rawblock, this._root) : null;
+    return rawblock ? new Block(rawblock, blockId, this._root) : null;
   }
 
   get root() {
@@ -152,8 +154,9 @@ export class Block {
         if (
           !block._block.inputs ||
           !Object.prototype.hasOwnProperty.call(block._block.inputs, name)
-        )
+        ) {
           return;
+        }
 
         const substack = block._block.inputs[name];
         if (!substack) return;

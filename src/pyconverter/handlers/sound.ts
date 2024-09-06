@@ -1,5 +1,5 @@
 import { Block } from '../block';
-import { Helpers } from '../helpers';
+import * as Helpers from '../helpers';
 import { BlockHandlersType, OperatorHandlersType } from './handlers';
 
 function flippersound_beepForTime(block: Block) {

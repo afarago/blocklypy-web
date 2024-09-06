@@ -1,4 +1,4 @@
-import { Helpers } from './helpers';
+import * as Helpers from './helpers';
 
 export class BlockValue {
   private _value: string | number;

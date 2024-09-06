@@ -4,6 +4,34 @@
     <meta charset="utf-8" />
     <title>Sample App</title>
   </head>
+  <style>
+    body {
+      min-height: 100vh;
+      position: relative;
+    }
+    body::after {
+      content: '';
+      display: block;
+      height: 50px;
+      /* Set same as footer's height */
+    }
+    footer {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      /* width: 100%; */
+      height: 1em;
+      text-align: right;
+      /* background-color: #eee; */
+      padding-top: 1em;
+    }
+    #output {
+      font-family: monospace;
+      white-space: pre;
+      padding-bottom: 1em;
+      padding-inline: 1em;
+    }
+  </style>
   <body>
     <h1>SPIKE to Pybricks Wizard</h1>
     <h2>LEGO SPIKE word-block converter to Pybricks python code</h2>

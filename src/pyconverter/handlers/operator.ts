@@ -1,13 +1,12 @@
-import { Helpers } from '../helpers';
+import * as Helpers from '../helpers';
 import { debug } from '../utils';
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import { Imports } from '../imports';
-import { Variables } from '../variables';
 import { handlers, BlockHandlersType, OperatorHandlersType } from './handlers';
+import * as Imports from '../imports';
+import * as Variables from '../variables';
 //import { DeviceMotor, DeviceSensor } from '../devices';
 //import { calc_comparator, calc_hub_orientation } from '../converters';
-//import { Variables } from '../variables';
 
 // TODO: split operators as handlers by map
 
@@ -24,11 +23,14 @@ function operator_and_or(block: Block) {
 }
 
 export function processOperation(block: Block): BlockValue {
-  const op = block?.opcode;
-  if (handlers.operationHandlers[op])
-    return handlers.operationHandlers[op](block);
+  if (block) {
+    const op = block?.opcode;
+    if (handlers.operationHandlers[op])
+      return handlers.operationHandlers[op](block);
 
-  debug(`# unknown: ${block?.get_block_description()}`);
+    debug(`# unknown: ${block?.get_block_description()}`);
+    console.trace();
+  }
   return new BlockValue('None', true);
 
   //     // ===================

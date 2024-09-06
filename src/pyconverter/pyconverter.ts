@@ -1,9 +1,9 @@
 import { Block } from './block';
-import { Broadcasts } from './broadcasts';
+import * as Broadcasts from './broadcasts';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
-import { Helpers } from './helpers';
-import { Imports } from './imports';
+import * as Helpers from './helpers';
+import * as Imports from './imports';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
@@ -11,6 +11,7 @@ import {
   get_divider,
   indent_code,
 } from './utils';
+import * as Variables from './variables';
 
 enum StackGroupType {
   Start = 1,
@@ -29,14 +30,26 @@ const SHOW_ORPHAN_CODE = false;
 const DEBUG_SKIP_HELPERS = false;
 
 let isAsyncNeeded = false;
-const broadcasts: Broadcasts = new Broadcasts();
 
 export function convertFlipperProgramToPython(projectData: JsonBlock) {
   const root_target = projectData.targets[1];
-  // Block.ProcessOperation = process_operation.bind(this);
 
   // ========================
   try {
+    for (const varblock of Object.values(root_target.variables)) {
+      if (Array.isArray(varblock)) {
+        const name = varblock[0];
+        Variables.use(name, null, false);
+      }
+    }
+    for (const varblock of Object.values(root_target.lists)) {
+      if (Array.isArray(varblock)) {
+        const name = varblock[0];
+        Variables.use(name, null, true);
+      }
+    }
+
+    // ------------------------
     const topLevelStacks = getTopLevelStacks(root_target);
     const stackGroups = getStackGroups(topLevelStacks);
 
@@ -79,7 +92,7 @@ export function convertFlipperProgramToPython(projectData: JsonBlock) {
     const code_sections = [
       { name: 'imports', code: Imports.to_global_code() },
       // { name: 'setup', code: setup_codes },
-      // { name: 'global variables', code: Variables.to_global_code() },
+      { name: 'global variables', code: Variables.to_global_code() },
       {
         name: 'helper functions',
         code: !DEBUG_SKIP_HELPERS ? Helpers.to_global_code() : [],
@@ -109,7 +122,7 @@ export function convertFlipperProgramToPython(projectData: JsonBlock) {
     const result = retval2.filter(e => e).join('\r\n\r\n');
     return result;
   } catch (err) {
-    console.log('>>', err); //!!
+    console.error('::ERROR::', err);
   }
 }
 
@@ -151,17 +164,17 @@ function getPycodeForStackGroups(
       if (group === StackGroupType.MessageEvent) {
         const messageNameRaw = getMessageName(stack);
         const messageName = Broadcasts.sanitize(messageNameRaw);
-        if (!broadcasts.has(messageName)) {
+        if (!Broadcasts.has(messageName)) {
           Helpers.get('class_Message');
           code.push(
             ...[
               '',
               get_divider(`[MESSAGE] ${messageNameRaw}`, '-'),
-              broadcasts.get_code(messageName),
+              Broadcasts.get_code(messageName),
               '',
             ]
           );
-          const stack_fn = `${messageName}.main_fn`;
+          const stack_fn = `${Broadcasts.get_pyname(messageName)}.main_fn`;
           stacks.set(stack_fn, null);
         }
       }
@@ -225,7 +238,7 @@ function getPycodeForStackGroups(
             code.push(`async def ${stack_action_fn}():`);
             code.push(...sub_code);
             code.push(
-              broadcasts.add_stack(
+              Broadcasts.add_stack(
                 Broadcasts.sanitize(messageName),
                 stack_action_fn
               )
@@ -255,9 +268,11 @@ function getPycodeForStackGroups(
 }
 
 function getTopLevelStacks(root_target: JsonBlock) {
-  return Object.values(root_target.blocks)
-    .filter((block: any) => block.topLevel && !block.shadow)
-    .map((block: any) => Block.buildStack(new Block(block, root_target)));
+  return Object.entries(root_target.blocks)
+    .filter(([id, block]: [string, any]) => block.topLevel && !block.shadow)
+    .map(([id, block]: [string, any]) => {
+      return Block.buildStack(new Block(block, id, root_target));
+    });
 }
 
 function getStackGroups(topLevelStacks: Block[][]) {
@@ -305,6 +320,9 @@ export function process_stack(blocks: Block[] | null): string[] {
 
   if (blocks && blocks.length > 0) {
     for (const block of blocks) {
+      const comment = getCommentForBlock(block);
+      if (comment) retval.push(...indent_code(`# ${comment}`));
+
       const sub_code = convertBlockToCode(block);
       if (sub_code !== null) retval.push(...indent_code(sub_code));
     }
@@ -315,7 +333,6 @@ export function process_stack(blocks: Block[] | null): string[] {
   return retval;
 }
 
-// order messages by msg
 function getMessageName(stack: Block[]): string {
   const headBlock = stack[0];
   if (headBlock?.opcode !== 'event_whenbroadcastreceived') return null;
@@ -323,11 +340,19 @@ function getMessageName(stack: Block[]): string {
   return messageName;
 }
 
-//!!convertBlockToCode
-export function convertBlockToCode(block: Block): string[] | null {
+function getCommentForBlock(block: Block) {
+  //TODO: optimize
+  const comment = Array.from(Object.values(block._root.comments)).filter(
+    (elem: any) => {
+      return elem.blockId === block._id;
+    }
+  )?.[0]?.text;
+
+  return comment?.replace(/[\r\n]/g, ' ');
+}
+
+function convertBlockToCode(block: Block): string[] | null {
   const op = block.opcode;
   if (handlers.blockHandlers[op]) return handlers.blockHandlers[op](block);
   else return null;
 }
-
-export { processOperation };
