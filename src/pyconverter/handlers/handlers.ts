@@ -7,6 +7,7 @@ import variables from './variable';
 // import { Handlers as MotorHandlers } from './handlers/motor.js';
 // import { Handlers as MotorPairHandlers } from './handlers/motorpair.js';
 import sound from './sound';
+import misc from './misc';
 
 export interface HandlersType {
   blockHandlers: BlockHandlersType;
@@ -27,6 +28,7 @@ function getHandlers(): HandlersType {
     variables(),
     operations(),
     sound(),
+    misc(),
   ].reduce((aggr, elem) => {
     aggr.blockHandlers = { ...aggr.blockHandlers, ...elem.blockHandlers };
     aggr.operationHandlers = {

@@ -30,19 +30,24 @@ const SHOW_ORPHAN_CODE = false;
 const DEBUG_SKIP_HELPERS = false;
 
 let isAsyncNeeded = false;
+export function setAsyncFlag(value: boolean) {
+  isAsyncNeeded = value;
+}
 
 export function convertFlipperProgramToPython(projectData: ScratchProject) {
-  const root_target = projectData.targets[1];
-
   // ========================
   try {
-    for (const varblock of Object.values(root_target.variables)) {
+    preprocessMessages(projectData);
+
+    const target1 = projectData.targets[1];
+
+    for (const varblock of Object.values(target1.variables)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
         Variables.use(name, null, false);
       }
     }
-    for (const varblock of Object.values(root_target.lists)) {
+    for (const varblock of Object.values(target1.lists)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
         Variables.use(name, null, true);
@@ -50,7 +55,7 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
     }
 
     // ------------------------
-    const topLevelStacks = getTopLevelStacks(root_target);
+    const topLevelStacks = getTopLevelStacks(target1);
     const stackGroups = getStackGroups(topLevelStacks);
 
     // switch to async if there ar multiple start stacks or any event stack
@@ -126,6 +131,13 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
   }
 }
 
+function preprocessMessages(projectData: ScratchProject) {
+  const target0 = projectData.targets[0];
+  Object.entries(target0.broadcasts).forEach(([id, name]) =>
+    Broadcasts.use(id, name)
+  );
+}
+
 function createProgramStacksCode(programStacks: Map<string, string[]>) {
   return Array.from(programStacks.values())
     .filter(item => item)
@@ -155,6 +167,7 @@ function getPycodeForStackGroups(
   for (const [group_name, stack_group] of stackGroups.entries()) {
     if (!SHOW_ORPHAN_CODE && group_name === StackGroupType.Orphan) continue;
 
+    let lastStackEventMessage = null;
     for (const stack_gitem of stack_group) {
       const code: string[] = [];
       const stack = stack_gitem.stack;
@@ -164,7 +177,8 @@ function getPycodeForStackGroups(
       if (group === StackGroupType.MessageEvent) {
         const messageNameRaw = getMessageName(stack);
         const messageName = Broadcasts.sanitize(messageNameRaw);
-        if (!Broadcasts.has(messageName)) {
+        if (lastStackEventMessage !== messageName) {
+          lastStackEventMessage = messageName;
           Helpers.get('class_Message');
           code.push(
             ...[
@@ -239,6 +253,7 @@ function getPycodeForStackGroups(
             code.push(...sub_code);
             code.push(
               Broadcasts.add_stack(
+                null, //TODO: get message id
                 Broadcasts.sanitize(messageName),
                 stack_action_fn
               )
@@ -267,11 +282,11 @@ function getPycodeForStackGroups(
   return stacks;
 }
 
-function getTopLevelStacks(root_target: ScratchTarget) {
-  return Object.entries(root_target.blocks)
+function getTopLevelStacks(target1: ScratchTarget) {
+  return Object.entries(target1.blocks)
     .filter(([id, block]) => block.topLevel && !block.shadow)
     .map(([id, block]) => {
-      return Block.buildStack(new Block(block, id, root_target));
+      return Block.buildStack(new Block(block, id, target1));
     });
 }
 
@@ -336,7 +351,8 @@ export function process_stack(blocks: Block[] | null): string[] {
 function getMessageName(stack: Block[]): string {
   const headBlock = stack[0];
   if (headBlock?.opcode !== 'event_whenbroadcastreceived') return null;
-  const messageName = String(headBlock.get_field('BROADCAST_OPTION').value);
+
+  const messageName = headBlock.get_field('BROADCAST_OPTION').value.toString();
   return messageName;
 }
 
@@ -348,5 +364,6 @@ function getCommentForBlock(block: Block) {
 function convertBlockToCode(block: Block): string[] | null {
   const op = block.opcode;
   if (handlers.blockHandlers[op]) return handlers.blockHandlers[op](block);
-  else return null;
+
+  return [`# unknown: ${block.get_block_description()}`];
 }
