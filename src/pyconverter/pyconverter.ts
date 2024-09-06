@@ -342,11 +342,12 @@ function getMessageName(stack: Block[]): string {
 
 function getCommentForBlock(block: Block) {
   //TODO: optimize
-  const comment = Array.from(Object.values(block._root.comments)).filter(
+  const commentBlock = Array.from(Object.values(block._root.comments)).filter(
     (elem: any) => {
       return elem.blockId === block._id;
     }
-  )?.[0]?.text;
+  )?.[0] as any;
+  const comment = commentBlock?.text;
 
   return comment?.replace(/[\r\n]/g, ' ');
 }
