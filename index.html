@@ -1,50 +1,151 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Sample App</title>
-  </head>
-  <style>
-    body {
-      min-height: 100vh;
-      position: relative;
-    }
-    body::after {
-      content: '';
-      display: block;
-      height: 50px;
-      /* Set same as footer's height */
-    }
-    footer {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      /* width: 100%; */
-      height: 1em;
-      text-align: right;
-      /* background-color: #eee; */
-      padding-top: 1em;
-    }
-    #output {
-      font-family: monospace;
-      white-space: pre;
-      padding-bottom: 1em;
-      padding-inline: 1em;
-    }
-  </style>
-  <body>
-    <h1>SPIKE to Pybricks Wizard</h1>
-    <h2>LEGO SPIKE word-block converter to Pybricks python code</h2>
-    <div id="upload-area">
-      <div>Upload a file here</div>
-      <form>
-        <input type="file" id="file-selector" accept=".lms, .llsp3, .llsp" />
-      </form>
+<head>
+  <meta charset="utf-8" />
+  <title>LegoAppTools</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/static/css/site.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@1.6.7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.10"></script>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png" />
+  <link rel="manifest" href="/static/favicon/site.webmanifest" />
+  <link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#5bbad5" />
+  <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+  <meta name="msapplication-TileColor" content="#da532c" />
+  <meta name="msapplication-config" content="/static/favicon/browserconfig.xml" />
+  <meta name="theme-color" content="#ffffff" />
+</head>
+<style>
+  body {
+    min-height: 100vh;
+    position: relative;
+  }
+
+  body::after {
+    content: '';
+    display: block;
+    height: 50px;
+    /* Set same as footer's height */
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    /* width: 100%; */
+    height: 1em;
+    text-align: right;
+    /* background-color: #eee; */
+    padding-top: 1em;
+  }
+
+  #output {
+    font-family: monospace;
+    white-space: pre;
+    padding-bottom: 1em;
+    padding-inline: 1em;
+  }
+</style>
+<body>
+  <header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+      <div class="container">
+        <a class="navbar-brand" style="font-size: 200%; padding-bottom: 0px" href="/static/img/logo_full.svg">
+          <svg height="1.5em" width="4em" style="position: relative; top: -5px">
+            <use href="/static/img/logo_full.svg#icon" xlink:href="/static/img/logo_full.svg#icon"></use>
+          </svg>
+          LEGO App Tools
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+  <div class="container">
+    <h3>
+      SPIKE to Pybricks Wizard
+      <small class="text-muted">
+        word-block converter to Pybricks python code (beta)
+      </small>
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+      <div id="maincontainer" class="container py-3">
+
+        <div class="flex-fill pb-3">
+          <input type="file" name="file-selector" accept=".llsp,.lms,.lmsp" id="file-selector" class="form-control"
+            data-text="Choose a file" data-input="true" data-buttonbefore="true" data-dragdrop="true" data-badge="false"
+            data-placeholder="Select a LEGO SPIKE, Robot Inventor or EV3 Classroom file (.llsp, .lms, .lmsp) to upload" />
+        </div>
+
+        <!-- <div class="p-3 d-none" style="position: absolute" id="spinner">
+              <div class="spinner-grow text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+ -->
+        <div id="tab_dummy" class="h-75 border active py-5">
+          <div class="d-flex justify-content-center">
+            <div class="text-center">
+              <i class="bi bi-cloud-arrow-up-fill" style="
+                      font-size: 6rem;
+                      color: cornflowerblue;
+                      line-height: 1em;
+                    "></i><br />
+              Drop a LEGO SPIKE, Robot Inventor MINDSTORMS file<br />
+              (.llsp, .llsp3, .lms)
+            </div>
+          </div>
+        </div>
+        <div id="tabs_main" class="h-100 d-none" style="min-height: 30vh">
+          <ul class="nav nav-tabs border-0" role="tablist">
+            <li class="nav-item p-2">
+              <svg width="20" height="20">
+                <use id="svg_program_use" href="/static/img/cat0.svg#icon" xlink:href="/static/img/cat0.svg#icon"></use>
+              </svg>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="#tab_code" id="code" data-bs-toggle="tab">Code</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#tab_svg" id="svg" data-bs-toggle="tab">Preview</a>
+            </li>
+          </ul>
+
+          <div class="tab-content h-75">
+            <div id="tab_svg" class="tab-pane p-3 h-100 border">
+              <div id="preview_svg"></div>
+            </div>
+            <div id="tab_code" class="tab-pane p-3 h-100 border active">
+              <button id="copy-button"><i class="bi bi-copy"></i></button>
+              <pre id="preview_code" style="font-family: 'Courier New', monospace"></pre>
+            </div>
+          </div>
+        </div>
+
+        <input id="selectedtab" type="hidden" name="selectedtab" value="" />
+      </div>
+    </form>
+    </main>
+  </div>
+
+  <footer class="border-top footer text-muted">
+    <div class="container">
+      &copy; Attila Farago -
+      <a href="https://github.com/afarago">@afarago</a> - 2022
     </div>
-    <hr />
-    <div id="output" style="font-family: monospace; white-space: pre"></div>
-  </body>
-  <footer style="position: absolute; bottom: 0">
-    <div>Project by Attila Farago, 2024</div>
   </footer>
+</body>
 </html>

@@ -39,10 +39,10 @@
   },
   "devDependencies": {
     "@types/express-fileupload": "^1.5.1",
+    "@types/jquery": "^3.5.30",
     "@types/jszip": "^3.4.1",
     "@types/node": "^20.16.5",
     "@webpack-cli/generators": "^3.0.7",
-    "browser-sync": "^3.0.2",
     "concurrently": "^8.2.2",
     "css-loader": "^7.1.2",
     "gts": "^5.3.1",
@@ -59,9 +59,9 @@
   },
   "dependencies": {
     "@types/express": "^4.17.21",
+    "bootstrap-icons": "^1.11.3",
     "express": "^4.19.2",
     "express-fileupload": "^1.5.1",
-    "jszip": "^3.10.1",
-    "ts-replace-all": "^1.0.0"
+    "jszip": "^3.10.1"
   }
 }

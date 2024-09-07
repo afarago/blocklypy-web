@@ -6,7 +6,7 @@
 - process target[0].messages
 - variables, lists, broadcasts - registry by id, also handling duplicates
 - clear up states --> remove global registries...
-
+- handle empty operation when Boolean None -> not None ==> False
 ## LATER
 - some converters cannot handle dynamic expressions and variables (e.g. global brightness)
 - optimize comments

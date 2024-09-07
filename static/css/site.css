@@ -1,0 +1,168 @@
+﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Provide sufficient contrast against white background */
+a {
+  color: #0366d6;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px; /* Vertically center the text there */
+}
+
+/* Main page
+-------------------------------------------------- */
+
+.tab-pane {
+  min-height: 32vh;
+  position: relative;
+}
+
+/* Main page Animated drop area
+-------------------------------------------------- 
+    from: https://css-tricks.com/more-control-over-css-borders-with-background-image/
+*/
+
+#maincontainer.drop-active {
+  background-image: repeating-linear-gradient(
+      -60deg,
+      #f6c407,
+      #f6c407 9.3px,
+      transparent 30px,
+      transparent 39.3px,
+      #f6c407 60px
+    ),
+    repeating-linear-gradient(30deg, #f6c407, #f6c407 9.3px, transparent 30px, transparent 39.3px, #f6c407 60px),
+    repeating-linear-gradient(120deg, #f6c407, #f6c407 9.3px, transparent 30px, transparent 39.3px, #f6c407 60px),
+    repeating-linear-gradient(210deg, #f6c407, #f6c407 9.3px, transparent 30px, transparent 39.3px, #f6c407 60px);
+  background-size:
+    3px calc(100% + 120px),
+    calc(100% + 120px) 3px,
+    3px calc(100% + 120px),
+    calc(100% + 120px) 3px;
+  background-position:
+    0 0,
+    0 0,
+    100% 0,
+    0 100%;
+  background-repeat: no-repeat;
+  animation: dropActive_borderAnimation 0.8s infinite linear;
+  border-radius: 8px;
+}
+
+@keyframes dropActive_borderAnimation {
+  from {
+    background-position:
+      0 0,
+      -120px 0,
+      100% -120px,
+      0 100%;
+  }
+
+  to {
+    background-position:
+      0 -120px,
+      0 0,
+      100% 0,
+      -120px 100%;
+  }
+}
+
+/* ----- */
+
+@keyframes copysuccess_animation {
+  from {
+    outline: 0px solid rgba(144, 238, 144, 0.5);
+  }
+  30% {
+    outline: 6px solid rgba(144, 238, 144, 1);
+  }
+  90% {
+    outline: 6px solid rgba(144, 238, 144, 1);
+  }
+  to {
+    outline: 0px solid rgba(144, 238, 144, 0.5);
+  }
+}
+
+#copy-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px #ccc solid;
+  margin: 0.5em;
+}
+
+#copy-button.success {
+  animation: copysuccess_animation 0.5s 1 ease-in;
+  animation-delay: 0s;
+  -webkit-animation-fill-mode: forwards;
+  outline: 2px solid lightgreen;
+  background-color: hsl(120, 73%, 80%);
+}
