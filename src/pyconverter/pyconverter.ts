@@ -94,7 +94,7 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
     //   }
     // }
 
-    const code_sections = [
+    const code_sections: { name: string; code: string[] }[] = [
       { name: 'imports', code: Imports.to_global_code() },
       // { name: 'setup', code: setup_codes },
       { name: 'global variables', code: Variables.to_global_code() },
@@ -116,7 +116,7 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
     };
 
     const retval2 = code_sections.map(curr =>
-      curr.code.length
+      curr.code?.length
         ? [
             get_divider(`SECTION: ${curr.name.toUpperCase()}`, '='),
             ...curr.code.map((line: string) => asyncReplaceFn(line)),
@@ -139,13 +139,13 @@ function preprocessMessages(projectData: ScratchProject) {
 }
 
 function createProgramStacksCode(programStacks: Map<string, string[]>) {
-  return Array.from(programStacks.values())
-    .filter(item => item)
-    .map(e => [...e, ''])
-    .flat();
+  const stacks = Array.from(programStacks.values()).filter(item => item);
+  return stacks?.length > 0 ? stacks.map(e => [...e, '']).flat() : null;
 }
 
 function createMainProgramCode(stacks: Map<string, string[]>) {
+  if (stacks?.size === 0) return ['pass'];
+
   if (isAsyncNeeded) {
     return [
       'async def main():',
