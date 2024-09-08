@@ -1,16 +1,16 @@
 import * as Imports from './imports';
-import { DeviceOnPortBase, setup_devices_registry } from "./device";
+import { DeviceOnPortBase, setup_devices_registry } from './device';
 
 export class DeviceSensor extends DeviceOnPortBase {
-  _sensor_class = null;
-  constructor(port, sensor_class) {
+  _sensor_class: string = null;
+  constructor(port: string, sensor_class?: string) {
     super(port);
     this._sensor_class = sensor_class;
   }
-  static devicename_from_port(port, sensor_class) {
+  static devicename_from_port(port: string, sensor_class?: string) {
     return `${sensor_class ? sensor_class.toLowerCase() : 'sensor'}_${port.toLowerCase()}`;
   }
-  static instance(port, sensor_class = 'PUPDevice') {
+  static instance(port: string, sensor_class = 'PUPDevice') {
     const devname = DeviceSensor.devicename_from_port(port, sensor_class);
     let elem = setup_devices_registry[devname];
     if (!elem) {
@@ -20,7 +20,7 @@ export class DeviceSensor extends DeviceOnPortBase {
           : 'pybricks.pupdevices',
         sensor_class
       );
-      elem = setup_devices_registry[devname] = new DeviceSensor(
+      setup_devices_registry[devname] = elem = new DeviceSensor(
         port,
         sensor_class
       );

@@ -1,16 +1,16 @@
-import * as Helpers from '../helpers.js';
+import * as Helpers from '../helpers';
 import {
   AWAIT_PLACEHOLDER,
   CONST_ROTATIONS,
   CONST_DEGREES,
   CONST_SECONDS,
   debug,
-} from '../utils.js';
-import { BlockHandlersType, OperatorHandlersType } from './handlers.js';
-import { calc_stop } from '../converters.js';
-import { DeviceMotor } from '../devicemotor.js';
-import { BlockValue } from '../blockvalue.js';
-import { Block } from '../block.js';
+} from '../utils';
+import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { calc_stop } from '../converters';
+import { DeviceMotor } from '../devicemotor';
+import { BlockValue } from '../blockvalue';
+import { Block } from '../block';
 
 function flippermotor_motorSetSpeed(block: Block) {
   const port = block.get_input('PORT').value.toString();

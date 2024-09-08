@@ -1,11 +1,10 @@
-import * as Helpers from '../helpers.js';
+import * as Helpers from '../helpers';
 import * as Imports from '../imports';
-import { BlockHandlersType, OperatorHandlersType } from './handlers.js';
-import { calc_comparator } from '../converters.js';
-import { BlockValue } from '../blockvalue.js';
-import { Block } from '../block.js';
-import { DeviceSensor } from '../devicesensor.js';
-import { debug } from '../utils.js';
+import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { calc_comparator } from '../converters';
+import { BlockValue } from '../blockvalue';
+import { Block } from '../block';
+import { DeviceSensor } from '../devicesensor';
 
 // function flippermoresensors_deviceType(block: Block) {
 //   // TODO get PUPDevice of the current device for the info object!
@@ -39,7 +38,7 @@ function flippersensors_orientationAxis(block: Block) {
 }
 
 function flippersensors_color(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
 
@@ -50,7 +49,7 @@ function flippersensors_color(block: Block) {
 }
 
 function flippersensors_isColor(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
   const color1 = block.get_input(
     block?.opcode.includes('_is') ? 'VALUE' : 'OPTION'
   );
@@ -62,7 +61,7 @@ function flippersensors_isColor(block: Block) {
 }
 
 function flippersensors_reflectivity(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
 
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
@@ -70,7 +69,7 @@ function flippersensors_reflectivity(block: Block) {
 }
 
 function flippersensors_isReflectivity(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
   const value = block.get_input('VALUE');
   const comparator = calc_comparator(block.get_field('COMPARATOR'));
 
@@ -83,7 +82,7 @@ function flippersensors_isReflectivity(block: Block) {
 }
 
 function flippersensors_isPressed(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
   const option = block.get_field('OPTION'); // pressed, hardpressed, released, pressurechanged
 
   const device = DeviceSensor.instance(port, 'ForceSensor');
@@ -101,7 +100,7 @@ function flippersensors_isPressed(block: Block) {
 }
 
 function flippersensors_distance(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT').value?.toString();
   const unit = block.get_field('UNIT');
 
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');
@@ -115,7 +114,7 @@ function flippersensors_distance(block: Block) {
 }
 
 function flippersensors_isDistance(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT')?.value?.toString();
   const unit = block.get_field('UNIT');
   const value = block.get_input('VALUE');
 

@@ -40,7 +40,7 @@ function flippercontrol_fork(block: Block) {
 }
 
 function flipperdisplay_ultrasonicLightUp(block: Block) {
-  const port = block.get_input('PORT').value;
+  const port = block.get_input('PORT')?.value?.toString();
   const value = block.get_input('VALUE');
 
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');

@@ -14,7 +14,7 @@ export class DeviceBase {
   get dependencies(): DeviceBase[] {
     return [];
   }
-  ensure_dependencies() {
+  ensure_dependencies(): DeviceBase[] | undefined {
     return [] as DeviceBase[];
   }
 }
@@ -25,8 +25,5 @@ export class DeviceOnPortBase extends DeviceBase {
     super();
     this.port = port;
     Imports.use('pybricks.parameters', 'Port');
-  }
-  ensure_dependencies() {
-    // NOOP
   }
 }

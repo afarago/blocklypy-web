@@ -11,7 +11,7 @@ function handleFileUpload(file: File) {
       $('#preview_code').html(retval.pycode);
 
       const slotid = retval.projectInfo.slotIndex;
-      const sloturl = `/static/img/cat${slotid}.svg#dsmIcon`;
+      const sloturl = `img/cat${slotid}.svg#dsmIcon`;
       $('#svg_program_use').attr('href', sloturl).attr('xlink:href', sloturl);
 
       $('#tab_dummy').addClass('d-none');
