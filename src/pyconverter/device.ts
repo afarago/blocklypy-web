@@ -14,6 +14,9 @@ export class DeviceBase {
   get dependencies(): DeviceBase[] {
     return [];
   }
+  ensure_dependencies() {
+    return [] as DeviceBase[];
+  }
 }
 
 export class DeviceOnPortBase extends DeviceBase {

@@ -1,5 +1,6 @@
 import { Block } from './block';
 import * as Broadcasts from './broadcasts';
+import { setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import * as Helpers from './helpers';
@@ -8,6 +9,7 @@ import { ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
+  debug,
   get_divider,
   indent_code,
 } from './utils';
@@ -68,35 +70,37 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
 
     const programStacks = getPycodeForStackGroups(stackGroups);
 
-    // // section: setup
-    // const setup_codes = [];
-    // setup_codes.push('hub = PrimeHub()');
-    // Imports.use('pybricks.hubs', 'PrimeHub');
+    // section: setup
+    const setup_codes = [];
+    setup_codes.push('hub = PrimeHub()');
+    Imports.use('pybricks.hubs', 'PrimeHub');
 
-    // for (const elem of Object.values(setup_devices_registry)) {
-    //   elem.ensure_dependencies();
-    // }
+    for (const elem of Object.values(setup_devices_registry)) {
+      elem.ensure_dependencies();
+    }
 
-    // let remaining_items = Object.values(setup_devices_registry);
-    // while (remaining_items.length) {
-    //   // TODO: safeguard against circular dependency
-    //   for (const [idx, elem] of Object.entries(remaining_items)) {
-    //     if (
-    //       elem.dependencies?.every(elem2 => !remaining_items.includes(elem2))
-    //     ) {
-    //       remaining_items.splice(idx, 1);
+    const remaining_items = Object.values(setup_devices_registry);
+    while (remaining_items.length) {
+      debug(remaining_items);
+      // TODO: safeguard against circular dependency
+      for (const elem1 of remaining_items.entries()) {
+        const [idx, elem] = elem1;
+        if (
+          elem.dependencies?.every(elem2 => !remaining_items.includes(elem2))
+        ) {
+          remaining_items.splice(idx, 1);
 
-    //       const code = elem.setup_code();
-    //       if (code) setup_codes.push(...code);
+          const code = elem.setup_code();
+          if (code) setup_codes.push(...code);
 
-    //       break;
-    //     }
-    //   }
-    // }
+          break;
+        }
+      }
+    }
 
     const code_sections: { name: string; code: string[] }[] = [
       { name: 'imports', code: Imports.to_global_code() },
-      // { name: 'setup', code: setup_codes },
+      { name: 'setup', code: setup_codes },
       { name: 'global variables', code: Variables.to_global_code() },
       {
         name: 'helper functions',
