@@ -74,6 +74,8 @@ export class BlockValue {
           return new BlockValue(BlockValue.raw(a1) * BlockValue.raw(c1));
         if (b === '/')
           return new BlockValue(BlockValue.raw(a1) / BlockValue.raw(c1));
+        if (b === '%')
+          return new BlockValue(BlockValue.raw(a1) % BlockValue.raw(c1));
       } else {
         return new BlockValue(
           `${Helpers.get('float_safe', a1).raw} ${b} ${Helpers.get('float_safe', c1).raw}`,

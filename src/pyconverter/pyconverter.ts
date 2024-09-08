@@ -169,116 +169,121 @@ function getPycodeForStackGroups(
 
     let lastStackEventMessage = null;
     for (const stack_gitem of stack_group) {
-      const code: string[] = [];
-      const stack = stack_gitem.stack;
-      const group = stack_gitem.group;
-      const headBlock = stack[0];
-      const nextBlocks = stack.slice(1);
-      if (group === StackGroupType.MessageEvent) {
-        const messageNameRaw = getMessageName(stack);
-        const messageName = Broadcasts.sanitize(messageNameRaw);
-        if (lastStackEventMessage !== messageName) {
-          lastStackEventMessage = messageName;
-          Helpers.get('class_Message');
-          code.push(
-            ...[
-              '',
-              get_divider(`[MESSAGE] ${messageNameRaw}`, '-'),
-              Broadcasts.get_code(messageName),
-              '',
-            ]
-          );
-          const stack_fn = `${Broadcasts.get_pyname(messageName)}.main_fn`;
-          stacks.set(stack_fn, null);
+      try {
+        const code: string[] = [];
+        const stack = stack_gitem.stack;
+        const group = stack_gitem.group;
+        const headBlock = stack[0];
+        const nextBlocks = stack.slice(1);
+        if (group === StackGroupType.MessageEvent) {
+          const messageNameRaw = getMessageName(stack);
+          const messageName = Broadcasts.sanitize(messageNameRaw);
+          if (lastStackEventMessage !== messageName) {
+            lastStackEventMessage = messageName;
+            Helpers.get('class_Message');
+            code.push(
+              ...[
+                '',
+                get_divider(`[MESSAGE] ${messageNameRaw}`, '-'),
+                Broadcasts.get_code(messageName),
+                '',
+              ]
+            );
+            const stack_fn = `${Broadcasts.get_pyname(messageName)}.main_fn`;
+            stacks.set(stack_fn, null);
+          }
         }
-      }
 
-      stackCounter++;
-      code.push(
-        `### [STACK: #${stackCounter}] ${headBlock.get_block_description()}`
-      );
+        stackCounter++;
+        code.push(
+          `### [STACK: #${stackCounter}] ${headBlock.get_block_description()}`
+        );
 
-      const stack_fn = `stack${stackCounter}_fn`;
-      const stack_action_fn = `stack${stackCounter}_action_fn`;
-      const sub_code = process_stack(nextBlocks);
+        const stack_fn = `stack${stackCounter}_fn`;
+        const stack_action_fn = `stack${stackCounter}_action_fn`;
+        const sub_code = process_stack(nextBlocks);
 
-      switch (group_name) {
-        case StackGroupType.Start:
-          //case 'flipperevents_whenProgramStarts':
-          {
-            code.push(`${ASYNC_PLACEHOLDER}def ${stack_fn}():`);
-            code.push(...sub_code);
+        switch (group_name) {
+          case StackGroupType.Start:
+            //case 'flipperevents_whenProgramStarts':
+            {
+              code.push(`${ASYNC_PLACEHOLDER}def ${stack_fn}():`);
+              code.push(...sub_code);
 
-            // add to stack
-            stacks.set(stack_fn, code);
-          }
-          break;
-        case StackGroupType.Event:
-          // case 'flipperevents_whenColor':
-          // case 'flipperevents_whenPressed':
-          // case 'flipperevents_whenDistance':
-          // case 'flipperevents_whenCondition':
-          // case 'flipperevents_whenOrientation':
-          // case 'flipperevents_whenButton': // TODO: later separate and optimize
-          // case 'flipperevents_whenTimer': // TODO: later separate and optimize
-          {
-            // stack action function
-            code.push(`async def ${stack_action_fn}():`);
-            code.push(...sub_code);
+              // add to stack
+              stacks.set(stack_fn, code);
+            }
+            break;
+          case StackGroupType.Event:
+            // case 'flipperevents_whenColor':
+            // case 'flipperevents_whenPressed':
+            // case 'flipperevents_whenDistance':
+            // case 'flipperevents_whenCondition':
+            // case 'flipperevents_whenOrientation':
+            // case 'flipperevents_whenButton': // TODO: later separate and optimize
+            // case 'flipperevents_whenTimer': // TODO: later separate and optimize
+            {
+              // stack action function
+              code.push(`async def ${stack_action_fn}():`);
+              code.push(...sub_code);
 
-            // condition function
-            const stack_cond_fn = `stack${stackCounter}_condition_fn`;
-            const condition_code = processOperation(headBlock);
-            code.push(`def ${stack_cond_fn}():`);
-            code.push(...indent_code(['return ' + condition_code.raw]));
-            code.push(`async def ${stack_fn}():`);
-            code.push(
-              ...indent_code([
-                `await ${Helpers.get('event_task', stack_cond_fn, stack_action_fn).raw}`,
-              ])
-            );
+              // condition function
+              const stack_cond_fn = `stack${stackCounter}_condition_fn`;
+              const condition_code = processOperation(headBlock);
+              code.push(`def ${stack_cond_fn}():`);
+              code.push(...indent_code(['return ' + condition_code.raw]));
+              code.push(`async def ${stack_fn}():`);
+              code.push(
+                ...indent_code([
+                  `await ${Helpers.get('event_task', stack_cond_fn, stack_action_fn).raw}`,
+                ])
+              );
 
-            // add to stack
-            stacks.set(stack_fn, code);
-          }
-          break;
+              // add to stack
+              stacks.set(stack_fn, code);
+            }
+            break;
 
-        case StackGroupType.MessageEvent:
-          // case 'event_whenbroadcastreceived':
-          {
-            const messageName = getMessageName(stack);
+          case StackGroupType.MessageEvent:
+            // case 'event_whenbroadcastreceived':
+            {
+              const messageName = getMessageName(stack);
 
-            // stack action function
-            code.push(`async def ${stack_action_fn}():`);
-            code.push(...sub_code);
-            code.push(
-              Broadcasts.add_stack(
-                null, //TODO: get message id
-                Broadcasts.sanitize(messageName),
-                stack_action_fn
-              )
-            );
+              // stack action function
+              code.push(`async def ${stack_action_fn}():`);
+              code.push(...sub_code);
+              code.push(
+                Broadcasts.add_stack(
+                  null, //TODO: get message id
+                  Broadcasts.sanitize(messageName),
+                  stack_action_fn
+                )
+              );
 
-            // condition function already added
+              // condition function already added
 
-            // add to stack
-            stacks.set(stack_fn, code);
-          }
-          break;
+              // add to stack
+              stacks.set(stack_fn, code);
+            }
+            break;
 
-        default:
-          {
-            code.push('### this code will not be running\r\n#');
-            const sub_code = process_stack(stack).map(line => '# ' + line);
-            code.push(...sub_code);
+          default:
+            {
+              code.push('### this code will not be running\r\n#');
+              const sub_code = process_stack(stack).map(line => '# ' + line);
+              code.push(...sub_code);
 
-            // add to stack
-            //??
-          }
-          break;
+              // add to stack
+              //??
+            }
+            break;
+        }
+      } catch (err) {
+        console.error('::ERROR::', err);
       }
     }
   }
+
   return stacks;
 }
 

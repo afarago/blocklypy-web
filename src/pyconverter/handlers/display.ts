@@ -28,7 +28,7 @@ function flipperdisplay_ledOn(block: Block) {
 
 function flipperdisplay_ledText(block: Block) {
   const text = block.get_input('TEXT');
-  const expr = text.is_string
+  const expr = text?.is_string
     ? BlockValue.raw(text)
     : Helpers.get('str', text).value;
   return [`${AWAIT_PLACEHOLDER}hub.display.text(${expr})`];

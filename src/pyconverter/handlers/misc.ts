@@ -5,6 +5,7 @@ import { process_stack, setAsyncFlag } from '../pyconverter';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { DeviceSensor } from '../devicesensor';
 
 function flippersensors_resetTimer(block: Block) {
   Imports.use('pybricks.tools', 'StopWatch');
@@ -42,9 +43,8 @@ function flipperdisplay_ultrasonicLightUp(block: Block) {
   const port = block.get_input('PORT').value;
   const value = block.get_input('VALUE');
 
-  // const device = DeviceSensor.instance(port, 'UltrasonicSensor');
-  // const d = device.devicename;
-  const d = 'testdev'; //!!
+  const device = DeviceSensor.instance(port, 'UltrasonicSensor');
+  const d = device.devicename;
   return [`${d}.lights.on([${value.raw?.toString().split(' ').join(', ')}])`];
 }
 

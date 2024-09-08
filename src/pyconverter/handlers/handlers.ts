@@ -4,6 +4,8 @@ import control from './control';
 import display from './display';
 import operations from './operator';
 import variables from './variable';
+import motor from './motor';
+import sensor from './sensor';
 // import { Handlers as MotorHandlers } from './handlers/motor.js';
 // import { Handlers as MotorPairHandlers } from './handlers/motorpair.js';
 import sound from './sound';
@@ -29,6 +31,8 @@ function getHandlers(): HandlersType {
     operations(),
     sound(),
     misc(),
+    motor(),
+    sensor(),
   ].reduce((aggr, elem) => {
     aggr.blockHandlers = { ...aggr.blockHandlers, ...elem.blockHandlers };
     aggr.operationHandlers = {

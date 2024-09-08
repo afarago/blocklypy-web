@@ -9,10 +9,6 @@ function flippersound_beepForTime(block: Block) {
   return [Helpers.get('hub_speaker_flipper_play', note, duration).value];
 }
 
-export const Handlers = {
-  flippersound_beepForTime: flippersound_beepForTime,
-};
-
 export default function sound() {
   const blockHandlers: BlockHandlersType = {
     flippersound_beepForTime,

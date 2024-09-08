@@ -1,6 +1,6 @@
 import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
 import { BlockValue } from './blockvalue';
-import { round2 } from './converters';
+import { flipperColorsMap, round2 } from './converters';
 import * as Imports from './imports';
 
 interface HelperFunctionDefintion {
@@ -220,29 +220,40 @@ def convert_distance(value, unit):
   },
   convert_color: {
     local_fn: value => {
-      const COLORS = [
-        'BLACK',
-        'MAGENTA',
-        'VIOLET',
-        'BLUE',
-        'CYAN',
-        'GREEN',
-        'GREEN',
-        'YELLOW',
-        'ORANGE',
-        'RED',
-        'WHITE',
-      ];
-      const color_value = value in COLORS ? COLORS[value] : 'NONE';
+      // const COLORS = [
+      //   'BLACK',
+      //   'MAGENTA',
+      //   'VIOLET',
+      //   'BLUE',
+      //   'CYAN',
+      //   'GREEN',
+      //   'GREEN',
+      //   'YELLOW',
+      //   'ORANGE',
+      //   'RED',
+      //   'WHITE',
+      // ];
+      const colors = Array.from(flipperColorsMap.values());
+      const color_value = value in colors ? colors[value] : 'Color.NONE';
 
       Imports.use('pybricks.parameters', 'Color');
-      return `Color.${color_value}`;
+      return color_value;
     },
     py_fn: `
 def convert_color(value):
     COLORS = [Color.BLACK, Color.MAGENTA, Color.VIOLET, Color.BLUE, Color.CYAN, Color.GREEN, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.RED, Color.WHITE]
-    return COLORS[value]`,
+    return COLORS[int_safe(value)]`,
+    py_dependencies: ['int_safe'],
   },
+  convert_color_back: {
+    py_fn: `
+def convert_color_back(value):
+    colorMap = [${Array.from(flipperColorsMap.values())
+      .map((key, value) => `${key}: ${value}`)
+      .join(', ')}]
+    return colorMap.index(value)`,
+  },
+  //!!TODO
   convert_brightness: {
     local_fn: value => {
       // 0-9 -> 0-100
@@ -254,19 +265,18 @@ def convert_brightness(value):
   },
 
   convert_ussensor_distance: {
-    //   local_fn: (value, unit) => {
-    //     switch (BlockValue.raw(unit)) {
-    //       case CONST_CM:
-    //         return value * 10; // cm->mm
-    //       case CONST_INCHES:
-    //         return value * 25.4; // in->mm
-    //       case '%':
-    //         const MAX_US_SENSOR_DISTANCE = 2000; // 100% = 2000mm
-    //         return (MAX_US_SENSOR_DISTANCE * BlockValue.raw(value)) / 100;
-    //       default:
-    //         return value;
-    //     }
-    //   },
+    local_fn: (value, unit) => {
+      switch (BlockValue.raw(unit)) {
+        case CONST_CM:
+          return value * 10; // cm->mm
+        case CONST_INCHES:
+          return value * 25.4; // in->mm
+        case '%':
+          return (2000 * BlockValue.raw(value)) / 100; // 100% = 2000mm
+        default:
+          return value;
+      }
+    },
     py_fn: `
 def convert_ussensor_distance(value, unit):
     if unit == "cm": return value * 10
@@ -274,6 +284,35 @@ def convert_ussensor_distance(value, unit):
     elif unit == "%": return 2000 * value / 100
     else: return value`,
   },
+  convert_ussensor_distance_back: {
+    local_fn: (value, unit) => {
+      switch (BlockValue.raw(unit)) {
+        case CONST_CM:
+          return value / 10; // cm->mm
+        case CONST_INCHES:
+          return value / 25.4; // in->mm
+        case '%':
+          return (BlockValue.raw(value) * 100) / 2000; // 100% = 2000mm
+        default:
+          return value;
+      }
+    },
+    py_fn: `
+def convert_ussensor_distance_back(value, unit):
+    if unit == "cm": return value / 10
+    elif unit == "inches": return value / 25.4
+    elif unit == "%": return value * 100 / 2000
+    else: return value`,
+  },
+
+  convert_hub_orientation: {
+    local_fn: value =>
+      'Side.' + BlockValue.value(value)?.replace('side', '').toUpperCase(),
+    py_fn: `
+def convert_hub_orientation(value):
+    return 'Side.' + BlockValue.value(value)?.replace('side', '').toUpperCase()`,
+  },
+
   //!! num_eval: {
   //   local_fn: BlockValue.num_eval,
   //   local_dynamic_fn: BlockValue.num_eval,
