@@ -4,7 +4,7 @@ import * as Imports from '../imports';
 import { process_stack, setAsyncFlag } from '../pyconverter';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import * as Variables from '../variables';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType } from './handlers';
 import { DeviceSensor } from '../devicesensor';
 
 function flippersensors_resetTimer(block: Block) {
@@ -80,17 +80,17 @@ function event_broadcast(block: Block) {
 //   }
 // }
 
-export default function misc() {
-  const blockHandlers: BlockHandlersType = {
-    flippersensors_resetTimer,
-    flippercontrol_fork,
-    flipperdisplay_ultrasonicLightUp,
-    flipperlight_ultrasonicLightUp: flipperdisplay_ultrasonicLightUp,
-    flippersensors_resetYaw,
-    event_broadcast,
-    event_broadcastandwait: event_broadcast,
-  };
-  const operationHandlers: OperatorHandlersType = null;
+export default function misc(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['flippersensors_resetTimer', flippersensors_resetTimer],
+    ['flippercontrol_fork', flippercontrol_fork],
+    ['flipperdisplay_ultrasonicLightUp', flipperdisplay_ultrasonicLightUp],
+    ['flipperlight_ultrasonicLightUp', flipperdisplay_ultrasonicLightUp],
+    ['flippersensors_resetYaw', flippersensors_resetYaw],
+    ['event_broadcast', event_broadcast],
+    ['event_broadcastandwait', event_broadcast],
+  ]);
+  const operatorHandlers: any = null;
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

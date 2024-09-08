@@ -1,6 +1,5 @@
 import * as Helpers from '../helpers';
-import * as Imports from '../imports';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { HandlersType, OperatorHandler } from './handlers';
 import { calc_comparator } from '../converters';
 import { BlockValue } from '../blockvalue';
 import { Block } from '../block';
@@ -144,35 +143,35 @@ function flippersensors_buttonIsPressed(block: Block) {
   return new BlockValue(event === 'pressed' ? value : `not (${value})`, true);
 }
 
-export default function sensor() {
-  const blockHandlers: BlockHandlersType = {};
-  const operationHandlers: OperatorHandlersType = {
-    // flippermoresensors_deviceType,
+export default function sensor(): HandlersType {
+  const blockHandlers: any = null;
+  const operatorHandlers = new Map<string, OperatorHandler>([
+    // ["flippermoresensors_deviceType", flippermoresensors_deviceType],
 
-    flippersensors_orientationAxis,
-    flippersensors_orientation,
-    flippersensors_isorientation,
-    flipperevents_whenOrientation: flippersensors_isorientation,
+    ['flippersensors_orientationAxis', flippersensors_orientationAxis],
+    ['flippersensors_orientation', flippersensors_orientation],
+    ['flippersensors_isorientation', flippersensors_isorientation],
+    ['flipperevents_whenOrientation', flippersensors_isorientation],
 
-    flippersensors_color,
-    flippersensors_isColor,
-    flipperevents_whenColor: flippersensors_isColor,
+    ['flippersensors_color', flippersensors_color],
+    ['flippersensors_isColor', flippersensors_isColor],
+    ['flipperevents_whenColor', flippersensors_isColor],
 
-    flippersensors_reflectivity,
-    flippersensors_isReflectivity,
-    flippersensors_whenReflectivity: flippersensors_isReflectivity,
+    ['flippersensors_reflectivity', flippersensors_reflectivity],
+    ['flippersensors_isReflectivity', flippersensors_isReflectivity],
+    ['flippersensors_whenReflectivity', flippersensors_isReflectivity],
 
-    // flippersensors_pressed,
-    flippersensors_isPressed,
-    flipperevents_whenPressed: flippersensors_isPressed,
+    // ["flippersensors_pressed", flippersensors_pressed],
+    ['flippersensors_isPressed', flippersensors_isPressed],
+    ['flipperevents_whenPressed', flippersensors_isPressed],
 
-    flippersensors_distance,
-    flippersensors_isDistance,
-    flipperevents_whenDistance: flippersensors_isDistance,
+    ['flippersensors_distance', flippersensors_distance],
+    ['flippersensors_isDistance', flippersensors_isDistance],
+    ['flipperevents_whenDistance', flippersensors_isDistance],
 
-    flippersensors_buttonIsPressed,
-    flipperevents_whenButton: flippersensors_buttonIsPressed,
-  };
+    ['flippersensors_buttonIsPressed', flippersensors_buttonIsPressed],
+    ['flipperevents_whenButton', flippersensors_buttonIsPressed],
+  ]);
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

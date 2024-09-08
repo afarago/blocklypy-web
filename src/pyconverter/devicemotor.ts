@@ -19,12 +19,10 @@ export class DeviceMotor extends DeviceOnPortBase {
   }
   static instance(port: string, direction_cw?: boolean) {
     const devname = DeviceMotor.devicename_from_port(port);
-    let elem = setup_devices_registry[devname] as DeviceMotor;
+    let elem = setup_devices_registry.get(devname) as DeviceMotor;
     if (!elem) {
-      elem = setup_devices_registry[devname] = new DeviceMotor(
-        port,
-        direction_cw
-      );
+      elem = new DeviceMotor(port, direction_cw);
+      setup_devices_registry.set(devname, elem);
     } else {
       elem.direction_cw = direction_cw ?? elem.direction_cw;
     }

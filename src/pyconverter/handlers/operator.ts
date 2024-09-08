@@ -2,7 +2,7 @@ import * as Helpers from '../helpers';
 import { debug } from '../utils';
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import { handlers, BlockHandlersType, OperatorHandlersType } from './handlers';
+import { handlers, OperatorHandler, HandlersType } from './handlers';
 import * as Imports from '../imports';
 import * as Variables from '../variables';
 //import { DeviceMotor, DeviceSensor } from '../devices';
@@ -25,8 +25,8 @@ function operator_and_or(block: Block) {
 export function processOperation(block: Block): BlockValue {
   if (block) {
     const op = block?.opcode;
-    if (handlers.operationHandlers[op])
-      return handlers.operationHandlers[op](block);
+    if (handlers.operatorHandlers.has(op))
+      return handlers.operatorHandlers.get(op)(block);
 
     debug(`# unknown: ${block?.get_block_description()}`);
     console.trace();
@@ -228,33 +228,33 @@ function operator_not(block: Block) {
   return new BlockValue(`not (${code_condition.raw})`, true);
 }
 
-export default function operations() {
-  const blockHandlers: BlockHandlersType = null;
-  const operationHandlers: OperatorHandlersType = {
-    operator_or: operator_and_or,
-    operator_and: operator_and_or,
-    operator_not: operator_not,
-    operator_lt: operator_lt_gt_eq,
-    operator_gt: operator_lt_gt_eq,
-    operator_equals: operator_lt_gt_eq,
-    operator_add: operator_math_two_op,
-    operator_subtract: operator_math_two_op,
-    operator_multiply: operator_math_two_op,
-    operator_divide: operator_math_two_op,
-    operator_mod: operator_math_two_op,
-    operator_round: operator_round,
-    operator_mathop: operator_mathop,
-    flipperoperator_mathFunc2Params: flipperoperator_mathFunc2Params,
-    operator_random: operator_random,
-    operator_join: operator_join,
-    operator_letter_of: operator_letter_of,
-    operator_length: operator_length,
-    operator_contains: operator_contains,
-    flipperoperator_isInBetween: flipperoperator_isInBetween,
-    flippersensors_timer: flippersensors_timer,
-    flipperevents_whenTimer: flipperevents_whenTimer,
-    flipperevents_whenCondition: flipperevents_whenCondition,
-  };
+export default function operations(): HandlersType {
+  const blockHandlers: any = null;
+  const operatorHandlers = new Map<string, OperatorHandler>([
+    ['operator_or', operator_and_or],
+    ['operator_and', operator_and_or],
+    ['operator_not', operator_not],
+    ['operator_lt', operator_lt_gt_eq],
+    ['operator_gt', operator_lt_gt_eq],
+    ['operator_equals', operator_lt_gt_eq],
+    ['operator_add', operator_math_two_op],
+    ['operator_subtract', operator_math_two_op],
+    ['operator_multiply', operator_math_two_op],
+    ['operator_divide', operator_math_two_op],
+    ['operator_mod', operator_math_two_op],
+    ['operator_round', operator_round],
+    ['operator_mathop', operator_mathop],
+    ['flipperoperator_mathFunc2Params', flipperoperator_mathFunc2Params],
+    ['operator_random', operator_random],
+    ['operator_join', operator_join],
+    ['operator_letter_of', operator_letter_of],
+    ['operator_length', operator_length],
+    ['operator_contains', operator_contains],
+    ['flipperoperator_isInBetween', flipperoperator_isInBetween],
+    ['flippersensors_timer', flippersensors_timer],
+    ['flipperevents_whenTimer', flipperevents_whenTimer],
+    ['flipperevents_whenCondition', flipperevents_whenCondition],
+  ]);
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

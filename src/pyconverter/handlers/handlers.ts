@@ -10,16 +10,12 @@ import sensor from './sensor';
 import sound from './sound';
 import misc from './misc';
 
-export interface HandlersType {
-  blockHandlers: BlockHandlersType;
-  operationHandlers: OperatorHandlersType;
-}
 // export type BlockHandlerFunction = (block: Block) => string[] | null
-export interface BlockHandlersType {
-  [key: string]: (block: Block) => string[] | null;
-}
-export interface OperatorHandlersType {
-  [key: string]: (block: Block) => BlockValue | null;
+export type BlockHandler = (block: Block) => string[] | null;
+export type OperatorHandler = (block: Block) => BlockValue | null;
+export interface HandlersType {
+  blockHandlers: Map<string, BlockHandler> | null;
+  operatorHandlers: Map<string, OperatorHandler> | null;
 }
 
 function getHandlers(): HandlersType {
@@ -33,14 +29,22 @@ function getHandlers(): HandlersType {
     motor(),
     motorpair(),
     sensor(),
-  ].reduce((aggr, elem) => {
-    aggr.blockHandlers = { ...aggr.blockHandlers, ...elem.blockHandlers };
-    aggr.operationHandlers = {
-      ...aggr.operationHandlers,
-      ...elem.operationHandlers,
-    };
-    return aggr;
-  }, {} as HandlersType);
+  ].reduce(
+    (aggr, elem) => {
+      if (elem.blockHandlers)
+        for (const [key, value] of elem.blockHandlers)
+          aggr.blockHandlers.set(key, value);
+      if (elem.operatorHandlers)
+        for (const [key, value] of elem.operatorHandlers)
+          aggr.operatorHandlers.set(key, value);
+      return aggr;
+    },
+    {
+      blockHandlers: new Map<string, BlockHandler>(),
+      operatorHandlers: new Map<string, OperatorHandler>(),
+    } as HandlersType
+  );
+
   return retval;
 }
 export const handlers = getHandlers();

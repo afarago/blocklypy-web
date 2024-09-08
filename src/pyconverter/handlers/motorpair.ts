@@ -1,7 +1,6 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
 import { calc_stop } from '../converters';
-import { DeviceMotor } from '../devicemotor';
 import { DeviceDriveBase } from '../devicedrivebase';
 import * as Helpers from '../helpers';
 import {
@@ -11,9 +10,8 @@ import {
   CONST_INCHES,
   CONST_ROTATIONS,
   CONST_SECONDS,
-  debug,
 } from '../utils';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType } from './handlers';
 
 function _process_flippermove(
   op: string,
@@ -133,8 +131,6 @@ function flippermove_steer(block: Block) {
   const value = block.get_input('VALUE');
   const unit = block.get_field('UNIT');
 
-  debug(block._block);
-
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   // inputs: steering, value
   return _process_flippermove(
@@ -150,7 +146,7 @@ function flippermove_steer(block: Block) {
 function flippermove_startSteer(block: Block) {
   const steer = block.get_input('STEERING');
   //TODO: handle as value can stick in "straight: 0" instead of "0" when adding and removing variable
-  const steer_adjusted = steer; // TODO
+  // const steer_adjusted = steer; // TODO
 
   //TODO: write a Helper for steer adjust, how to branch?
   const steer_value = parseInt(steer.value.toString());
@@ -180,7 +176,7 @@ function flippermove_movementSpeed(block: Block) {
   const speed = block.get_input('SPEED');
 
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
-  const d = device.devicename;
+  // const d = device.devicename;
 
   const value = Helpers.get('convert_speed', speed);
   device.default_speed = value;
@@ -236,7 +232,7 @@ function flippermove_setDistance(block: Block) {
     null,
     wheel_diameter
   ) as DeviceDriveBase;
-  const d = device.devicename;
+  // const d = device.devicename;
 
   device.rotation_distance = distance;
   device.wheel_diameter = wheel_diameter;
@@ -253,19 +249,22 @@ function flippermove_setMovementPair(block: Block) {
   ];
 }
 
-export default function motorpair() {
-  const blockHandlers: BlockHandlersType = {
-    flippermove_setMovementPair,
-    flippermove_setDistance,
-    flippermove_startMove,
-    flippermove_stopMove,
-    flippermove_move,
-    flippermove_movementSpeed,
-    flippermoremove_movementSetStopMethod,
-    flippermove_startSteer,
-    flippermove_steer,
-  };
-  const operationHandlers: OperatorHandlersType = {};
+export default function motorpair(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['flippermove_setMovementPair', flippermove_setMovementPair],
+    ['flippermove_setDistance', flippermove_setDistance],
+    ['flippermove_startMove', flippermove_startMove],
+    ['flippermove_stopMove', flippermove_stopMove],
+    ['flippermove_move', flippermove_move],
+    ['flippermove_movementSpeed', flippermove_movementSpeed],
+    [
+      'flippermoremove_movementSetStopMethod',
+      flippermoremove_movementSetStopMethod,
+    ],
+    ['flippermove_startSteer', flippermove_startSteer],
+    ['flippermove_steer', flippermove_steer],
+  ]);
+  const operatorHandlers: any = null;
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

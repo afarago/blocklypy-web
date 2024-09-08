@@ -46,3 +46,8 @@ export function sanitize(key: string) {
 
 // static to_global_code() {
 // }
+
+export function clear() {
+  //TODO: move to session handling
+  registry.clear();
+}

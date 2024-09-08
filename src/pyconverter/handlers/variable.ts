@@ -1,9 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
-import * as Helpers from '../helpers';
-import { debug } from '../utils';
 import * as Variables from '../variables';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function _readParameters(
   block: Block,
@@ -133,22 +131,23 @@ function data_listcontainsitem(block: Block) {
   return new BlockValue(`(${list}.index(${item.raw}) != None)`, true);
 }
 
-export default function variables() {
-  const blockHandlers: BlockHandlersType = {
-    data_setvariableto,
-    data_changevariableby,
-    data_addtolist,
-    data_deleteoflist,
-    data_deletealloflist,
-    data_insertatlist,
-    data_replaceitemoflist,
-  };
-  const operationHandlers: OperatorHandlersType = {
-    data_itemoflist,
-    data_itemnumoflist,
-    data_lengthoflist,
-    data_listcontainsitem,
-  };
+export default function variables(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['data_setvariableto', data_setvariableto],
+    ['data_changevariableby', data_changevariableby],
+    ['data_addtolist', data_addtolist],
+    ['data_deleteoflist', data_deleteoflist],
+    ['data_deletealloflist', data_deletealloflist],
+    ['data_insertatlist', data_insertatlist],
+    ['data_replaceitemoflist', data_replaceitemoflist],
+  ]);
 
-  return { blockHandlers, operationHandlers };
+  const operatorHandlers = new Map<string, OperatorHandler>([
+    ['data_itemoflist', data_itemoflist],
+    ['data_itemnumoflist', data_itemnumoflist],
+    ['data_lengthoflist', data_lengthoflist],
+    ['data_listcontainsitem', data_listcontainsitem],
+  ]);
+
+  return { blockHandlers, operatorHandlers };
 }

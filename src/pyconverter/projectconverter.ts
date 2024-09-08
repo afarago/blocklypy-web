@@ -1,6 +1,5 @@
 import JSZip from 'jszip';
 import { convertFlipperProgramToPython } from './pyconverter';
-import { debug } from 'console';
 
 const DEBUG_SKIP_HEADER = false;
 

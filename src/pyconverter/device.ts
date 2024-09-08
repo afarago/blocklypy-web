@@ -1,7 +1,6 @@
 import * as Imports from './imports';
-import * as Helpers from './helpers';
 
-export const setup_devices_registry: Record<string, DeviceBase> = {};
+export const setup_devices_registry = new Map<string, DeviceBase>();
 
 export class DeviceBase {
   _ports: string[];
@@ -29,4 +28,9 @@ export class DeviceOnPortBase extends DeviceBase {
     this.port = port;
     Imports.use('pybricks.parameters', 'Port');
   }
+}
+
+export function setup_devices_clear() {
+  //TODO: move to session handling
+  setup_devices_registry.clear();
 }

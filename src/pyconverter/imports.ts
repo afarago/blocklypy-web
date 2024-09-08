@@ -12,3 +12,8 @@ export function to_global_code() {
       : `import ${key}`
   );
 }
+
+export function clear() {
+  //TODO: move to session handling
+  registry.clear();
+}

@@ -1,6 +1,6 @@
 import { Block } from '../block';
 import * as Helpers from '../helpers';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType } from './handlers';
 
 function flippersound_beepForTime(block: Block) {
   const note = block.get_input('NOTE'); // 48 = C, .. 1-8 = C
@@ -9,11 +9,11 @@ function flippersound_beepForTime(block: Block) {
   return [Helpers.get('hub_speaker_flipper_play', note, duration).value];
 }
 
-export default function sound() {
-  const blockHandlers: BlockHandlersType = {
-    flippersound_beepForTime,
-  };
-  const operationHandlers: OperatorHandlersType = null;
+export default function sound(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['flippersound_beepForTime', flippersound_beepForTime],
+  ]);
+  const operatorHandlers: any = null;
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

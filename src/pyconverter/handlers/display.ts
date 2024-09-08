@@ -3,8 +3,7 @@ import { BlockValue, num_eval } from '../blockvalue';
 import { convert_matrix } from '../converters';
 import * as Helpers from '../helpers';
 import { AWAIT_PLACEHOLDER } from '../utils';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
-import * as Variables from '../variables';
+import { BlockHandler, HandlersType } from './handlers';
 
 let global_pixel_brightness = 100;
 // TODO: later on add possibility to set variable/expr for global brightness
@@ -22,7 +21,7 @@ function flipperdisplay_ledOn(block: Block) {
   const x1 = num_eval(x, '-', 1);
   const y1 = num_eval(y, '-', 1);
   return [
-    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${Helpers.get('float', brightness).raw})`,
+    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${Helpers.get('float_safe', brightness).raw})`,
   ];
 }
 
@@ -63,24 +62,24 @@ function flipperdisplay_displayOff(block: Block) {
   }
 }
 
-export default function display() {
-  const blockHandlers: BlockHandlersType = {
-    flipperdisplay_displayOff: flipperdisplay_displayOff,
-    flipperlight_lightDisplayOff: flipperdisplay_displayOff,
-    flipperdisplay_centerButtonLight: flipperdisplay_centerButtonLight,
-    flipperlight_centerButtonLight: flipperdisplay_centerButtonLight,
-    flipperdisplay_ledImage: flipperdisplay_ledImage,
-    flipperlight_lightDisplayImageOn: flipperdisplay_ledImage,
-    flipperdisplay_ledImageFor: flipperdisplay_ledImageFor,
-    flipperlight_lightDisplayImageOnForTime: flipperdisplay_ledImageFor,
-    flipperdisplay_ledText: flipperdisplay_ledText,
-    flipperlight_lightDisplayText: flipperdisplay_ledText,
-    flipperdisplay_ledOn: flipperdisplay_ledOn,
-    flipperlight_lightDisplaySetPixel: flipperdisplay_ledOn,
-    flipperdisplay_ledSetBrightness: flipperdisplay_ledSetBrightness,
-    flipperlight_lightDisplaySetBrightness: flipperdisplay_ledSetBrightness,
-  };
-  const operationHandlers: OperatorHandlersType = null;
+export default function display(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['flipperdisplay_displayOff', flipperdisplay_displayOff],
+    ['flipperlight_lightDisplayOff', flipperdisplay_displayOff],
+    ['flipperdisplay_centerButtonLight', flipperdisplay_centerButtonLight],
+    ['flipperlight_centerButtonLight', flipperdisplay_centerButtonLight],
+    ['flipperdisplay_ledImage', flipperdisplay_ledImage],
+    ['flipperlight_lightDisplayImageOn', flipperdisplay_ledImage],
+    ['flipperdisplay_ledImageFor', flipperdisplay_ledImageFor],
+    ['flipperlight_lightDisplayImageOnForTime', flipperdisplay_ledImageFor],
+    ['flipperdisplay_ledText', flipperdisplay_ledText],
+    ['flipperlight_lightDisplayText', flipperdisplay_ledText],
+    ['flipperdisplay_ledOn', flipperdisplay_ledOn],
+    ['flipperlight_lightDisplaySetPixel', flipperdisplay_ledOn],
+    ['flipperdisplay_ledSetBrightness', flipperdisplay_ledSetBrightness],
+    ['flipperlight_lightDisplaySetBrightness', flipperdisplay_ledSetBrightness],
+  ]);
+  const operatorHandlers: any = null;
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

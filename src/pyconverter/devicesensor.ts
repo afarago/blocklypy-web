@@ -12,7 +12,7 @@ export class DeviceSensor extends DeviceOnPortBase {
   }
   static instance(port: string, sensor_class = 'PUPDevice') {
     const devname = DeviceSensor.devicename_from_port(port, sensor_class);
-    let elem = setup_devices_registry[devname];
+    let elem = setup_devices_registry.get(devname);
     if (!elem) {
       Imports.use(
         sensor_class === 'PUPDevice'
@@ -20,10 +20,8 @@ export class DeviceSensor extends DeviceOnPortBase {
           : 'pybricks.pupdevices',
         sensor_class
       );
-      setup_devices_registry[devname] = elem = new DeviceSensor(
-        port,
-        sensor_class
-      );
+      elem = new DeviceSensor(port, sensor_class);
+      setup_devices_registry.set(devname, elem);
     } else {
       // NOOP
     }

@@ -4,9 +4,8 @@ import {
   CONST_ROTATIONS,
   CONST_DEGREES,
   CONST_SECONDS,
-  debug,
 } from '../utils';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 import { calc_stop } from '../converters';
 import { DeviceMotor } from '../devicemotor';
 import { BlockValue, num_eval } from '../blockvalue';
@@ -17,7 +16,7 @@ function flippermotor_motorSetSpeed(block: Block) {
   const speed = block.get_input('SPEED');
 
   const device = DeviceMotor.instance(port);
-  const d = device.devicename;
+  // const d = device.devicename;
 
   const value = Helpers.get('convert_speed', speed);
   device.default_speed = value;
@@ -154,20 +153,26 @@ function flippermoremotor_power(block: Block) {
   return new BlockValue(`${d}.load()`, true);
 }
 
-export default function display() {
-  const blockHandlers: BlockHandlersType = {
-    flippermotor_motorSetSpeed,
-    flippermotor_motorStartDirection,
-    flippermotor_motorStop,
-    flippermotor_motorGoDirectionToPosition,
-    flippermotor_motorTurnForDirection,
-    flippermoremotor_motorSetStopMethod,
-  };
-  const operationHandlers: OperatorHandlersType = {
-    flippermotor_absolutePosition,
-    flippermotor_speed,
-    flippermoremotor_power,
-  };
+export default function display(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['flippermotor_motorSetSpeed', flippermotor_motorSetSpeed],
+    ['flippermotor_motorStartDirection', flippermotor_motorStartDirection],
+    ['flippermotor_motorStop', flippermotor_motorStop],
+    [
+      'flippermotor_motorGoDirectionToPosition',
+      flippermotor_motorGoDirectionToPosition,
+    ],
+    ['flippermotor_motorTurnForDirection', flippermotor_motorTurnForDirection],
+    [
+      'flippermoremotor_motorSetStopMethod',
+      flippermoremotor_motorSetStopMethod,
+    ],
+  ]);
+  const operatorHandlers = new Map<string, OperatorHandler>([
+    ['flippermotor_absolutePosition', flippermotor_absolutePosition],
+    ['flippermotor_speed', flippermotor_speed],
+    ['flippermoremotor_power', flippermoremotor_power],
+  ]);
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }

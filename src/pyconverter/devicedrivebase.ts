@@ -31,15 +31,13 @@ export class DeviceDriveBase extends DeviceBase {
     wheel_diameter?: any,
     axle_track?: any
   ) {
-    let elem = setup_devices_registry[
+    let elem = setup_devices_registry.get(
       DeviceDriveBase.DEVICENAME
-    ] as DeviceDriveBase;
+    ) as DeviceDriveBase;
     if (!elem) {
       Imports.use('pybricks.robotics', 'DriveBase');
-      const obj =
-        (elem =
-        setup_devices_registry[DeviceDriveBase.DEVICENAME] =
-          new DeviceDriveBase(ports, wheel_diameter, axle_track));
+      elem = new DeviceDriveBase(ports, wheel_diameter, axle_track);
+      setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
     } else {
       // TODO: init/reinit motors??
       elem.ports = ports ?? elem._ports;

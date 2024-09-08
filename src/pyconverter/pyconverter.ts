@@ -1,6 +1,6 @@
 import { Block } from './block';
 import * as Broadcasts from './broadcasts';
-import { setup_devices_registry } from './device';
+import { setup_devices_clear, setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import * as Helpers from './helpers';
@@ -9,7 +9,6 @@ import { ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
-  debug,
   get_divider,
   indent_code,
 } from './utils';
@@ -28,6 +27,14 @@ interface StackGroup {
   stack: Block[];
 }
 
+// interface ConverterOptions {
+//   debug: {
+//     show_orphan_code: boolean;
+//     skip_helpers: boolean;
+//   };
+// }
+// session
+
 const SHOW_ORPHAN_CODE = false;
 const DEBUG_SKIP_HELPERS = false;
 
@@ -36,13 +43,18 @@ export function setAsyncFlag(value: boolean) {
   isAsyncNeeded = value;
 }
 
-export function convertFlipperProgramToPython(projectData: ScratchProject) {
+export function convertFlipperProgramToPython(
+  projectData: ScratchProject
+  // options: ConverterOptions
+) {
   // ========================
   try {
+    //TODO: move to session handling
+    clearCaches();
+
     preprocessMessages(projectData);
 
     const target1 = projectData.targets[1];
-
     for (const varblock of Object.values(target1.variables)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
@@ -75,11 +87,11 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
     setup_codes.push('hub = PrimeHub()');
     Imports.use('pybricks.hubs', 'PrimeHub');
 
-    for (const elem of Object.values(setup_devices_registry)) {
+    for (const elem of setup_devices_registry.values()) {
       elem.ensure_dependencies();
     }
 
-    const remaining_items = Object.values(setup_devices_registry);
+    const remaining_items = [...setup_devices_registry.values()];
     while (remaining_items.length) {
       // TODO: safeguard against circular dependency
       for (const elem1 of remaining_items.entries()) {
@@ -132,6 +144,14 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
   } catch (err) {
     console.error('::ERROR::', err);
   }
+}
+
+function clearCaches() {
+  Broadcasts.clear();
+  setup_devices_clear();
+  Helpers.clear();
+  Imports.clear();
+  Variables.clear();
 }
 
 function preprocessMessages(projectData: ScratchProject) {
@@ -292,7 +312,7 @@ function getPycodeForStackGroups(
 
 function getTopLevelStacks(target1: ScratchTarget) {
   return Object.entries(target1.blocks)
-    .filter(([id, block]) => block.topLevel && !block.shadow)
+    .filter(([, block]) => block.topLevel && !block.shadow)
     .map(([id, block]) => {
       return Block.buildStack(new Block(block, id, target1));
     });
@@ -372,7 +392,8 @@ function getCommentForBlock(block: Block) {
 function convertBlockToCode(block: Block): string[] | null {
   try {
     const op = block.opcode;
-    if (handlers.blockHandlers[op]) return handlers.blockHandlers[op](block);
+    if (handlers.blockHandlers.has(op))
+      return handlers.blockHandlers.get(op)(block);
   } catch (e) {
     console.trace(e);
     return [`# error with: ${block.get_block_description()} - ${e}`];

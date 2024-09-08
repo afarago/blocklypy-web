@@ -66,3 +66,8 @@ export function to_global_code() {
       `${convert(key)} = ${value.value || (!value.is_list ? 'None' : '[]')}`
   );
 }
+
+export function clear() {
+  //TODO: move to session handling
+  registry.clear();
+}

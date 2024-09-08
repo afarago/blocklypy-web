@@ -3,7 +3,7 @@ import * as Helpers from '../helpers';
 import * as Imports from '../imports';
 import * as pyconverter from '../pyconverter';
 import { AWAIT_PLACEHOLDER, indent_code } from '../utils';
-import { BlockHandlersType, OperatorHandlersType } from './handlers';
+import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
 
 function control_forever(block: Block) {
@@ -68,17 +68,17 @@ function control_wait_until(block: Block) {
   return [`while ${condition_value.raw}:`, ...sub_code];
 }
 
-export default function control() {
-  const blockHandlers: BlockHandlersType = {
-    control_forever,
-    control_repeat,
-    control_repeat_until,
-    control_wait,
-    control_if: control_if_and_if_else,
-    control_if_else: control_if_and_if_else,
-    control_wait_until,
-  };
-  const operationHandlers: OperatorHandlersType = null;
+export default function control(): HandlersType {
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['control_forever', control_forever],
+    ['control_repeat', control_repeat],
+    ['control_repeat_until', control_repeat_until],
+    ['control_wait', control_wait],
+    ['control_if', control_if_and_if_else],
+    ['control_if_else', control_if_and_if_else],
+    ['control_wait_until', control_wait_until],
+  ]);
+  const operatorHandlers: any = null;
 
-  return { blockHandlers, operationHandlers };
+  return { blockHandlers, operatorHandlers };
 }
