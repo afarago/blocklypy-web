@@ -7,6 +7,7 @@ import * as Variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
 import { DeviceSensor } from '../devicesensor';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_resetTimer(block: Block) {
   Imports.use('pybricks.tools', 'StopWatch');
   Variables.use('sw_main', 'StopWatch()');
@@ -48,6 +49,7 @@ function flipperdisplay_ultrasonicLightUp(block: Block) {
   return [`${d}.lights.on([${value.raw?.toString().split(' ').join(', ')}])`];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_resetYaw(block: Block) {
   return ['hub.imu.reset_heading()'];
 }

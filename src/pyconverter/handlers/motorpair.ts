@@ -200,6 +200,7 @@ function flippermove_move(block: Block) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippermove_stopMove(block: Block) {
   const device = DeviceDriveBase.instance();
   const d = device.devicename;

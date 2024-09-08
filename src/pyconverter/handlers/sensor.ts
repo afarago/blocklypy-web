@@ -6,9 +6,10 @@ import { Block } from '../block';
 import { DeviceSensor } from '../devicesensor';
 
 // function flippermoresensors_deviceType(block: Block) {
-//   // TODO get PUPDevice of the current device for the info object!
+// TODO get PUPDevice of the current device for the info object!
 // }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_orientation(block: Block) {
   return Helpers.get(
     'calc_hub_orientation_back',

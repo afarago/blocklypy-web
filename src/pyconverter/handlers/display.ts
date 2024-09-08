@@ -56,6 +56,7 @@ function flipperdisplay_centerButtonLight(block: Block) {
   return [`hub.light.on(${color.value})`];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flipperdisplay_displayOff(block: Block) {
   {
     return ['hub.display.off()'];
@@ -70,6 +71,7 @@ export default function display(): HandlersType {
     ['flipperlight_centerButtonLight', flipperdisplay_centerButtonLight],
     ['flipperdisplay_ledImage', flipperdisplay_ledImage],
     ['flipperlight_lightDisplayImageOn', flipperdisplay_ledImage],
+    ['flipperdisplay_ledMatrixFor', flipperdisplay_ledImageFor], //SPIKEV2
     ['flipperdisplay_ledImageFor', flipperdisplay_ledImageFor],
     ['flipperlight_lightDisplayImageOnForTime', flipperdisplay_ledImageFor],
     ['flipperdisplay_ledText', flipperdisplay_ledText],

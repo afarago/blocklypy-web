@@ -183,11 +183,9 @@ def int_safe(value, default=0):
         py_fn: `
 async def event_task(condition_fn, stack_fn):
     while True:
-        while not condition_fn():
-            yield
+        while not condition_fn(): yield
         await stack_fn()
-    while condition_fn(): 
-        yield`,
+        while condition_fn(): yield`,
       },
     ],
     [

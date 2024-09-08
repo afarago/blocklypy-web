@@ -24,11 +24,12 @@ function control_repeat(block: Block) {
 
 function control_repeat_until(block: Block) {
   const condition_block = block.get_inputAsBlock('CONDITION');
-  const condition_value = processOperation(condition_block);
+  // wait until block has a flaw, needs to have the return value from falsy to truthy
+  const condition_value = processOperation(condition_block, 'True');
 
   const sub_code = pyconverter.process_stack(block.substacks[0]);
 
-  return [`while ${condition_value.raw}:`, ...sub_code];
+  return [`while not (${condition_value.raw}):`, ...sub_code];
 }
 
 function control_wait(block: Block) {
@@ -61,11 +62,12 @@ function control_if_and_if_else(block: Block) {
 
 function control_wait_until(block: Block) {
   const condition_block = block.get_inputAsBlock('CONDITION');
-  const condition_value = processOperation(condition_block);
+  // wait until block has a flaw, needs to have the return value from falsy to truthy
+  const condition_value = processOperation(condition_block, 'True');
 
   const sub_code = pyconverter.process_stack(null); // empty substack -> results in pass
 
-  return [`while ${condition_value.raw}:`, ...sub_code];
+  return [`while not (${condition_value.raw}):`, ...sub_code];
 }
 
 export default function control(): HandlersType {

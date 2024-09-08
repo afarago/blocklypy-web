@@ -22,7 +22,10 @@ function operator_and_or(block: Block) {
   );
 }
 
-export function processOperation(block: Block): BlockValue {
+export function processOperation(
+  block: Block,
+  returnOnEmpty = 'None'
+): BlockValue {
   if (block) {
     const op = block?.opcode;
     if (handlers.operatorHandlers.has(op))
@@ -31,7 +34,7 @@ export function processOperation(block: Block): BlockValue {
     debug(`# unknown: ${block?.get_block_description()}`);
     console.trace();
   }
-  return new BlockValue('None', true);
+  return new BlockValue(returnOnEmpty, true);
 }
 
 function flipperevents_whenCondition(block: Block) {
