@@ -50,39 +50,45 @@ export class BlockValue {
   static value(value: any) {
     return BlockValue.is(value) ? value.value : value;
   }
+}
 
-  static num_eval(a: any, b: any = undefined, c: any = undefined): any {
-    if (arguments.length === 1) {
-      if (Array.isArray(a)) return this.num_eval(...(a as [any]));
-      return !BlockValue.is_dynamic(a) ? BlockValue.raw(a) : a;
-    } else if (arguments.length === 2) {
-      if (a !== '-') return null;
-      const b1 = BlockValue.num_eval(b);
-      if (!BlockValue.is_dynamic(b1)) return -b1;
-      else return new BlockValue(`-${BlockValue.raw(b1)}`, true);
-    } else if (arguments.length === 3) {
-      const a1 = BlockValue.num_eval(a);
-      const c1 = BlockValue.num_eval(c);
-      const allow_local =
-        !BlockValue.is_dynamic(a1) && !BlockValue.is_dynamic(c1);
-      if (allow_local) {
-        if (b === '+')
-          return new BlockValue(BlockValue.raw(a1) + BlockValue.raw(c1));
-        if (b === '-')
-          return new BlockValue(BlockValue.raw(a1) - BlockValue.raw(c1));
-        if (b === '*')
-          return new BlockValue(BlockValue.raw(a1) * BlockValue.raw(c1));
-        if (b === '/')
-          return new BlockValue(BlockValue.raw(a1) / BlockValue.raw(c1));
-        if (b === '%')
-          return new BlockValue(BlockValue.raw(a1) % BlockValue.raw(c1));
-      } else {
-        return new BlockValue(
-          `${Helpers.get('float_safe', a1).raw} ${b} ${Helpers.get('float_safe', c1).raw}`,
-          true
-        );
-      }
+export function num_eval(
+  a: any,
+  b: any = undefined,
+  c: any = undefined,
+  isInteger = false
+): any {
+  if (arguments.length === 1) {
+    if (Array.isArray(a)) return num_eval(...(a as [any]));
+    return !BlockValue.is_dynamic(a) ? BlockValue.raw(a) : a;
+  } else if (arguments.length === 2) {
+    if (a !== '-') return null;
+    const b1 = num_eval(b);
+    if (!BlockValue.is_dynamic(b1)) return -b1;
+    else return new BlockValue(`-${BlockValue.raw(b1)}`, true);
+  } else if (arguments.length >= 3) {
+    const a1 = num_eval(a);
+    const c1 = num_eval(c);
+    const allow_local =
+      !BlockValue.is_dynamic(a1) && !BlockValue.is_dynamic(c1);
+    if (allow_local) {
+      if (b === '+')
+        return new BlockValue(BlockValue.raw(a1) + BlockValue.raw(c1));
+      if (b === '-')
+        return new BlockValue(BlockValue.raw(a1) - BlockValue.raw(c1));
+      if (b === '*')
+        return new BlockValue(BlockValue.raw(a1) * BlockValue.raw(c1));
+      if (b === '/')
+        return new BlockValue(BlockValue.raw(a1) / BlockValue.raw(c1));
+      if (b === '%')
+        return new BlockValue(BlockValue.raw(a1) % BlockValue.raw(c1));
+    } else {
+      const conv_function = isInteger ? 'int_safe' : 'float_safe';
+      return new BlockValue(
+        `${Helpers.get(conv_function, a1).raw} ${b} ${Helpers.get(conv_function, c1).raw}`,
+        true
+      );
     }
-    return null;
   }
+  return null;
 }

@@ -9,7 +9,7 @@ import {
 import { BlockHandlersType, OperatorHandlersType } from './handlers';
 import { calc_stop } from '../converters';
 import { DeviceMotor } from '../devicemotor';
-import { BlockValue } from '../blockvalue';
+import { BlockValue, num_eval } from '../blockvalue';
 import { Block } from '../block';
 
 function flippermotor_motorSetSpeed(block: Block) {
@@ -48,7 +48,7 @@ function flippermotor_motorTurnForDirection(block: Block) {
   const d = device.devicename;
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
   if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
-    const value2 = BlockValue.num_eval(
+    const value2 = num_eval(
       [direction_mulsign, '*', unit.value === CONST_ROTATIONS ? 360 : 1],
       '*',
       Helpers.get('float_safe', value)
@@ -88,12 +88,7 @@ function flippermotor_motorGoDirectionToPosition(block: Block) {
     );
   }
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
-  const value = BlockValue.num_eval(
-    Helpers.get('float_safe', position.value),
-    '%',
-    360
-  );
-  debug(Helpers.get('float_safe', position.value), value)
+  const value = num_eval(Helpers.get('float_safe', position.value), '%', 360);
   retval.push(
     `${AWAIT_PLACEHOLDER}${d}.run_target(${device.default_speed_variable}, ${value.raw}${postfix_then})`
   );

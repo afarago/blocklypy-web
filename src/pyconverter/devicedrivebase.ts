@@ -17,7 +17,7 @@ export class DeviceDriveBase extends DeviceBase {
   _rotation_distance: number;
   motor_left: any;
   motor_right: any;
-  constructor(ports, wheel_diameter, axle_track) {
+  constructor(ports: any, wheel_diameter: any, axle_track: any) {
     super();
     this._ports = ports;
     this._wheel_diameter = wheel_diameter;
@@ -26,8 +26,14 @@ export class DeviceDriveBase extends DeviceBase {
     this._default_then = null;
   }
   static DEVICENAME = 'drivebase';
-  static instance(ports, wheel_diameter, axle_track) {
-    let elem = setup_devices_registry[DeviceDriveBase.DEVICENAME];
+  static instance(
+    ports?: string[] | null,
+    wheel_diameter?: any,
+    axle_track?: any
+  ) {
+    let elem = setup_devices_registry[
+      DeviceDriveBase.DEVICENAME
+    ] as DeviceDriveBase;
     if (!elem) {
       Imports.use('pybricks.robotics', 'DriveBase');
       const obj =
@@ -42,7 +48,7 @@ export class DeviceDriveBase extends DeviceBase {
     }
     return elem;
   }
-  get_speed(value = null) {
+  get_speed(value: any) {
     return value === null ? this.default_speed : value;
   }
   get_then() {
@@ -57,7 +63,7 @@ export class DeviceDriveBase extends DeviceBase {
   get default_speed_variable() {
     return `${this.devicename}_default_speed`;
   }
-  set default_then(value) {
+  set default_then(value: any) {
     this._default_then = value;
   }
   get wheel_diameter() {

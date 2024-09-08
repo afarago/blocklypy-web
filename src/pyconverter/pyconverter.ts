@@ -81,7 +81,6 @@ export function convertFlipperProgramToPython(projectData: ScratchProject) {
 
     const remaining_items = Object.values(setup_devices_registry);
     while (remaining_items.length) {
-      debug(remaining_items);
       // TODO: safeguard against circular dependency
       for (const elem1 of remaining_items.entries()) {
         const [idx, elem] = elem1;
@@ -371,8 +370,13 @@ function getCommentForBlock(block: Block) {
 }
 
 function convertBlockToCode(block: Block): string[] | null {
-  const op = block.opcode;
-  if (handlers.blockHandlers[op]) return handlers.blockHandlers[op](block);
+  try {
+    const op = block.opcode;
+    if (handlers.blockHandlers[op]) return handlers.blockHandlers[op](block);
+  } catch (e) {
+    console.trace(e);
+    return [`# error with: ${block.get_block_description()} - ${e}`];
+  }
 
   return [`# unknown: ${block.get_block_description()}`];
 }

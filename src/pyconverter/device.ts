@@ -4,6 +4,9 @@ import * as Helpers from './helpers';
 export const setup_devices_registry: Record<string, DeviceBase> = {};
 
 export class DeviceBase {
+  _ports: string[];
+  _wheel_diameter: any;
+  _axle_track: any;
   constructor() {}
   get devicename(): string | null {
     return null;
@@ -14,8 +17,8 @@ export class DeviceBase {
   get dependencies(): DeviceBase[] {
     return [];
   }
-  ensure_dependencies(): DeviceBase[] | undefined {
-    return [] as DeviceBase[];
+  ensure_dependencies() {
+    // NOOP
   }
 }
 

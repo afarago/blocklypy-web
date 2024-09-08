@@ -1,5 +1,5 @@
 import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
-import { BlockValue } from './blockvalue';
+import { BlockValue, num_eval } from './blockvalue';
 import { flipperColorsMap, round2 } from './converters';
 import * as Imports from './imports';
 
@@ -29,7 +29,7 @@ export function get(fn_name: string, ...args: any[]) {
         );
         return BlockValue.is(expr)
           ? expr
-          : new BlockValue(expr, false, false, typeof expr == 'string');
+          : new BlockValue(expr, false, false, typeof expr === 'string');
       }
     }
 
@@ -37,7 +37,7 @@ export function get(fn_name: string, ...args: any[]) {
       const expr = fn_item.local_fn(...args);
       return BlockValue.is(expr)
         ? expr
-        : new BlockValue(expr, true, false, typeof expr == 'string');
+        : new BlockValue(expr, true, false, typeof expr === 'string');
     }
 
     if (fn_item.py_fn) {
@@ -313,8 +313,8 @@ def convert_hub_orientation(value):
     return 'Side.' + BlockValue.value(value)?.replace('side', '').toUpperCase()`,
   },
 
-  //!! num_eval: {
-  //   local_fn: BlockValue.num_eval,
-  //   local_dynamic_fn: BlockValue.num_eval,
+  // num_eval: {
+  //   local_fn: num_eval,
+  //   local_dynamic_fn: num_eval,
   // },
 };

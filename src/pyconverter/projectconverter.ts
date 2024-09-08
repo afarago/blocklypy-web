@@ -71,5 +71,5 @@ Created:    ${projectInfo.created}
 Last saved: ${projectInfo.lastsaved}
 
 """
-`;
+`.trim();
 }

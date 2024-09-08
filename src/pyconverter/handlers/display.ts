@@ -1,5 +1,5 @@
 import { Block } from '../block';
-import { BlockValue } from '../blockvalue';
+import { BlockValue, num_eval } from '../blockvalue';
 import { convert_matrix } from '../converters';
 import * as Helpers from '../helpers';
 import { AWAIT_PLACEHOLDER } from '../utils';
@@ -19,8 +19,8 @@ function flipperdisplay_ledOn(block: Block) {
   const x = block.get_input('X');
   const y = block.get_input('Y');
   const brightness = block.get_input('BRIGHTNESS');
-  const x1 = BlockValue.num_eval(x, '-', 1);
-  const y1 = BlockValue.num_eval(y, '-', 1);
+  const x1 = num_eval(x, '-', 1);
+  const y1 = num_eval(y, '-', 1);
   return [
     `hub.display.pixel(${x1.raw}, ${y1.raw}, ${Helpers.get('float', brightness).raw})`,
   ];

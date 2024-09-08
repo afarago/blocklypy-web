@@ -13,8 +13,8 @@ try {
     __dirname,
     //'testdata/test1.llsp3'
     '../testdata/test2.lms'
-    //path.join(__dirname, 'testdata/test2.lms'
   );
+  // 'c:/Users/i066492/OneDrive - SAP SE/Documents/user_afarago/9_Personal/@EzAz/2024/fll/innovacio_projekt.lms';
   const file = fs.readFileSync(__FILE__);
 
   // const retval = await converter.convert(file);
