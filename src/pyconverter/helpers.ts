@@ -193,11 +193,11 @@ async def event_task(condition_fn, stack_fn):
       {
         py_fn: `
 class Message:
-    def __init__(self):
+    def __init__(self, stack_fns):
         self.running = False
         self.signalled = False
         self.cancelling = False
-        self.stack_fns = []
+        self.stack_fns = stack_fns
     async def main_fn(self):
         while True:
             while not self.signalled: yield
@@ -226,10 +226,11 @@ class Message:
             await self.action_fn()
         else:
             await self.guard_single()
-            self.signalled = True
+            self.signalled = True`,
+        /*
     def add_stack_fn(self, stack_fn):
         self.stack_fns.append(stack_fn)
-  `,
+*/
       },
     ],
     [

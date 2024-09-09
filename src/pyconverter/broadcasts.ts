@@ -17,15 +17,15 @@ export function use(id: string, key: string) {
   return registry.get(key);
 }
 
-export function add_stack(id: string, key: string, stack_fn: string) {
-  const entry = use(id, key);
-  entry.code.push(stack_fn);
+// export function add_stack(id: string, key: string, stack_fn: string) {
+//   const entry = use(id, key);
+//   entry.code.push(stack_fn);
 
-  return `${get_pyname(key)}.add_stack_fn(${stack_fn})`;
-}
+//   return `${get_pyname(key)}.add_stack_fn(${stack_fn})`;
+// }
 
-export function get_code(key: string) {
-  return `${get_pyname(key)} = Message()`;
+export function get_code(key: string, functions: string[]) {
+  return `${get_pyname(key)} = Message([${functions.join(', ')}])`;
 }
 
 export function get_pyname(key: string) {
@@ -34,7 +34,7 @@ export function get_pyname(key: string) {
 
 export function sanitize(key: string) {
   key = key
-    .trim()
+    ?.trim()
     .replace(/[ .-]/gim, '_')
     .replace(/[^a-zA-Z0-9_]/gim, '')
     .toLowerCase();

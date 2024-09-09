@@ -1,7 +1,10 @@
 import { BlockValue } from './blockvalue';
 import { processOperation } from './handlers/operator';
+import { ProcedureArg, ProcedureDefinition } from './procedures';
 import * as Scratch from './scratch';
 import * as Variables from './variables';
+
+export class BlockMatchError extends Error {}
 
 // more information on scratch file format is ref:https://en.scratch-wiki.info/wiki/Scratch_File_Format
 export class Block {
@@ -60,78 +63,87 @@ export class Block {
   //   };
   // }
 
-  get_inputAsBlock(name: string): Block {
+  get_inputAsBlock(name: string, forceNoShadow = true): Block {
     const input = this._block.inputs[name];
 
     if (!input) return null;
 
-    if (input[0] !== Scratch.ShadowState.NOSHADOW) return;
+    if (input[0] !== Scratch.ShadowState.NOSHADOW && forceNoShadow)
+      throw new BlockMatchError('Input is not a block, use get_input');
     // if (typeof input.value !== 'string') return;
     //throw new Error('Input is not a stack or blocks');
 
     return this.getById(input[1] as string);
   }
 
-  get_input(name: string): BlockValue {
-    try {
-      const input = this._block.inputs[name];
-      if (!input) return null;
+  get_input(name: string, forceSimpleValue = true): BlockValue {
+    const input = this._block.inputs[name];
+    if (!input) return null;
 
-      switch (input[0]) {
-        case Scratch.ShadowState.SHADOW:
-          {
-            const is_reference = typeof input[1] === 'string';
-            const is_direct_value = Array.isArray(input[1]);
-            if (is_reference) {
-              const block2 = this.getById(input[1] as string);
-              if (!block2 || typeof block2 !== 'object') return null;
+    switch (input[0]) {
+      case Scratch.ShadowState.SHADOW:
+        {
+          const is_reference = typeof input[1] === 'string';
+          const is_direct_value = Array.isArray(input[1]);
+          if (is_reference) {
+            const block2 = this.getById(input[1] as string);
+            if (!block2 || typeof block2 !== 'object') return null;
 
-              const first_field = Object.values(block2?._block.fields)[0];
-              const first_field_value = first_field[0];
-              return first_field_value !== null
-                ? new BlockValue(first_field_value)
-                : null;
-            } else if (is_direct_value) {
-              const value_array = input[1] as Scratch.BlockValueArray;
-              if (value_array === null) return null;
-
-              const value_type = value_array[0]; // 4 = value, 5 = wait-duration-sec, 6 = times, 10 = string, 11 = message (name, ref) //!!
-              const is_string =
-                value_type === Scratch.BlockValueType.STRING ||
-                value_type === Scratch.BlockValueType.BROADCAST;
-              const value_value =
-                value_type === Scratch.BlockValueType.STRING ||
-                value_type === Scratch.BlockValueType.BROADCAST
-                  ? value_array[1].toString()
-                  : parseFloat(value_array[1].toString());
-              return new BlockValue(value_value, false, false, is_string);
+            if (block2.opcode === 'procedures_prototype') {
+              return new BlockValue(block2._block.mutation.proccode);
             }
+
+            const first_field = Object.values(block2?._block.fields)[0];
+            const first_field_value = first_field[0];
+            return first_field_value !== null
+              ? new BlockValue(first_field_value)
+              : null;
+          } else if (is_direct_value) {
+            const value_array = input[1] as Scratch.BlockValueArray;
+            if (value_array === null) return null;
+
+            const value_type = value_array[0]; // 4 = value, 5 = wait-duration-sec, 6 = times, 10 = string, 11 = message (name, ref) //!!
+            const is_string =
+              value_type === Scratch.BlockValueType.STRING ||
+              value_type === Scratch.BlockValueType.BROADCAST;
+            const value_value =
+              value_type === Scratch.BlockValueType.STRING ||
+              value_type === Scratch.BlockValueType.BROADCAST
+                ? value_array[1].toString()
+                : parseFloat(value_array[1].toString());
+            return new BlockValue(value_value, false, false, is_string);
           }
-          break;
-        case Scratch.ShadowState.NOSHADOW:
-          throw new Error('Input is a blocks, use get_inputAsBlock');
-        case Scratch.ShadowState.OBSCURED:
-          {
-            const ref = input[1];
-            if (typeof ref === 'string') {
-              const block2 = this.getById(ref.toString());
-              const op = processOperation(block2);
-              return op;
-            } else if (typeof ref === 'object' && Array.isArray(ref)) {
-              //!! assert(ref[0] === 12 || ref[0] === 13);
-              const var_name = Variables.convert(
-                ref[1].toString(),
-                ref[0] === Scratch.BlockValueType.LIST
-              );
-              // const var_ref = ref[2]
-              return new BlockValue(var_name, true, true);
-            }
+        }
+        break;
+      case Scratch.ShadowState.NOSHADOW:
+        {
+          if (forceSimpleValue)
+            throw new BlockMatchError(
+              'Input is a blocks, use get_inputAsBlock'
+            );
+
+          const block2 = this.getById(input[1] as string);
+          return new BlockValue(block2?.opcode);
+        }
+        break;
+      case Scratch.ShadowState.OBSCURED:
+        {
+          const ref = input[1];
+          if (typeof ref === 'string') {
+            const block2 = this.getById(ref.toString());
+            const op = processOperation(block2);
+            return op;
+          } else if (typeof ref === 'object' && Array.isArray(ref)) {
+            //!! assert(ref[0] === 12 || ref[0] === 13);
+            const var_name = Variables.convert(
+              ref[1].toString(),
+              ref[0] === Scratch.BlockValueType.LIST
+            );
+            // const var_ref = ref[2]
+            return new BlockValue(var_name, true, true);
           }
-          break;
-      }
-    } catch (e) {
-      //!!//!!debug(e);
-      return null;
+        }
+        break;
     }
   }
 
@@ -141,10 +153,10 @@ export class Block {
   }
 
   get_block_description() {
-    const inputs_all = Object.entries(this._block.inputs).map(
-      ([k, _]) => `${k.toLowerCase()}: ${this.get_input(k)?.raw}`
+    const inputs_all = Object.entries(this._block.inputs)?.map(
+      ([k, _]) => `${k.toLowerCase()}: ${this.get_input(k, false)?.raw}`
     );
-    const fields_all = Object.entries(this._block.fields).map(
+    const fields_all = Object.entries(this._block.fields)?.map(
       ([k, _]) => `${k.toLowerCase()}: ${this.get_field(k)?.raw}`
     );
     return `${this.opcode}(${inputs_all.concat(fields_all).join(', ')})`;
@@ -179,4 +191,48 @@ export class Block {
 
     return retval;
   }
+}
+
+export function extractProcedureDefinition(block: Block): ProcedureDefinition {
+  const block2 = block.get_inputAsBlock('custom_block', false);
+  // this is a procedures_prototype
+
+  const proccode = block2._block.mutation.proccode;
+  const blockname = Variables.sanitize(
+    proccode.match(/^(.*?)(?= %[sb])|^.*/)?.[0]
+  );
+  const argumentnames1 = Array.from(
+    JSON.parse(block2._block.mutation.argumentnames) as string[]
+  ).map(e => Variables.sanitize(e));
+
+  const argumenttypes: string[] = [];
+  const argumentids: string[] = [];
+  // const argumentnames2: string[] = [];
+  Object.entries(block2._block.inputs).forEach(([key, v3]) => {
+    const blockId3 = v3[1];
+    if (typeof blockId3 !== 'string') return null;
+    const block3 = block2.getById(blockId3);
+    // const argname = Variables.sanitize(
+    //   block3.get_field('VALUE')?.value?.toString()
+    // );
+    const argtype = block3.opcode.replace('argument_reporter_', '');
+    const argtype_mod = argtype === 'string_number' ? 'string' : 'boolean';
+
+    argumentids.push(key);
+    argumenttypes.push(argtype_mod);
+    // argumentnames2.push(argname);
+  });
+
+  return new ProcedureDefinition(
+    proccode,
+    blockname,
+    argumentnames1.reduce((aggr, val, idx) => {
+      aggr.set(val, {
+        name: val,
+        id: argumentids[idx],
+        type: argumenttypes[idx],
+      });
+      return aggr;
+    }, new Map<string, ProcedureArg>())
+  );
 }

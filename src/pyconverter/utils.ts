@@ -1,3 +1,5 @@
+import getCurrentLine from 'get-current-line';
+
 export const INDENT = '    ';
 export const ASYNC_PLACEHOLDER = '$$ASYNC$$';
 export const AWAIT_PLACEHOLDER = '$$AWAIT$$';
@@ -14,7 +16,13 @@ export function get_divider(text: string, fillchar = '-', width = 80) {
 }
 
 export function debug(...args: any[]) {
-  console.log('::DEBUG::', ...args);
+  const prefix = getCurrentLine
+    ? (() => {
+        const line = getCurrentLine({ frames: +3 });
+        return `at ${line?.method} (${line?.file}:${line?.line}:${line?.char})`;
+      })()
+    : '';
+  console.log('::DEBUG::', ...args, prefix);
 }
 
 export function indent_code(value: string | string[]) {

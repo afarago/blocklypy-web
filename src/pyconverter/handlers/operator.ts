@@ -1,12 +1,10 @@
-import * as Helpers from '../helpers';
-import { debug } from '../utils';
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import { handlers, OperatorHandler, HandlersType } from './handlers';
+import * as Helpers from '../helpers';
 import * as Imports from '../imports';
+import { debug } from '../utils';
 import * as Variables from '../variables';
-//import { DeviceMotor, DeviceSensor } from '../devices';
-//import { calc_comparator, calc_hub_orientation } from '../converters';
+import { handlers, HandlersType, OperatorHandler } from './handlers';
 
 // TODO: split operators as handlers by map
 
@@ -231,6 +229,11 @@ function operator_not(block: Block) {
   return new BlockValue(`not (${code_condition.raw})`, true);
 }
 
+function argument_reporter_string(block: Block) {
+  const value = block.get_field('VALUE');
+  return new BlockValue(value.value, true, true, false);
+}
+
 export default function operations(): HandlersType {
   const blockHandlers: any = null;
   const operatorHandlers = new Map<string, OperatorHandler>([
@@ -257,6 +260,8 @@ export default function operations(): HandlersType {
     ['flippersensors_timer', flippersensors_timer],
     ['flipperevents_whenTimer', flipperevents_whenTimer],
     ['flipperevents_whenCondition', flipperevents_whenCondition],
+    ['argument_reporter_string_number', argument_reporter_string],
+    ['argument_reporter_boolean', argument_reporter_string],
   ]);
 
   return { blockHandlers, operatorHandlers };

@@ -1,10 +1,11 @@
-import { Block } from './block';
+import { Block, extractProcedureDefinition } from './block';
 import * as Broadcasts from './broadcasts';
 import { setup_devices_clear, setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import * as Helpers from './helpers';
 import * as Imports from './imports';
+import * as Procedures from './procedures';
 import { ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
@@ -18,6 +19,7 @@ enum StackGroupType {
   Start = 1,
   Event = 2,
   MessageEvent = 3,
+  MyBlock = 4,
   Orphan = 9,
 }
 
@@ -36,7 +38,6 @@ interface StackGroup {
 // session
 
 const SHOW_ORPHAN_CODE = false;
-const DEBUG_SKIP_HELPERS = false;
 
 let isAsyncNeeded = false;
 export function setAsyncFlag(value: boolean) {
@@ -53,6 +54,7 @@ export function convertFlipperProgramToPython(
     clearCaches();
 
     preprocessMessages(projectData);
+    preprocessProcedureDefinitions(projectData);
 
     const target1 = projectData.targets[1];
     for (const varblock of Object.values(target1.variables)) {
@@ -81,46 +83,18 @@ export function convertFlipperProgramToPython(
         false;
 
     const programStacks = getPycodeForStackGroups(stackGroups);
+    const programCode = createProgramStacksCode(programStacks);
 
-    // section: setup
-    const setup_codes = [];
-    setup_codes.push('hub = PrimeHub()');
-    Imports.use('pybricks.hubs', 'PrimeHub');
+    const setupCode = createSetupCodes();
 
-    for (const elem of setup_devices_registry.values()) {
-      elem.ensure_dependencies();
-    }
+    const helperCode = Helpers.to_global_code();
 
-    const remaining_items = [...setup_devices_registry.values()];
-    while (remaining_items.length) {
-      // TODO: safeguard against circular dependency
-      for (const elem1 of remaining_items.entries()) {
-        const [idx, elem] = elem1;
-        if (
-          elem.dependencies?.every(elem2 => !remaining_items.includes(elem2))
-        ) {
-          remaining_items.splice(idx, 1);
-
-          const code = elem.setup_code();
-          if (code) setup_codes.push(...code);
-
-          break;
-        }
-      }
-    }
-
-    const code_sections: { name: string; code: string[] }[] = [
+    const codeSections: { name: string; code: string[] }[] = [
       { name: 'imports', code: Imports.to_global_code() },
-      { name: 'setup', code: setup_codes },
+      { name: 'setup', code: setupCode },
       { name: 'global variables', code: Variables.to_global_code() },
-      {
-        name: 'helper functions',
-        code: !DEBUG_SKIP_HELPERS ? Helpers.to_global_code() : [],
-      },
-      {
-        name: 'program code',
-        code: createProgramStacksCode(programStacks),
-      },
+      { name: 'helper functions', code: helperCode },
+      { name: 'program code', code: programCode },
       { name: 'main code', code: createMainProgramCode(programStacks) },
     ];
 
@@ -130,11 +104,11 @@ export function convertFlipperProgramToPython(
         .replace(AWAIT_PLACEHOLDER, isAsyncNeeded ? 'await ' : '');
     };
 
-    const retval2 = code_sections.map(curr =>
+    const retval2 = codeSections.map(curr =>
       curr.code?.length
         ? [
             get_divider(`SECTION: ${curr.name.toUpperCase()}`, '='),
-            ...curr.code.map((line: string) => asyncReplaceFn(line)),
+            ...curr.code.map(asyncReplaceFn),
           ].join('\r\n')
         : null
     );
@@ -146,12 +120,40 @@ export function convertFlipperProgramToPython(
   }
 }
 
+function createSetupCodes() {
+  const setupCodes = [];
+  setupCodes.push('hub = PrimeHub()');
+  Imports.use('pybricks.hubs', 'PrimeHub');
+
+  for (const elem of setup_devices_registry.values()) {
+    elem.ensure_dependencies();
+  }
+
+  const remainingItems = [...setup_devices_registry.values()];
+  while (remainingItems.length) {
+    // TODO: safeguard against circular dependency
+    for (const elem1 of remainingItems.entries()) {
+      const [idx, elem] = elem1;
+      if (elem.dependencies?.every(elem2 => !remainingItems.includes(elem2))) {
+        remainingItems.splice(idx, 1);
+
+        const code = elem.setup_code();
+        if (code) setupCodes.push(...code);
+
+        break;
+      }
+    }
+  }
+  return setupCodes;
+}
+
 function clearCaches() {
   Broadcasts.clear();
   setup_devices_clear();
   Helpers.clear();
   Imports.clear();
   Variables.clear();
+  Procedures.clear();
 }
 
 function preprocessMessages(projectData: ScratchProject) {
@@ -161,93 +163,156 @@ function preprocessMessages(projectData: ScratchProject) {
   );
 }
 
-function createProgramStacksCode(programStacks: Map<string, string[]>) {
-  const stacks = Array.from(programStacks.values()).filter(item => item);
-  return stacks?.length > 0 ? stacks.map(e => [...e, '']).flat() : null;
+function preprocessProcedureDefinitions(projectData: ScratchProject) {
+  const target1 = projectData.targets[1];
+  Object.entries(target1.blocks)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    .filter(([id, sblock]) => sblock.opcode === 'procedures_definition')
+    .forEach(([id, sblock]) => {
+      const block = new Block(sblock, id, target1);
+      const procdef = extractProcedureDefinition(block);
+      Procedures.register(procdef);
+    });
 }
 
-function createMainProgramCode(stacks: Map<string, string[]>) {
-  if (stacks?.size === 0) return ['pass'];
+function createProgramStacksCode(programStacks: OutputCodeStack[]) {
+  const stacks = Array.from(programStacks.values()).filter(
+    ostack => ostack.code
+  );
+  return stacks?.length > 0
+    ? stacks
+        .map(ostack =>
+          ostack.code.length > 0 && !ostack.isDivider
+            ? [...ostack.code, '']
+            : [...ostack.code]
+        )
+        .flat()
+    : null;
+}
+
+function createMainProgramCode(ostacks: OutputCodeStack[]) {
+  const startupStacks = ostacks.filter(ostack => ostack.isStartup);
+
+  if (ostacks.length === 0 || startupStacks.length === 0)
+    return [
+      '# no startup stacks registered, program will not do anything',
+      'pass',
+    ];
 
   if (isAsyncNeeded) {
+    // multiple start stacks
     return [
       'async def main():',
-      indent_code([`await multitask(${[...stacks.keys()].join(', ')})`])[0],
+      indent_code([
+        `await multitask(${[
+          ...startupStacks
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            .map(ostack => ostack.name),
+        ].join(', ')})`,
+      ])[0],
       'run_task(main())',
     ];
   } else {
     // single start stack
-    return [`${[...stacks.keys()][0]}()`];
+    return [`${startupStacks[0].name}()`];
   }
 }
+
+type OutputCodeStack = {
+  code: string[];
+  isStartup?: boolean;
+  isDivider?: boolean;
+  name?: string;
+};
 
 function getPycodeForStackGroups(
   stackGroups: Map<StackGroupType, StackGroup[]>
 ) {
   let stackCounter = 0;
-  const stacks = new Map<string, string[]>();
+  const aggregatedCodeStacks: OutputCodeStack[] = [];
 
   for (const [group_name, stack_group] of stackGroups.entries()) {
     if (!SHOW_ORPHAN_CODE && group_name === StackGroupType.Orphan) continue;
 
+    // add a header code
+    const groupNameStr = StackGroupType[group_name];
+    aggregatedCodeStacks.push({
+      code: [get_divider(`GROUP: ${groupNameStr.toUpperCase()}`, '-')],
+      isStartup: false,
+      isDivider: true,
+    });
+
     let lastStackEventMessage = null;
+    const aggregatedMessageFns: string[] = [];
     for (const stack_gitem of stack_group) {
       try {
+        stackCounter++;
+
         const code: string[] = [];
-        const stack = stack_gitem.stack;
+        const currentStack = stack_gitem.stack;
         const group = stack_gitem.group;
-        const headBlock = stack[0];
-        const nextBlocks = stack.slice(1);
-        if (group === StackGroupType.MessageEvent) {
-          const messageNameRaw = getMessageName(stack);
+        const headBlock = currentStack[0];
+        const nextBlocks = currentStack.slice(1);
+
+        let stack_fn = `stack${stackCounter}_fn`;
+        const stackActionFn = `stack${stackCounter}_action_fn`;
+        let description = headBlock.get_block_description();
+        let funcSignature = `${stack_fn}()`;
+
+        lastStackEventMessage = checkAndRegisterMessage(
+          currentStack,
+          stackActionFn,
+          lastStackEventMessage,
+          aggregatedCodeStacks,
+          aggregatedMessageFns,
+          false
+        );
+
+        if (group === StackGroupType.MyBlock) {
+          const functionDef = extractProcedureDefinition(headBlock);
+          Procedures.register(functionDef);
+
+          stack_fn = functionDef.getPyName('myblock_');
+          funcSignature = functionDef.getPyDefinition();
+          description = funcSignature;
+        } else if (group === StackGroupType.MessageEvent) {
+          const messageNameRaw = getMessageName(currentStack);
           const messageName = Broadcasts.sanitize(messageNameRaw);
           if (lastStackEventMessage !== messageName) {
-            lastStackEventMessage = messageName;
-            Helpers.get('class_Message');
-            code.push(
-              ...[
-                '',
-                get_divider(`[MESSAGE] ${messageNameRaw}`, '-'),
-                Broadcasts.get_code(messageName),
-                '',
-              ]
-            );
-            const stack_fn = `${Broadcasts.get_pyname(messageName)}.main_fn`;
-            stacks.set(stack_fn, null);
+            aggregatedCodeStacks.push({
+              code: [get_divider(`MESSAGE: ${messageNameRaw}`, '-')],
+              isStartup: false,
+              isDivider: true,
+            });
           }
         }
 
-        stackCounter++;
-        code.push(
-          `### [STACK: #${stackCounter}] ${headBlock.get_block_description()}`
-        );
+        code.push(`# STACK#${stackCounter}: ${description}`);
 
-        const stack_fn = `stack${stackCounter}_fn`;
-        const stack_action_fn = `stack${stackCounter}_action_fn`;
         const sub_code = process_stack(nextBlocks);
 
         switch (group_name) {
           case StackGroupType.Start:
-            //case 'flipperevents_whenProgramStarts':
+          case StackGroupType.MyBlock:
             {
-              code.push(`${ASYNC_PLACEHOLDER}def ${stack_fn}():`);
+              code.push(`${ASYNC_PLACEHOLDER}def ${funcSignature}:`);
               code.push(...sub_code);
 
-              // add to stack
-              stacks.set(stack_fn, code);
+              aggregatedCodeStacks.push({
+                code: code,
+                isStartup: group_name === StackGroupType.Start,
+                name: stack_fn,
+                isDivider: false,
+              });
             }
             break;
           case StackGroupType.Event:
-            // case 'flipperevents_whenColor':
-            // case 'flipperevents_whenPressed':
-            // case 'flipperevents_whenDistance':
-            // case 'flipperevents_whenCondition':
-            // case 'flipperevents_whenOrientation':
-            // case 'flipperevents_whenButton': // TODO: later separate and optimize
-            // case 'flipperevents_whenTimer': // TODO: later separate and optimize
             {
+              // case 'flipperevents_whenButton': // TODO: later separate and optimize
+              // case 'flipperevents_whenTimer': // TODO: later separate and optimize
+
               // stack action function
-              code.push(`async def ${stack_action_fn}():`);
+              code.push(`async def ${stackActionFn}():`);
               code.push(...sub_code);
 
               // condition function
@@ -258,46 +323,53 @@ function getPycodeForStackGroups(
               code.push(`async def ${stack_fn}():`);
               code.push(
                 ...indent_code([
-                  `await ${Helpers.get('event_task', stack_cond_fn, stack_action_fn).raw}`,
+                  `await ${Helpers.get('event_task', stack_cond_fn, stackActionFn).raw}`,
                 ])
               );
 
               // add to stack
-              stacks.set(stack_fn, code);
+              aggregatedCodeStacks.push({
+                code: code,
+                isStartup: true,
+                name: stack_fn,
+              });
             }
             break;
 
           case StackGroupType.MessageEvent:
-            // case 'event_whenbroadcastreceived':
             {
-              const messageName = getMessageName(stack);
+              // const messageName = getMessageName(currentStack);
 
               // stack action function
-              code.push(`async def ${stack_action_fn}():`);
+              code.push(`async def ${stackActionFn}():`);
               code.push(...sub_code);
-              code.push(
-                Broadcasts.add_stack(
-                  null, //TODO: get message id
-                  Broadcasts.sanitize(messageName),
-                  stack_action_fn
-                )
-              );
+              // code.push(
+              //   Broadcasts.add_stack(
+              //     null, //TODO: get message id
+              //     Broadcasts.sanitize(messageName),
+              //     stackActionFn
+              //   )
+              // );
 
-              // condition function already added
+              // condition function already added once on top
 
               // add to stack
-              stacks.set(stack_fn, code);
+              aggregatedCodeStacks.push({ code: code, isStartup: false });
             }
             break;
 
           default:
             {
-              code.push('### this code will not be running\r\n#');
-              const sub_code = process_stack(stack).map(line => '# ' + line);
+              code.push(
+                '### this code has no hat block and will not be running'
+              );
+              const sub_code = process_stack(currentStack).map(
+                line => '# ' + line
+              );
               code.push(...sub_code);
 
-              // add to stack
-              //??
+              // add to stack, but not to startup
+              aggregatedCodeStacks.push({ code: code, isStartup: false });
             }
             break;
         }
@@ -305,9 +377,55 @@ function getPycodeForStackGroups(
         console.error('::ERROR::', err);
       }
     }
+
+    // dump any potential accumulated message
+    checkAndRegisterMessage(
+      null,
+      null,
+      lastStackEventMessage,
+      aggregatedCodeStacks,
+      aggregatedMessageFns,
+      true
+    );
   }
 
-  return stacks;
+  return aggregatedCodeStacks;
+}
+
+function checkAndRegisterMessage(
+  currentStack: Block[],
+  stackActionFn: string,
+  lastStackEventMessage: any,
+  aggregatedCodeStacks: OutputCodeStack[],
+  aggregatedMessageFns: string[],
+  forceDump: boolean
+) {
+  const messageNameRaw = getMessageName(currentStack);
+  const messageName = Broadcasts.sanitize(messageNameRaw);
+  if (
+    aggregatedMessageFns.length &&
+    (lastStackEventMessage !== messageName || forceDump)
+  ) {
+    Helpers.get('class_Message');
+
+    const message_fn = Broadcasts.get_pyname(lastStackEventMessage);
+    aggregatedCodeStacks.push({
+      code: [Broadcasts.get_code(lastStackEventMessage, aggregatedMessageFns)],
+      isStartup: false,
+    });
+    const stack_fn = `${message_fn}.main_fn`;
+    aggregatedCodeStacks.push({ code: null, isStartup: true, name: stack_fn });
+
+    aggregatedMessageFns.splice(0, aggregatedMessageFns.length);
+    lastStackEventMessage = messageName;
+  }
+
+  if (messageName?.length) {
+    aggregatedMessageFns.push(stackActionFn);
+    lastStackEventMessage = messageName;
+  }
+
+  return lastStackEventMessage;
 }
 
 function getTopLevelStacks(target1: ScratchTarget) {
@@ -324,13 +442,17 @@ function getStackGroups(topLevelStacks: Block[][]) {
       const headBlock = stack[0];
       const op = headBlock.opcode;
       function get_op_group(op: string) {
-        if (op === 'flipperevents_whenProgramStarts')
+        if (op === 'flipperevents_whenProgramStarts') {
           return StackGroupType.Start;
-        else if (op.startsWith('flipperevents_when'))
+        } else if (op.startsWith('flipperevents_when')) {
           return StackGroupType.Event;
-        else if (op.startsWith('event_whenbroadcastreceived'))
+        } else if (op.startsWith('event_whenbroadcastreceived')) {
           return StackGroupType.MessageEvent;
-        return StackGroupType.Orphan;
+        } else if (op === 'procedures_definition') {
+          return StackGroupType.MyBlock;
+        } else {
+          return StackGroupType.Orphan;
+        }
       }
       return {
         opcode: op,
@@ -377,10 +499,12 @@ export function process_stack(blocks: Block[] | null): string[] {
 }
 
 function getMessageName(stack: Block[]): string {
-  const headBlock = stack[0];
+  const headBlock = stack?.[0];
   if (headBlock?.opcode !== 'event_whenbroadcastreceived') return null;
 
-  const messageName = headBlock.get_field('BROADCAST_OPTION').value.toString();
+  const messageName = headBlock
+    .get_field('BROADCAST_OPTION')
+    ?.value?.toString();
   return messageName;
 }
 

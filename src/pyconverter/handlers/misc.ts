@@ -1,11 +1,14 @@
-import { Block } from '../block';
+import { Block, BlockMatchError } from '../block';
+import { BlockValue } from '../blockvalue';
 import * as Broadcasts from '../broadcasts';
+import { DeviceSensor } from '../devicesensor';
 import * as Imports from '../imports';
+import * as Procedures from '../procedures';
 import { process_stack, setAsyncFlag } from '../pyconverter';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
-import { DeviceSensor } from '../devicesensor';
+import { processOperation } from './operator';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_resetTimer(block: Block) {
@@ -64,6 +67,33 @@ function event_broadcast(block: Block) {
   ];
 }
 
+function procedures_call(block: Block) {
+  const proccode = block._block?.mutation?.proccode;
+  const procdef = Procedures.get(proccode);
+
+  function defaultValueForType(type: string) {
+    if (type === 'string') return new BlockValue('', false, false, true);
+    else if (type === 'boolean') return new BlockValue('False', true);
+    throw new Error(`Unknown type ${type}`);
+  }
+
+  const args = [...procdef.args.values()].map(aarg => {
+    try {
+      const item = block.get_input(aarg.id);
+      return item ?? defaultValueForType(aarg.type);
+    } catch (e) {
+      if (e instanceof BlockMatchError) {
+        const block2 = block.get_inputAsBlock(aarg.id);
+        return processOperation(block2);
+      } else {
+        throw e;
+      }
+    }
+  });
+
+  return [`${procdef.name}(${args.map(BlockValue.raw).join(', ')})`];
+}
+
 // function handleBlock(block: Block, op: string) {
 //   switch (op) {
 //     case 'flippersensors_resetTimer':
@@ -91,6 +121,7 @@ export default function misc(): HandlersType {
     ['flippersensors_resetYaw', flippersensors_resetYaw],
     ['event_broadcast', event_broadcast],
     ['event_broadcastandwait', event_broadcast],
+    ['procedures_call', procedures_call],
   ]);
   const operatorHandlers: any = null;
 
