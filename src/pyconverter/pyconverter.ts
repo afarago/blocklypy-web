@@ -259,6 +259,9 @@ function getPycodeForStackGroups(
         let description = headBlock.get_block_description();
         let funcSignature = `${stack_fn}()`;
 
+        const messageNameRaw = getMessageName(currentStack);
+        const messageName = Broadcasts.sanitize(messageNameRaw);
+        const isMessageChanged = lastStackEventMessage !== messageName;
         lastStackEventMessage = checkAndRegisterMessage(
           currentStack,
           stackActionFn,
@@ -276,9 +279,7 @@ function getPycodeForStackGroups(
           funcSignature = functionDef.getPyDefinition();
           description = funcSignature;
         } else if (group === StackGroupType.MessageEvent) {
-          const messageNameRaw = getMessageName(currentStack);
-          const messageName = Broadcasts.sanitize(messageNameRaw);
-          if (lastStackEventMessage !== messageName) {
+          if (isMessageChanged) {
             aggregatedCodeStacks.push({
               code: [get_divider(`MESSAGE: ${messageNameRaw}`, '-')],
               isStartup: false,
