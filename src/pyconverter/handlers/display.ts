@@ -1,7 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
 import { convert_matrix } from '../converters';
-import * as Helpers from '../helpers';
+import helpers from '../helpers';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import { BlockHandler, HandlersType } from './handlers';
 
@@ -21,7 +21,7 @@ function flipperdisplay_ledOn(block: Block) {
   const x1 = num_eval(x, '-', 1);
   const y1 = num_eval(y, '-', 1);
   return [
-    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${Helpers.get('float_safe', brightness).raw})`,
+    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${helpers.get('float_safe').call(brightness).raw})`,
   ];
 }
 
@@ -29,12 +29,12 @@ function flipperdisplay_ledText(block: Block) {
   const text = block.get_input('TEXT');
   const expr = text?.is_string
     ? BlockValue.raw(text)
-    : Helpers.get('str', text).value;
+    : helpers.get('str').call(text).value;
   return [`${AWAIT_PLACEHOLDER}hub.display.text(${expr})`];
 }
 
 function flipperdisplay_ledImageFor(block: Block) {
-  const value = Helpers.get('convert_time', block.get_input('VALUE'));
+  const value = helpers.get('convert_time').call(block.get_input('VALUE'));
   const matrix = block.get_input('MATRIX');
 
   return [
@@ -52,7 +52,7 @@ function flipperdisplay_ledImage(block: Block) {
 }
 
 function flipperdisplay_centerButtonLight(block: Block) {
-  const color = Helpers.get('convert_color', block.get_input('COLOR'));
+  const color = helpers.get('convert_color').call(block.get_input('COLOR'));
   return [`hub.light.on(${color.value})`];
 }
 

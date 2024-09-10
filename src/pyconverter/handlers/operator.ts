@@ -1,6 +1,6 @@
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import * as Helpers from '../helpers';
+import helpers from '../helpers';
 import * as Imports from '../imports';
 import { debug } from '../utils';
 import * as Variables from '../variables';
@@ -40,7 +40,7 @@ function flipperevents_whenCondition(block: Block) {
 }
 
 function flipperevents_whenTimer(block: Block) {
-  const value = Helpers.get('convert_time', block.get_input('VALUE'));
+  const value = helpers.get('convert_time')?.call(block.get_input('VALUE'));
 
   Imports.use('pybricks.tools', 'StopWatch');
   Variables.use('sw_main', 'StopWatch()');
@@ -56,9 +56,9 @@ function flippersensors_timer() {
 }
 
 function flipperoperator_isInBetween(block: Block) {
-  const value = Helpers.get('float_safe', block.get_input('VALUE'));
-  const low = Helpers.get('float_safe', block.get_input('LOW'));
-  const high = Helpers.get('float_safe', block.get_input('HIGH'));
+  const value = helpers.get('float_safe')?.call(block.get_input('VALUE'));
+  const low = helpers.get('float_safe')?.call(block.get_input('LOW'));
+  const high = helpers.get('float_safe')?.call(block.get_input('HIGH'));
 
   return new BlockValue(
     `(${low.raw} <= ${value.raw}) and (${value.raw} <= ${high.raw})`,
@@ -67,28 +67,28 @@ function flipperoperator_isInBetween(block: Block) {
 }
 
 function operator_contains(block: Block) {
-  const string1 = Helpers.get('str', block.get_input('STRING1'));
-  const string2 = Helpers.get('str', block.get_input('STRING2'));
+  const string1 = helpers.get('str')?.call(block.get_input('STRING1'));
+  const string2 = helpers.get('str')?.call(block.get_input('STRING2'));
 
   return new BlockValue(`${string2.raw} in ${string1.raw}`, true);
 }
 
 function operator_length(block: Block) {
-  const string = Helpers.get('str', block.get_input('STRING'));
+  const string = helpers.get('str')?.call(block.get_input('STRING'));
 
   return new BlockValue(`len(${string.raw})`, true);
 }
 
 function operator_letter_of(block: Block) {
-  const string = Helpers.get('str', block.get_input('STRING'));
-  const letter = Helpers.get('int_safe', block.get_input('LETTER'));
+  const string = helpers.get('str')?.call(block.get_input('STRING'));
+  const letter = helpers.get('int_safe')?.call(block.get_input('LETTER'));
 
   return new BlockValue(`${string.raw}[${letter.raw}]`, true, false, true);
 }
 
 function operator_join(block: Block) {
-  const string1 = Helpers.get('str', block.get_input('STRING1'));
-  const string2 = Helpers.get('str', block.get_input('STRING2'));
+  const string1 = helpers.get('str')?.call(block.get_input('STRING1'));
+  const string2 = helpers.get('str')?.call(block.get_input('STRING2'));
 
   return new BlockValue(
     `"".join([${string1.raw}, ${string2.raw}])`,
@@ -99,16 +99,16 @@ function operator_join(block: Block) {
 }
 
 function operator_random(block: Block) {
-  const from = Helpers.get('float_safe', block.get_input('FROM'));
-  const to = Helpers.get('float_safe', block.get_input('TO'));
+  const from = helpers.get('float_safe')?.call(block.get_input('FROM'));
+  const to = helpers.get('float_safe')?.call(block.get_input('TO'));
 
   Imports.use('urandom', 'randint');
   return new BlockValue(`randint(${from.raw}, ${to.raw})`, true);
 }
 
 function flipperoperator_mathFunc2Params(block: Block) {
-  const arg1 = Helpers.get('float_safe', block.get_input('ARG1'));
-  const arg2 = Helpers.get('float_safe', block.get_input('ARG2'));
+  const arg1 = helpers.get('float_safe')?.call(block.get_input('ARG1'));
+  const arg2 = helpers.get('float_safe')?.call(block.get_input('ARG2'));
   const args = [arg1, arg2];
   const post_process_fn = (e: string) => e;
   let op2 = block.get_field('TYPE').value;
@@ -133,8 +133,8 @@ function operator_mathop(block: Block) {
   let op2 = block.has_field('TYPE')
     ? block.get_field('TYPE').value
     : block.get_field('OPERATOR').value;
-  const num = Helpers.get('float_safe', block.get_input('NUM'));
-  const args = [num];
+  const num = helpers.get('float_safe')?.call(block.get_input('NUM'));
+  const args: any = [num];
   let post_process_fn = (e: string) => e;
 
   Imports.use('umath', null);
@@ -166,7 +166,7 @@ function operator_mathop(block: Block) {
 }
 
 function operator_round(block: Block) {
-  const num = Helpers.get('float_safe', block.get_input('NUM'));
+  const num = helpers.get('float_safe')?.call(block.get_input('NUM'));
 
   return new BlockValue(`round(${num.raw})`, true);
 }
@@ -192,10 +192,10 @@ function operator_math_two_op(block: Block) {
 
   let num1 = block.get_input('NUM1');
   if (!num1.is_numeric)
-    num1 = Helpers.get(operator.conv_fn ?? 'float_safe', num1);
+    num1 = helpers.get(operator.conv_fn ?? 'float_safe')?.call(num1);
   let num2 = block.get_input('NUM2');
   if (!num2.is_numeric)
-    num2 = Helpers.get(operator.conv_fn ?? 'float_safe', num2);
+    num2 = helpers.get(operator.conv_fn ?? 'float_safe')?.call(num2);
 
   let num1v = BlockValue.raw(num1);
   let num2v = BlockValue.raw(num2);
@@ -211,8 +211,8 @@ function operator_lt_gt_eq(block: Block) {
   // this is coming as string, but helper will take care of it
   // NOTE: this can be two strings and "A" > "Apple" makes sense, yet we assume numeric comparison here...
   const op = block?.opcode;
-  const operand1 = Helpers.get('float_safe', block.get_input('OPERAND1'));
-  const operand2 = Helpers.get('float_safe', block.get_input('OPERAND2'));
+  const operand1 = helpers.get('float_safe')?.call(block.get_input('OPERAND1'));
+  const operand2 = helpers.get('float_safe')?.call(block.get_input('OPERAND2'));
   const comparator = (op => {
     switch (op) {
       case 'operator_equals':

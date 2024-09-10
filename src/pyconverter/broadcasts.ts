@@ -27,6 +27,6 @@ export class BroadcastEntry {
   }
 }
 
-export const broadcasts = new RegistryManager<BroadcastEntry>(
+export default broadcasts = new RegistryManager<BroadcastEntry>(
   name => new BroadcastEntry(name)
 );

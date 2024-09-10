@@ -2,7 +2,7 @@ import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
 import { calc_stop } from '../converters';
 import { DeviceDriveBase } from '../devicedrivebase';
-import * as Helpers from '../helpers';
+import helpers from '../helpers';
 import {
   AWAIT_PLACEHOLDER,
   CONST_CM,
@@ -29,7 +29,7 @@ function _process_flippermove(
 
   //=== SECONDS
   if (unit.value === CONST_SECONDS) {
-    const time = Helpers.get('convert_time', value);
+    const time = helpers.get('convert_time')?.call(value);
     const stop_fn =
       device.get_then() === 'Stop.COAST'
         ? `${AWAIT_PLACEHOLDER}${d}.stop()`
@@ -73,7 +73,7 @@ function _process_flippermove(
   //=== CM and INCHES
   let distance;
   if (unit.value === CONST_CM || unit.value === CONST_INCHES) {
-    distance = Helpers.get('convert_distance', value, unit);
+    distance = helpers.get('convert_distance')?.call(value, unit);
   } else if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
     const factor =
       device.rotation_distance * (unit.value === CONST_ROTATIONS ? 1 : 1 / 360);
@@ -97,11 +97,12 @@ function _process_flippermove(
       direction_sign = direction === 'clockwise' ? '' : '-';
       // rot_deg = distance / (axle_track * PI)
       //TODO: use axle_track_variable
-      const rot_deg = Helpers.get(
-        'round',
-        num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
-        2
-      );
+      const rot_deg = helpers
+        .get('round')
+        ?.call(
+          num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
+          2
+        );
       return [
         `${AWAIT_PLACEHOLDER}${d}.turn(${direction_sign}${rot_deg.raw}${postfix_then})`,
       ];
@@ -178,7 +179,7 @@ function flippermove_movementSpeed(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   // const d = device.devicename;
 
-  const value = Helpers.get('convert_speed', speed);
+  const value = helpers.get('convert_speed')?.call(speed);
   device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
@@ -222,13 +223,11 @@ function flippermove_startMove(block: Block) {
 
 function flippermove_setDistance(block: Block) {
   const unit = block.get_field('UNIT');
-  const distance = Helpers.get(
-    'convert_distance',
-    block.get_input('DISTANCE'),
-    unit
-  ).raw;
+  const distance = helpers
+    .get('convert_distance')
+    ?.call(block.get_input('DISTANCE'), unit).raw as number;
 
-  const wheel_diameter = Helpers.get('round', distance / Math.PI, 2).raw;
+  const wheel_diameter = helpers.get('round')?.call(distance / Math.PI, 2).raw;
   const device = DeviceDriveBase.instance(
     null,
     wheel_diameter

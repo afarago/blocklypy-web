@@ -1,6 +1,6 @@
 import { Block, BlockMatchError } from '../block';
 import { BlockValue } from '../blockvalue';
-import { broadcasts } from '../broadcasts';
+import broadcasts from '../broadcasts';
 import { DeviceSensor } from '../devicesensor';
 import * as Imports from '../imports';
 import * as Procedures from '../procedures';

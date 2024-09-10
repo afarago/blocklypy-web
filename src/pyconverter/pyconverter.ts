@@ -1,9 +1,9 @@
 import { Block, extractProcedureDefinition } from './block';
-import { BroadcastEntry, broadcasts } from './broadcasts';
+import broadcasts from './broadcasts';
 import { setup_devices_clear, setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
-import * as Helpers from './helpers';
+import helpers, { HelperEnabledEntry } from './helpers';
 import * as Imports from './imports';
 import * as Procedures from './procedures';
 import { BlockField, ScratchProject, ScratchTarget } from './scratch';
@@ -88,7 +88,7 @@ export function convertFlipperProgramToPython(
 
     const setupCode = createSetupCodes();
 
-    const helperCode = Helpers.to_global_code();
+    const helperCode = HelperEnabledEntry.to_global_code(helpers);
 
     const codeSections: { name: string; code: string[] }[] = [
       { name: 'imports', code: Imports.to_global_code() },
@@ -151,7 +151,7 @@ function createSetupCodes() {
 function clearCaches() {
   broadcasts.clear();
   setup_devices_clear();
-  Helpers.clear();
+  helpers.clear();
   Imports.clear();
   Variables.clear();
   Procedures.clear();
@@ -327,7 +327,7 @@ function getPycodeForStackGroups(
               code.push(`async def ${stack_fn}():`);
               code.push(
                 ...indent_code([
-                  `await ${Helpers.get('event_task', stack_cond_fn, stackActionFn).raw}`,
+                  `await ${helpers.get('event_task')?.call(stack_cond_fn, stackActionFn).raw}`,
                 ])
               );
 
@@ -405,7 +405,7 @@ function checkAndRegisterMessage(
     aggregatedMessageFns.length &&
     (lastStackEventMessageId !== messageId || forceDump)
   ) {
-    Helpers.get('class_Message');
+    helpers.get('class_Message');
 
     const bco = broadcasts.get(lastStackEventMessageId);
     const message_fn = bco.get_pyname();

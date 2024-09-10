@@ -1,5 +1,5 @@
 import * as Imports from './imports';
-import * as Helpers from './helpers';
+import helpers from './helpers';
 import { DeviceOnPortBase, setup_devices_registry } from './device';
 import { BlockValue } from './blockvalue';
 
@@ -11,7 +11,7 @@ export class DeviceMotor extends DeviceOnPortBase {
   constructor(port: string, direction_cw: boolean) {
     super(port);
     this.direction_cw = direction_cw;
-    this._default_speed = Helpers.get('convert_speed', 50);
+    this._default_speed = helpers.get('convert_speed').call(50);
     this._default_then = null;
   }
   static devicename_from_port(port: string) {

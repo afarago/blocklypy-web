@@ -1,4 +1,4 @@
-import * as Helpers from '../helpers';
+import helpers from '../helpers';
 import { HandlersType, OperatorHandler } from './handlers';
 import { calc_comparator } from '../converters';
 import { BlockValue } from '../blockvalue';
@@ -11,10 +11,9 @@ import { DeviceSensor } from '../devicesensor';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_orientation(block: Block) {
-  return Helpers.get(
-    'calc_hub_orientation_back',
-    new BlockValue('hub.imu.up()', true)
-  );
+  return helpers
+    .get('calc_hub_orientation_back')
+    ?.call(new BlockValue('hub.imu.up()', true));
 }
 
 function flippersensors_isorientation(block: Block) {
@@ -22,7 +21,7 @@ function flippersensors_isorientation(block: Block) {
     block?.opcode.includes('_is') ? 'ORIENTATION' : 'VALUE'
   )?.value;
   return new BlockValue(
-    `hub.imu.up() == ${Helpers.get('calc_hub_orientation', orientation).value}`,
+    `hub.imu.up() == ${helpers.get('calc_hub_orientation')?.call(orientation).value}`,
     true
   );
 }
@@ -42,10 +41,9 @@ function flippersensors_color(block: Block) {
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
 
-  return Helpers.get(
-    'convert_color_back',
-    new BlockValue(`${d}.color()`, true)
-  );
+  return helpers
+    .get('convert_color_back')
+    ?.call(new BlockValue(`${d}.color()`, true));
 }
 
 function flippersensors_isColor(block: Block) {
@@ -53,7 +51,7 @@ function flippersensors_isColor(block: Block) {
   const color1 = block.get_input(
     block?.opcode.includes('_is') ? 'VALUE' : 'OPTION'
   );
-  const color = Helpers.get('convert_color', color1);
+  const color = helpers.get('convert_color')?.call(color1);
 
   const device = DeviceSensor.instance(port, 'ColorSensor'); //!! what if port is a variable??
   const d = device.devicename;
@@ -76,7 +74,7 @@ function flippersensors_isReflectivity(block: Block) {
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
   return new BlockValue(
-    `${d}.reflection() ${comparator.value} ${Helpers.get('float_safe', value).raw}`,
+    `${d}.reflection() ${comparator.value} ${helpers.get('float_safe')?.call(value).raw}`,
     true
   );
 }
@@ -106,11 +104,9 @@ function flippersensors_distance(block: Block) {
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');
   const d = device.devicename;
 
-  return Helpers.get(
-    'convert_ussensor_distance_back',
-    new BlockValue(`${d}.distance()`, true),
-    unit
-  );
+  return helpers
+    .get('convert_ussensor_distance_back')
+    ?.call(new BlockValue(`${d}.distance()`, true), unit);
 }
 
 function flippersensors_isDistance(block: Block) {
@@ -118,11 +114,9 @@ function flippersensors_isDistance(block: Block) {
   const unit = block.get_field('UNIT');
   const value = block.get_input('VALUE');
 
-  const adjusted_value = Helpers.get(
-    'convert_ussensor_distance',
-    Helpers.get('float_safe', value),
-    unit
-  );
+  const adjusted_value = helpers
+    .get('convert_ussensor_distance')
+    ?.call(helpers.get('float_safe')?.call(value), unit);
 
   const comparator = calc_comparator(block.get_field('COMPARATOR'));
   //TODO: if comparator is ==, we should use range, instead of simple comparison (e.g. 1% means x>0% or y<2%)

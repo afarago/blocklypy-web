@@ -19,7 +19,7 @@ export class RegistryManager<T> {
     return this.registry.get(id)?.payload;
   }
 
-  has(id: string) {
+  has(id: string): boolean {
     return this.registry.has(id);
   }
 
@@ -34,7 +34,11 @@ export class RegistryManager<T> {
     }
   }
 
-  clear() {
+  entries(): [string, RegistryEntry<T>][] {
+    return [...this.registry.entries()];
+  }
+
+  clear(): void {
     this.registry.clear();
   }
 }

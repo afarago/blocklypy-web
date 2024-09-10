@@ -1,7 +1,8 @@
-import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
 import { BlockValue } from './blockvalue';
 import { flipperColorsMap, round2 } from './converters';
 import * as Imports from './imports';
+import { RegistryManager } from './registrymanager';
+import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
 
 interface HelperFunctionDefintion {
   py_fn?: string;
@@ -10,66 +11,73 @@ interface HelperFunctionDefintion {
   local_dynamic_fn?: (...args: any[]) => any;
   local_fn_condition?: (args: any[]) => boolean;
 }
-const enabledRegistry = new Map<string, boolean>();
 
-export function get(fn_name: string, ...args: any[]) {
-  const fn_item = functionsRegistry.get(fn_name);
+export class HelperEnabledEntry {
+  private fn_name: string;
+  private isPyFnEnabled: boolean;
 
-  if (fn_item) {
-    // check if static local conversion is available
-    if (fn_item.local_fn) {
-      const allow_local =
-        args.every(elem => !BlockValue.is_dynamic(elem)) &&
-        (!fn_item.local_fn_condition ||
-          fn_item.local_fn_condition(args.map(arg => BlockValue.value(arg))));
-      if (allow_local) {
-        const expr = fn_item.local_fn(
-          ...args.map(arg => BlockValue.value(arg))
-        );
+  constructor(fn_name: string) {
+    this.fn_name = fn_name;
+  }
+
+  call(...args: any[]): BlockValue {
+    return this.getFunction(...args);
+  }
+
+  private getFunction(...args: any[]): BlockValue {
+    const fn_item = functionsRegistry.get(this.fn_name);
+
+    if (fn_item) {
+      // check if static local conversion is available
+      if (fn_item.local_fn) {
+        const allow_local =
+          args.every(elem => !BlockValue.is_dynamic(elem)) &&
+          (!fn_item.local_fn_condition ||
+            fn_item.local_fn_condition(args.map(arg => BlockValue.value(arg))));
+        if (allow_local) {
+          const expr = fn_item.local_fn(
+            ...args.map(arg => BlockValue.value(arg))
+          );
+          return BlockValue.is(expr)
+            ? expr
+            : new BlockValue(expr, false, false, typeof expr === 'string');
+        }
+      }
+
+      if (fn_item.local_dynamic_fn) {
+        const expr = fn_item.local_fn(...args);
         return BlockValue.is(expr)
           ? expr
-          : new BlockValue(expr, false, false, typeof expr === 'string');
+          : new BlockValue(expr, true, false, typeof expr === 'string');
       }
+
+      if (fn_item.py_fn) {
+        this.isPyFnEnabled = true;
+        //!! fn_item.py_dependencies?.forEach(fn_name2 => py_register(fn_name2));
+      }
+    } else {
+      debug(`WARN: missing helper function called "${this.fn_name}"`);
     }
 
-    if (fn_item.local_dynamic_fn) {
-      const expr = fn_item.local_fn(...args);
-      return BlockValue.is(expr)
-        ? expr
-        : new BlockValue(expr, true, false, typeof expr === 'string');
-    }
-
-    if (fn_item.py_fn) {
-      py_register(fn_name);
-      fn_item.py_dependencies?.forEach(fn_name2 => py_register(fn_name2));
-    }
-  } else {
-    debug(`WARN: missing helper function called "${fn_name}"`);
+    return new BlockValue(
+      `${this.fn_name}(${args.map(arg => BlockValue.raw(arg)).join(', ')})`,
+      true
+    );
   }
 
-  return new BlockValue(
-    `${fn_name}(${args.map(arg => BlockValue.raw(arg)).join(', ')})`,
-    true
-  );
-}
+  static to_global_code(
+    registry: RegistryManager<HelperEnabledEntry>
+  ): string[] {
+    const codes = Array.from(registry.entries())
+      .filter(([, value]) => value)
+      .map(([key]) => {
+        const fn_item = functionsRegistry.get(key);
+        return fn_item.py_fn?.trim().split('\r\n');
+      })
+      .flat();
 
-export function py_register(fn_name: string) {
-  const fn_item = functionsRegistry.get(fn_name);
-  if (fn_item?.py_fn) {
-    enabledRegistry.set(fn_name, true);
+    return codes;
   }
-}
-
-export function to_global_code() {
-  const codes = Array.from(enabledRegistry.entries())
-    .filter(([, value]) => value)
-    .map(([key]) => {
-      const fn_item = functionsRegistry.get(key);
-      return fn_item.py_fn?.trim().split('\r\n');
-    })
-    .flat();
-
-  return codes;
 }
 
 const functionsRegistry = new Map<string, HelperFunctionDefintion>(
@@ -373,7 +381,7 @@ def convert_hub_orientation(value):
   // },
 );
 
-export function clear() {
-  //TODO: move to session handling
-  enabledRegistry.clear();
-}
+const helperRegistry = new RegistryManager(
+  (fn_name: string) => new HelperEnabledEntry(fn_name)
+);
+export default helperRegistry;

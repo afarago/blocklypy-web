@@ -1,4 +1,4 @@
-import * as Helpers from '../helpers';
+import helpers from '../helpers';
 import {
   AWAIT_PLACEHOLDER,
   CONST_ROTATIONS,
@@ -18,7 +18,7 @@ function flippermotor_motorSetSpeed(block: Block) {
   const device = DeviceMotor.instance(port);
   // const d = device.devicename;
 
-  const value = Helpers.get('convert_speed', speed);
+  const value = helpers.get('convert_speed')?.call(speed);
   device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
@@ -50,13 +50,13 @@ function flippermotor_motorTurnForDirection(block: Block) {
     const value2 = num_eval(
       [direction_mulsign, '*', unit.value === CONST_ROTATIONS ? 360 : 1],
       '*',
-      Helpers.get('float_safe', value)
+      helpers.get('float_safe')?.call(value)
     );
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_angle(${device.default_speed_variable}, ${value2.raw}${postfix_then})`,
     ];
   } else if (unit.value === CONST_SECONDS) {
-    const value_adjusted = Helpers.get('convert_time', value);
+    const value_adjusted = helpers.get('convert_time')?.call(value);
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_time(${direction_sign}${device.default_speed_variable}, ${value_adjusted.raw}${postfix_then})`,
     ];
@@ -87,7 +87,11 @@ function flippermotor_motorGoDirectionToPosition(block: Block) {
     );
   }
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
-  const value = num_eval(Helpers.get('float_safe', position.value), '%', 360);
+  const value = num_eval(
+    helpers.get('float_safe')?.call(position.value),
+    '%',
+    360
+  );
   retval.push(
     `${AWAIT_PLACEHOLDER}${d}.run_target(${device.default_speed_variable}, ${value.raw}${postfix_then})`
   );
@@ -139,10 +143,9 @@ function flippermotor_speed(block: Block) {
   const device = DeviceMotor.instance(port);
   const d = device.devicename;
 
-  return Helpers.get(
-    'convert_speed_back',
-    new BlockValue(`${d}.speed()`, true)
-  );
+  return helpers
+    .get('convert_speed_back')
+    ?.call(new BlockValue(`${d}.speed()`, true));
 }
 
 function flippermoremotor_power(block: Block) {
