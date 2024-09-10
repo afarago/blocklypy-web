@@ -8,9 +8,9 @@ enum FLIPPERSTOP {
   HOLD = 2,
 }
 const flipperStopMap = new Map([
-  [FLIPPERSTOP.COAST, `Stop.COAST`],
-  [FLIPPERSTOP.BRAKE, `Stop.BRAKE`],
-  [FLIPPERSTOP.HOLD, `Stop.HOLD`],
+  [FLIPPERSTOP.COAST, 'Stop.COAST'],
+  [FLIPPERSTOP.BRAKE, 'Stop.BRAKE'],
+  [FLIPPERSTOP.HOLD, 'Stop.HOLD'],
 ]);
 
 enum FLIPPERORIENTATION {
