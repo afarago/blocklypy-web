@@ -17,7 +17,7 @@ function control_repeat(block: Block) {
   const sub_code = pyconverter.process_stack(block.substacks[0]);
 
   return [
-    `for _ in range(${helpers.get('int_safe').call(times).raw}):`,
+    `for _ in range(${helpers.get('int_safe')?.call(times).raw}):`,
     ...sub_code,
   ];
 }

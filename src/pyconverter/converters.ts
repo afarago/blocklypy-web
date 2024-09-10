@@ -94,9 +94,7 @@ export function convert_matrix(value: string, brightness = 100) {
     const row = [];
     for (let x = 0; x < 5; x++) {
       const c = value.slice(idx++, idx);
-      row.push(
-        helpers.get('convert_brightness').getFunction(parseInt(c)).value
-      );
+      row.push(helpers.get('convert_brightness')?.call(parseInt(c)).value);
     }
     retval.push(row);
   }

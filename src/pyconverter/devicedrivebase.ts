@@ -22,7 +22,7 @@ export class DeviceDriveBase extends DeviceBase {
     this._ports = ports;
     this._wheel_diameter = wheel_diameter;
     this._axle_track = axle_track;
-    this._default_speed = helpers.get('convert_speed').call(50);
+    this._default_speed = helpers.get('convert_speed')?.call(50);
     this._default_then = null;
   }
   static DEVICENAME = 'drivebase';

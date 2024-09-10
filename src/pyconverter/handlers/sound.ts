@@ -8,7 +8,12 @@ function flippersound_beepForTime(block: Block) {
     .get('convert_time')
     ?.call(block.get_input('DURATION'));
 
-  return [helpers.get('hub_speaker_flipper_play')?.call(note, duration).value];
+  return [
+    helpers
+      .get('hub_speaker_flipper_play')
+      ?.call(note, duration)
+      .value.toString(),
+  ];
 }
 
 export default function sound(): HandlersType {

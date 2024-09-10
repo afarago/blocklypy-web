@@ -21,10 +21,6 @@ export class HelperEnabledEntry {
   }
 
   call(...args: any[]): BlockValue {
-    return this.getFunction(...args);
-  }
-
-  private getFunction(...args: any[]): BlockValue {
     const fn_item = functionsRegistry.get(this.fn_name);
 
     if (fn_item) {
