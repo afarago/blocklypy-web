@@ -520,7 +520,9 @@ function convertBlockToCode(block: Block): string[] | null {
       return handlers.blockHandlers.get(op)(block);
   } catch (e) {
     console.trace(e);
-    return [`# error with: ${block.get_block_description()} - ${e}`];
+    return [
+      `# error with: ${block.get_block_description()} @ ${block._id} - ${e}`,
+    ];
   }
 
   return [`# unknown: ${block.get_block_description()}`];

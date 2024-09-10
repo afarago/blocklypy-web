@@ -147,6 +147,11 @@ export class Block {
     }
   }
 
+  has_field(name: string) {
+    const field = this._block.fields[name];
+    return field !== null && Array.isArray(field);
+  }
+
   get_field(name: string) {
     const field = this._block.fields[name]; // "DIRECTION": [ "clockwise", null ]
     return new BlockValue(field[0], false, false, typeof field[0] !== 'number');

@@ -30,7 +30,6 @@ export function processOperation(
       return handlers.operatorHandlers.get(op)(block);
 
     debug(`# unknown: ${block?.get_block_description()}`);
-    console.trace();
   }
   return new BlockValue(returnOnEmpty, true);
 }
@@ -77,14 +76,14 @@ function operator_contains(block: Block) {
 function operator_length(block: Block) {
   const string = Helpers.get('str', block.get_input('STRING'));
 
-  return new BlockValue(`len(${string})`, true);
+  return new BlockValue(`len(${string.raw})`, true);
 }
 
 function operator_letter_of(block: Block) {
   const string = Helpers.get('str', block.get_input('STRING'));
   const letter = Helpers.get('int_safe', block.get_input('LETTER'));
 
-  return new BlockValue(`${string}[${letter}]`, true, false, true);
+  return new BlockValue(`${string.raw}[${letter.raw}]`, true, false, true);
 }
 
 function operator_join(block: Block) {
@@ -104,7 +103,7 @@ function operator_random(block: Block) {
   const to = Helpers.get('float_safe', block.get_input('TO'));
 
   Imports.use('urandom', 'randint');
-  return new BlockValue(`randint(${from}, ${to})`, true);
+  return new BlockValue(`randint(${from.raw}, ${to.raw})`, true);
 }
 
 function flipperoperator_mathFunc2Params(block: Block) {
@@ -124,11 +123,16 @@ function flipperoperator_mathFunc2Params(block: Block) {
     // hypot missing
   }
 
-  return new BlockValue(post_process_fn(`${op2}(${args.join(', ')})`), true);
+  return new BlockValue(
+    post_process_fn(`${op2}(${args.map(BlockValue.raw).join(', ')})`),
+    true
+  );
 }
 
 function operator_mathop(block: Block) {
-  let op2 = block.get_field('TYPE').value;
+  let op2 = block.has_field('TYPE')
+    ? block.get_field('TYPE').value
+    : block.get_field('OPERATOR').value;
   const num = Helpers.get('float_safe', block.get_input('NUM'));
   const args = [num];
   let post_process_fn = (e: string) => e;
@@ -156,7 +160,7 @@ function operator_mathop(block: Block) {
   }
 
   return new BlockValue(
-    post_process_fn(`umath.${op2}(${args.join(', ')})`),
+    post_process_fn(`umath.${op2}(${args.map(BlockValue.raw).join(', ')})`),
     true
   );
 }
@@ -164,7 +168,7 @@ function operator_mathop(block: Block) {
 function operator_round(block: Block) {
   const num = Helpers.get('float_safe', block.get_input('NUM'));
 
-  return new BlockValue(`round(${num})`, true);
+  return new BlockValue(`round(${num.raw})`, true);
 }
 
 function operator_math_two_op(block: Block) {
