@@ -91,7 +91,9 @@ function procedures_call(block: Block) {
     }
   });
 
-  return [`${procdef.name}(${args.map(BlockValue.raw).join(', ')})`];
+  return [
+    `${AWAIT_PLACEHOLDER}${procdef.name}(${args.map(BlockValue.raw).join(', ')})`,
+  ];
 }
 
 // function handleBlock(block: Block, op: string) {
