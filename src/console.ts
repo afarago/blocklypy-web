@@ -9,12 +9,19 @@ try {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  const __FILE__ = //
-    path.join(
-      __dirname,
-      //'testdata/test1.llsp3'
-      '../testdata/test2.lms'
-    );
+  let __FILE__ = '';
+  if (process.argv.length >= 3) {
+    __FILE__ = process.argv[2];
+  } else {
+    __FILE__ = //
+      path.join(
+        __dirname,
+        //'testdata/test1.llsp3'
+        '../testdata/test2.lms'
+      );
+  }
+  console.log('::FILE::', __FILE__);
+
   // 'c:/Users/i066492/OneDrive - SAP SE/Documents/user_afarago/9_Personal/@EzAz/2024/fll/innovacio_projekt.lms';
   const file = fs.readFileSync(__FILE__);
 
