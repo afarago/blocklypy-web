@@ -1,12 +1,9 @@
-import { RegistryEntry, RegistryManager } from './registrymanager';
-export class BroadcastEntry extends RegistryEntry {
+import { RegistryManager } from './registrymanager';
+export class BroadcastEntry {
   name: string;
-  code: string[];
 
-  constructor(id: string, name: string = null, code: string[] = []) {
-    super(id);
+  constructor(name: string) {
     this.name = name;
-    this.code = code;
   }
 
   get_code(functions: string[]) {
@@ -31,5 +28,5 @@ export class BroadcastEntry extends RegistryEntry {
 }
 
 export const broadcasts = new RegistryManager<BroadcastEntry>(
-  (id, name) => new BroadcastEntry(id, name)
+  name => new BroadcastEntry(name)
 );

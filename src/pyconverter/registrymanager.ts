@@ -1,12 +1,14 @@
-export class RegistryEntry {
+class RegistryEntry<T> {
   id: string;
-  constructor(id: string) {
+  payload: T;
+  constructor(id: string, payload: T) {
     this.id = id;
+    this.payload = payload;
   }
 }
 
-export class RegistryManager<T extends RegistryEntry> {
-  private registry = new Map<string, T>();
+export class RegistryManager<T> {
+  private registry = new Map<string, RegistryEntry<T>>();
   private factory: (...args: any[]) => T;
 
   constructor(factory: (...args: any[]) => T) {
@@ -14,17 +16,17 @@ export class RegistryManager<T extends RegistryEntry> {
   }
 
   get(id: string): T {
-    return this.registry.get(id);
+    return this.registry.get(id)?.payload;
   }
 
-  has(key: string) {
-    return this.registry.has(key);
+  has(id: string) {
+    return this.registry.has(id);
   }
-  use(id: string, name: string): T {
+
+  use(id: string, ...args: any[]): T {
     if (!this.registry.has(id)) {
-      //const entry = new T(id);
-      const entry = this.factory(id, name);
-      // entry.id = id;
+      const payload = this.factory(...args);
+      const entry = new RegistryEntry<T>(id, payload);
       this.registry.set(id, entry);
       return entry as T;
     } else {
