@@ -1,15 +1,16 @@
 import { Block, extractProcedureDefinition } from './block';
-import * as Broadcasts from './broadcasts';
+import { BroadcastEntry, broadcasts } from './broadcasts';
 import { setup_devices_clear, setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import * as Helpers from './helpers';
 import * as Imports from './imports';
 import * as Procedures from './procedures';
-import { ScratchProject, ScratchTarget } from './scratch';
+import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
+  debug,
   get_divider,
   indent_code,
 } from './utils';
@@ -148,7 +149,7 @@ function createSetupCodes() {
 }
 
 function clearCaches() {
-  Broadcasts.clear();
+  broadcasts.clear();
   setup_devices_clear();
   Helpers.clear();
   Imports.clear();
@@ -159,7 +160,7 @@ function clearCaches() {
 function preprocessMessages(projectData: ScratchProject) {
   const target0 = projectData.targets[0];
   Object.entries(target0.broadcasts).forEach(([id, name]) =>
-    Broadcasts.use(id, name)
+    broadcasts.use(id, name)
   );
 }
 
@@ -242,7 +243,7 @@ function getPycodeForStackGroups(
       isDivider: true,
     });
 
-    let lastStackEventMessage = null;
+    let lastStackEventMessageId = null;
     const aggregatedMessageFns: string[] = [];
     for (const stack_gitem of stack_group) {
       try {
@@ -259,13 +260,15 @@ function getPycodeForStackGroups(
         let description = headBlock.get_block_description();
         let funcSignature = `${stack_fn}()`;
 
-        const messageNameRaw = getMessageName(currentStack);
-        const messageName = Broadcasts.sanitize(messageNameRaw);
-        const isMessageChanged = lastStackEventMessage !== messageName;
-        lastStackEventMessage = checkAndRegisterMessage(
+        const messageRecord = getMessageRecord(currentStack);
+        const messageId = messageRecord?.[1];
+        const messageNameRaw = messageRecord?.[0]?.toString();
+        // const messageName = broadcasts.sanitize(messageNameRaw);
+        const isMessageChanged = lastStackEventMessageId !== messageId;
+        lastStackEventMessageId = checkAndRegisterMessage(
           currentStack,
           stackActionFn,
-          lastStackEventMessage,
+          lastStackEventMessageId,
           aggregatedCodeStacks,
           aggregatedMessageFns,
           false
@@ -344,13 +347,6 @@ function getPycodeForStackGroups(
               // stack action function
               code.push(`async def ${stackActionFn}():`);
               code.push(...sub_code);
-              // code.push(
-              //   Broadcasts.add_stack(
-              //     null, //TODO: get message id
-              //     Broadcasts.sanitize(messageName),
-              //     stackActionFn
-              //   )
-              // );
 
               // condition function already added once on top
 
@@ -383,7 +379,7 @@ function getPycodeForStackGroups(
     checkAndRegisterMessage(
       null,
       null,
-      lastStackEventMessage,
+      lastStackEventMessageId,
       aggregatedCodeStacks,
       aggregatedMessageFns,
       true
@@ -396,37 +392,40 @@ function getPycodeForStackGroups(
 function checkAndRegisterMessage(
   currentStack: Block[],
   stackActionFn: string,
-  lastStackEventMessage: any,
+  lastStackEventMessageId: any,
   aggregatedCodeStacks: OutputCodeStack[],
   aggregatedMessageFns: string[],
   forceDump: boolean
 ) {
-  const messageNameRaw = getMessageName(currentStack);
-  const messageName = Broadcasts.sanitize(messageNameRaw);
+  const messageRecord = getMessageRecord(currentStack);
+  const messageId = messageRecord?.[1];
+  // const messageNameRaw = messageRecord?.[0]?.toString();
+  // const messageName = BroadcastEntry.sanitize(messageNameRaw);
   if (
     aggregatedMessageFns.length &&
-    (lastStackEventMessage !== messageName || forceDump)
+    (lastStackEventMessageId !== messageId || forceDump)
   ) {
     Helpers.get('class_Message');
 
-    const message_fn = Broadcasts.get_pyname(lastStackEventMessage);
+    const bco = broadcasts.get(lastStackEventMessageId);
+    const message_fn = bco.get_pyname();
     aggregatedCodeStacks.push({
-      code: [Broadcasts.get_code(lastStackEventMessage, aggregatedMessageFns)],
+      code: [bco.get_code(aggregatedMessageFns)],
       isStartup: false,
     });
     const stack_fn = `${message_fn}.main_fn`;
     aggregatedCodeStacks.push({ code: null, isStartup: true, name: stack_fn });
 
     aggregatedMessageFns.splice(0, aggregatedMessageFns.length);
-    lastStackEventMessage = messageName;
+    lastStackEventMessageId = messageId;
   }
 
-  if (messageName?.length) {
+  if (messageId?.length) {
     aggregatedMessageFns.push(stackActionFn);
-    lastStackEventMessage = messageName;
+    lastStackEventMessageId = messageId;
   }
 
-  return lastStackEventMessage;
+  return lastStackEventMessageId;
 }
 
 function getTopLevelStacks(target1: ScratchTarget) {
@@ -475,7 +474,9 @@ function getStackGroups(topLevelStacks: Block[][]) {
     retval
       .get(StackGroupType.MessageEvent)
       ?.sort((a: any, b: any) =>
-        getMessageName(a.stack).localeCompare(getMessageName(b.stack))
+        getMessageRecord(a.stack)?.[0]
+          ?.toString()
+          ?.localeCompare(getMessageRecord(b.stack)?.[0]?.toString())
       );
 
   return retval;
@@ -499,14 +500,13 @@ export function process_stack(blocks: Block[] | null): string[] {
   return retval;
 }
 
-function getMessageName(stack: Block[]): string {
+function getMessageRecord(stack: Block[]): BlockField {
   const headBlock = stack?.[0];
   if (headBlock?.opcode !== 'event_whenbroadcastreceived') return null;
 
-  const messageName = headBlock
-    .get_field('BROADCAST_OPTION')
-    ?.value?.toString();
-  return messageName;
+  // [0] is the message name, [1] is the message refid
+  const messageRecord = headBlock.get_fieldObject('BROADCAST_OPTION');
+  return messageRecord;
 }
 
 function getCommentForBlock(block: Block) {

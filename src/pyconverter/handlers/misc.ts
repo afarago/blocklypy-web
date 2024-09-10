@@ -1,6 +1,6 @@
 import { Block, BlockMatchError } from '../block';
 import { BlockValue } from '../blockvalue';
-import * as Broadcasts from '../broadcasts';
+import { broadcasts } from '../broadcasts';
 import { DeviceSensor } from '../devicesensor';
 import * as Imports from '../imports';
 import * as Procedures from '../procedures';
@@ -58,12 +58,12 @@ function flippersensors_resetYaw(block: Block) {
 }
 
 function event_broadcast(block: Block) {
-  const message_name = Broadcasts.get_pyname(
-    block.get_input('BROADCAST_INPUT')?.value?.toString()
-  );
+  const message_id = block.get_inputAsShadowId('BROADCAST_INPUT');
   const do_wait = block.opcode === 'event_broadcastandwait';
+  const message_pyname = broadcasts.get(message_id).get_pyname();
+
   return [
-    `${AWAIT_PLACEHOLDER}${message_name}.broadcast_exec(${do_wait ? 'True' : 'False'})`,
+    `${AWAIT_PLACEHOLDER}${message_pyname}.broadcast_exec(${do_wait ? 'True' : 'False'})`,
   ];
 }
 

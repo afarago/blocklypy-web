@@ -76,6 +76,26 @@ export class Block {
     return this.getById(input[1] as string);
   }
 
+  get_inputAsShadowId(name: string): string {
+    const input = this._block.inputs[name];
+    if (!input) return null;
+    if (input[0] !== Scratch.ShadowState.SHADOW) return null;
+    if (!Array.isArray(input[1])) return null;
+
+    // "inputs": {
+    //   "BROADCAST_INPUT": [
+    //     1,
+    //     [
+    //       11,
+    //       "message1",
+    //       "~#$`BYkw-{5H#=8LutyJ"   // <== returns this
+    //     ]
+    //   ]
+    // },
+
+    return input[1][2].toString();
+  }
+
   get_input(name: string, forceSimpleValue = true): BlockValue {
     const input = this._block.inputs[name];
     if (!input) return null;
@@ -102,7 +122,7 @@ export class Block {
             const value_array = input[1] as Scratch.BlockValueArray;
             if (value_array === null) return null;
 
-            const value_type = value_array[0]; // 4 = value, 5 = wait-duration-sec, 6 = times, 10 = string, 11 = message (name, ref) //!!
+            const value_type = value_array[0]; // 4 = value, 5 = wait-duration-sec, 6 = times, 10 = string, 11 = message (name, ref)
             const is_string =
               value_type === Scratch.BlockValueType.STRING ||
               value_type === Scratch.BlockValueType.BROADCAST;
@@ -153,8 +173,12 @@ export class Block {
   }
 
   get_field(name: string) {
-    const field = this._block.fields[name]; // "DIRECTION": [ "clockwise", null ]
+    const field = this.get_fieldObject(name);
     return new BlockValue(field[0], false, false, typeof field[0] !== 'number');
+  }
+
+  get_fieldObject(name: string) {
+    return this._block.fields[name]; // "DIRECTION": [ "clockwise", null ]
   }
 
   get_block_description() {

@@ -1,53 +1,35 @@
-type Entry = {
-  id: string;
+import { RegistryEntry, RegistryManager } from './registrymanager';
+export class BroadcastEntry extends RegistryEntry {
   name: string;
-  pyname: string;
   code: string[];
-};
-const registry = new Map<string, Entry>();
-//TODO: rebase registry for id instead of name
 
-export function has(key: string) {
-  return registry.has(key);
+  constructor(id: string, name: string = null, code: string[] = []) {
+    super(id);
+    this.name = name;
+    this.code = code;
+  }
+
+  get_code(functions: string[]) {
+    return `${this.get_pyname()} = Message([${functions.join(', ')}])`;
+  }
+
+  get_pyname() {
+    return `message_${BroadcastEntry.sanitize(this.name)}`;
+  }
+
+  private static sanitize(key: string) {
+    key = key
+      ?.trim()
+      .replace(/[ .-]/gim, '_')
+      .replace(/[^a-zA-Z0-9_]/gim, '')
+      .toLowerCase();
+    // TODO: select only valid e.g. must start with char
+    // TODO: check uniqueness
+    // TODO: add prefix
+    return key;
+  }
 }
 
-export function use(id: string, key: string) {
-  if (!registry.has(key))
-    registry.set(key, { id, name: key, pyname: sanitize(key), code: [] });
-  return registry.get(key);
-}
-
-// export function add_stack(id: string, key: string, stack_fn: string) {
-//   const entry = use(id, key);
-//   entry.code.push(stack_fn);
-
-//   return `${get_pyname(key)}.add_stack_fn(${stack_fn})`;
-// }
-
-export function get_code(key: string, functions: string[]) {
-  return `${get_pyname(key)} = Message([${functions.join(', ')}])`;
-}
-
-export function get_pyname(key: string) {
-  return `message_${key}`;
-}
-
-export function sanitize(key: string) {
-  key = key
-    ?.trim()
-    .replace(/[ .-]/gim, '_')
-    .replace(/[^a-zA-Z0-9_]/gim, '')
-    .toLowerCase();
-  // TODO: select only valid e.g. must start with char
-  // TODO: check uniqueness
-  // TODO: add prefix
-  return key;
-}
-
-// static to_global_code() {
-// }
-
-export function clear() {
-  //TODO: move to session handling
-  registry.clear();
-}
+export const broadcasts = new RegistryManager<BroadcastEntry>(
+  (id, name) => new BroadcastEntry(id, name)
+);
