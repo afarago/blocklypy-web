@@ -1,4 +1,4 @@
-import * as Imports from './imports';
+import imports from './imports';
 
 export const setup_devices_registry = new Map<string, DeviceBase>();
 
@@ -26,7 +26,7 @@ export class DeviceOnPortBase extends DeviceBase {
   constructor(port: string) {
     super();
     this.port = port;
-    Imports.use('pybricks.parameters', 'Port');
+    imports.use('pybricks.parameters', 'Port');
   }
 }
 

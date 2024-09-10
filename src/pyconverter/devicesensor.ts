@@ -1,4 +1,4 @@
-import * as Imports from './imports';
+import imports from './imports';
 import { DeviceOnPortBase, setup_devices_registry } from './device';
 
 export class DeviceSensor extends DeviceOnPortBase {
@@ -14,7 +14,7 @@ export class DeviceSensor extends DeviceOnPortBase {
     const devname = DeviceSensor.devicename_from_port(port, sensor_class);
     let elem = setup_devices_registry.get(devname);
     if (!elem) {
-      Imports.use(
+      imports.use(
         sensor_class === 'PUPDevice'
           ? 'pybricks.iodevices'
           : 'pybricks.pupdevices',

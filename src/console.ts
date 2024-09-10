@@ -9,16 +9,15 @@ try {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  let __FILE__ = '';
-  if (process.argv.length >= 3) {
-    __FILE__ = process.argv[2];
-  } else {
-    __FILE__ = //
-      path.join(
-        __dirname,
-        //'testdata/test1.llsp3'
-        '../testdata/test2.lms'
-      );
+  let __FILE__ =
+    process.argv?.slice(2)?.find(elem => !elem.startsWith('-')) ?? '';
+  if (__FILE__?.length === 0) {
+    __FILE__ = 'c:/Dev/pyllsp4data/spikev3/spikev3test.llsp3'; // line skip
+    // path.join(
+    //     __dirname,
+    //     //'testdata/test1.llsp3'
+    //     '../testdata/test2.lms'
+    //   );
   }
   console.log('::FILE::', __FILE__);
 

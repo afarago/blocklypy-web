@@ -1,7 +1,7 @@
 import { BlockValue } from './blockvalue';
 import { flipperColorsMap, round2 } from './converters';
-import * as Imports from './imports';
-import { RegistryManager } from './registrymanager';
+import imports from './imports';
+import { RegistryEntryWithId, RegistryManager } from './registrymanager';
 import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
 
 interface HelperFunctionDefintion {
@@ -12,16 +12,14 @@ interface HelperFunctionDefintion {
   local_fn_condition?: (args: any[]) => boolean;
 }
 
-export class HelperEnabledEntry {
-  private fn_name: string;
+export class HelperEnabledEntry implements RegistryEntryWithId {
+  id: string;
   private isPyFnEnabled: boolean;
 
-  constructor(fn_name: string) {
-    this.fn_name = fn_name;
-  }
+  constructor() {}
 
   call(...args: any[]): BlockValue {
-    const fn_item = functionsRegistry.get(this.fn_name);
+    const fn_item = functionsRegistry.get(this.id);
 
     if (fn_item) {
       // check if static local conversion is available
@@ -52,11 +50,11 @@ export class HelperEnabledEntry {
         //!! fn_item.py_dependencies?.forEach(fn_name2 => py_register(fn_name2));
       }
     } else {
-      debug(`WARN: missing helper function called "${this.fn_name}"`);
+      debug(`WARN: missing helper function called "${this.id}"`);
     }
 
     return new BlockValue(
-      `${this.fn_name}(${args.map(arg => BlockValue.raw(arg)).join(', ')})`,
+      `${this.id}(${args.map(arg => BlockValue.raw(arg)).join(', ')})`,
       true
     );
   }
@@ -65,7 +63,7 @@ export class HelperEnabledEntry {
     registry: RegistryManager<HelperEnabledEntry>
   ): string[] {
     const codes = Array.from(registry.entries())
-      .filter(([, value]) => value)
+      .filter(([, value]) => value.payload.isPyFnEnabled)
       .map(([key]) => {
         const fn_item = functionsRegistry.get(key);
         return fn_item.py_fn?.trim().split('\r\n');
@@ -277,7 +275,7 @@ def convert_distance(value, unit):
           const colors = Array.from(flipperColorsMap.values());
           const color_value = value in colors ? colors[value] : 'Color.NONE';
 
-          Imports.use('pybricks.parameters', 'Color');
+          imports.use('pybricks.parameters', 'Color');
           return color_value;
         },
         py_fn: `
@@ -377,7 +375,5 @@ def convert_hub_orientation(value):
   // },
 );
 
-const helperRegistry = new RegistryManager(
-  (fn_name: string) => new HelperEnabledEntry(fn_name)
-);
+const helperRegistry = new RegistryManager(() => new HelperEnabledEntry());
 export default helperRegistry;

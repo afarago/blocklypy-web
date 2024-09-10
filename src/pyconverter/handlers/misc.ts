@@ -2,7 +2,7 @@ import { Block, BlockMatchError } from '../block';
 import { BlockValue } from '../blockvalue';
 import broadcasts from '../broadcasts';
 import { DeviceSensor } from '../devicesensor';
-import * as Imports from '../imports';
+import imports from '../imports';
 import * as Procedures from '../procedures';
 import { process_stack, setAsyncFlag } from '../pyconverter';
 import { AWAIT_PLACEHOLDER } from '../utils';
@@ -12,7 +12,7 @@ import { processOperation } from './operator';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function flippersensors_resetTimer(block: Block) {
-  Imports.use('pybricks.tools', 'StopWatch');
+  imports.use('pybricks.tools', 'StopWatch');
   Variables.use('sw_main', 'StopWatch()');
 
   return ['sw_main.reset()'];

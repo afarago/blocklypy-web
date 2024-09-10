@@ -5,12 +5,12 @@ import { BlockHandler, HandlersType } from './handlers';
 function flippersound_beepForTime(block: Block) {
   const note = block.get_input('NOTE'); // 48 = C, .. 1-8 = C
   const duration = helpers
-    .get('convert_time')
+    .use('convert_time')
     ?.call(block.get_input('DURATION'));
 
   return [
     helpers
-      .get('hub_speaker_flipper_play')
+      .use('hub_speaker_flipper_play')
       ?.call(note, duration)
       .value.toString(),
   ];

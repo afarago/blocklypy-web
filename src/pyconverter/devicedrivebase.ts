@@ -1,4 +1,4 @@
-import * as Imports from './imports';
+import imports from './imports';
 import helpers from './helpers';
 import { DeviceBase, setup_devices_registry } from './device';
 import { DeviceMotor } from './devicemotor';
@@ -22,7 +22,7 @@ export class DeviceDriveBase extends DeviceBase {
     this._ports = ports;
     this._wheel_diameter = wheel_diameter;
     this._axle_track = axle_track;
-    this._default_speed = helpers.get('convert_speed')?.call(50);
+    this._default_speed = helpers.use('convert_speed')?.call(50);
     this._default_then = null;
   }
   static DEVICENAME = 'drivebase';
@@ -35,7 +35,7 @@ export class DeviceDriveBase extends DeviceBase {
       DeviceDriveBase.DEVICENAME
     ) as DeviceDriveBase;
     if (!elem) {
-      Imports.use('pybricks.robotics', 'DriveBase');
+      imports.use('pybricks.robotics', 'DriveBase');
       elem = new DeviceDriveBase(ports, wheel_diameter, axle_track);
       setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
     } else {

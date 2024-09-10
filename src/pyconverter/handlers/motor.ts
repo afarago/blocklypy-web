@@ -18,7 +18,7 @@ function flippermotor_motorSetSpeed(block: Block) {
   const device = DeviceMotor.instance(port);
   // const d = device.devicename;
 
-  const value = helpers.get('convert_speed')?.call(speed);
+  const value = helpers.use('convert_speed')?.call(speed);
   device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
@@ -50,13 +50,13 @@ function flippermotor_motorTurnForDirection(block: Block) {
     const value2 = num_eval(
       [direction_mulsign, '*', unit.value === CONST_ROTATIONS ? 360 : 1],
       '*',
-      helpers.get('float_safe')?.call(value)
+      helpers.use('float_safe')?.call(value)
     );
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_angle(${device.default_speed_variable}, ${value2.raw}${postfix_then})`,
     ];
   } else if (unit.value === CONST_SECONDS) {
-    const value_adjusted = helpers.get('convert_time')?.call(value);
+    const value_adjusted = helpers.use('convert_time')?.call(value);
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_time(${direction_sign}${device.default_speed_variable}, ${value_adjusted.raw}${postfix_then})`,
     ];
@@ -88,7 +88,7 @@ function flippermotor_motorGoDirectionToPosition(block: Block) {
   }
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
   const value = num_eval(
-    helpers.get('float_safe')?.call(position.value),
+    helpers.use('float_safe')?.call(position.value),
     '%',
     360
   );
@@ -144,7 +144,7 @@ function flippermotor_speed(block: Block) {
   const d = device.devicename;
 
   return helpers
-    .get('convert_speed_back')
+    .use('convert_speed_back')
     ?.call(new BlockValue(`${d}.speed()`, true));
 }
 

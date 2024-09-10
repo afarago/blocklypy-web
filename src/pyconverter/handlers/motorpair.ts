@@ -29,7 +29,7 @@ function _process_flippermove(
 
   //=== SECONDS
   if (unit.value === CONST_SECONDS) {
-    const time = helpers.get('convert_time')?.call(value);
+    const time = helpers.use('convert_time')?.call(value);
     const stop_fn =
       device.get_then() === 'Stop.COAST'
         ? `${AWAIT_PLACEHOLDER}${d}.stop()`
@@ -73,7 +73,7 @@ function _process_flippermove(
   //=== CM and INCHES
   let distance;
   if (unit.value === CONST_CM || unit.value === CONST_INCHES) {
-    distance = helpers.get('convert_distance')?.call(value, unit);
+    distance = helpers.use('convert_distance')?.call(value, unit);
   } else if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
     const factor =
       device.rotation_distance * (unit.value === CONST_ROTATIONS ? 1 : 1 / 360);
@@ -98,7 +98,7 @@ function _process_flippermove(
       // rot_deg = distance / (axle_track * PI)
       //TODO: use axle_track_variable
       const rot_deg = helpers
-        .get('round')
+        .use('round')
         ?.call(
           num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
           2
@@ -179,7 +179,7 @@ function flippermove_movementSpeed(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   // const d = device.devicename;
 
-  const value = helpers.get('convert_speed')?.call(speed);
+  const value = helpers.use('convert_speed')?.call(speed);
   device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
@@ -224,10 +224,10 @@ function flippermove_startMove(block: Block) {
 function flippermove_setDistance(block: Block) {
   const unit = block.get_field('UNIT');
   const distance = helpers
-    .get('convert_distance')
+    .use('convert_distance')
     ?.call(block.get_input('DISTANCE'), unit).raw as number;
 
-  const wheel_diameter = helpers.get('round')?.call(distance / Math.PI, 2).raw;
+  const wheel_diameter = helpers.use('round')?.call(distance / Math.PI, 2).raw;
   const device = DeviceDriveBase.instance(
     null,
     wheel_diameter

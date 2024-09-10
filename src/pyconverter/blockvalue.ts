@@ -85,7 +85,7 @@ export function num_eval(
     } else {
       const conv_function = isInteger ? 'int_safe' : 'float_safe';
       return new BlockValue(
-        `${helpers.get(conv_function)?.call(a1).raw} ${b} ${helpers.get(conv_function)?.call(c1).raw}`,
+        `${helpers.use(conv_function)?.call(a1).raw} ${b} ${helpers.use(conv_function)?.call(c1).raw}`,
         true
       );
     }

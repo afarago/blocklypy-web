@@ -1,4 +1,4 @@
-import * as Imports from './imports';
+import imports from './imports';
 import helpers from './helpers';
 import { BlockValue } from './blockvalue';
 
@@ -13,22 +13,23 @@ const flipperStopMap = new Map([
   [FLIPPERSTOP.HOLD, 'Stop.HOLD'],
 ]);
 
-enum FLIPPERORIENTATION {
-  FRONT = 0,
-  BACK = 1,
-  TOP = 2,
-  BOTTOM = 3,
-  LEFT = 4,
-  RIGHT = 5,
-}
-const flipperOrientationMap = new Map([
-  [FLIPPERORIENTATION.FRONT, 'Side.FRONT'],
-  [FLIPPERORIENTATION.BACK, 'Side.BACK'],
-  [FLIPPERORIENTATION.TOP, 'Side.TOP'],
-  [FLIPPERORIENTATION.BOTTOM, 'Side.BOTTOM'],
-  [FLIPPERORIENTATION.LEFT, 'Side.LEFT'],
-  [FLIPPERORIENTATION.RIGHT, 'Side.RIGHT'],
-]);
+// enum FLIPPERORIENTATION {
+//   FRONT = 0,
+//   BACK = 1,
+//   TOP = 2,
+//   BOTTOM = 3,
+//   LEFT = 4,
+//   RIGHT = 5,
+// }
+
+// const flipperOrientationMap = new Map([
+//   [FLIPPERORIENTATION.FRONT, 'Side.FRONT'],
+//   [FLIPPERORIENTATION.BACK, 'Side.BACK'],
+//   [FLIPPERORIENTATION.TOP, 'Side.TOP'],
+//   [FLIPPERORIENTATION.BOTTOM, 'Side.BOTTOM'],
+//   [FLIPPERORIENTATION.LEFT, 'Side.LEFT'],
+//   [FLIPPERORIENTATION.RIGHT, 'Side.RIGHT'],
+// ]);
 
 enum FLIPPERCOLORS {
   BLACK = 0,
@@ -58,7 +59,7 @@ export const flipperColorsMap = new Map([
 ]);
 
 export function calc_stop(value = -1) {
-  Imports.use('pybricks.parameters', 'Stop');
+  imports.use('pybricks.parameters', 'Stop');
 
   if (flipperStopMap.has(value)) return flipperStopMap.get(value);
 }
@@ -94,7 +95,7 @@ export function convert_matrix(value: string, brightness = 100) {
     const row = [];
     for (let x = 0; x < 5; x++) {
       const c = value.slice(idx++, idx);
-      row.push(helpers.get('convert_brightness')?.call(parseInt(c)).value);
+      row.push(helpers.use('convert_brightness')?.call(parseInt(c)).value);
     }
     retval.push(row);
   }

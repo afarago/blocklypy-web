@@ -4,7 +4,7 @@ import { setup_devices_clear, setup_devices_registry } from './device';
 import { handlers } from './handlers/handlers';
 import { processOperation } from './handlers/operator';
 import helpers, { HelperEnabledEntry } from './helpers';
-import * as Imports from './imports';
+import imports, { ImportRegistryEntry } from './imports';
 import * as Procedures from './procedures';
 import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
@@ -91,7 +91,7 @@ export function convertFlipperProgramToPython(
     const helperCode = HelperEnabledEntry.to_global_code(helpers);
 
     const codeSections: { name: string; code: string[] }[] = [
-      { name: 'imports', code: Imports.to_global_code() },
+      { name: 'imports', code: ImportRegistryEntry.to_global_code(imports) },
       { name: 'setup', code: setupCode },
       { name: 'global variables', code: Variables.to_global_code() },
       { name: 'helper functions', code: helperCode },
@@ -124,7 +124,7 @@ export function convertFlipperProgramToPython(
 function createSetupCodes() {
   const setupCodes = [];
   setupCodes.push('hub = PrimeHub()');
-  Imports.use('pybricks.hubs', 'PrimeHub');
+  imports.use('pybricks.hubs', 'PrimeHub');
 
   for (const elem of setup_devices_registry.values()) {
     elem.ensure_dependencies();
@@ -152,7 +152,7 @@ function clearCaches() {
   broadcasts.clear();
   setup_devices_clear();
   helpers.clear();
-  Imports.clear();
+  imports.clear();
   Variables.clear();
   Procedures.clear();
 }
@@ -327,7 +327,7 @@ function getPycodeForStackGroups(
               code.push(`async def ${stack_fn}():`);
               code.push(
                 ...indent_code([
-                  `await ${helpers.get('event_task')?.call(stack_cond_fn, stackActionFn).raw}`,
+                  `await ${helpers.use('event_task')?.call(stack_cond_fn, stackActionFn).raw}`,
                 ])
               );
 
@@ -405,7 +405,7 @@ function checkAndRegisterMessage(
     aggregatedMessageFns.length &&
     (lastStackEventMessageId !== messageId || forceDump)
   ) {
-    helpers.get('class_Message');
+    helpers.use('class_Message');
 
     const bco = broadcasts.get(lastStackEventMessageId);
     const message_fn = bco.get_pyname();

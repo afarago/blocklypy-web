@@ -1,4 +1,4 @@
-import * as Imports from './imports';
+import imports from './imports';
 import helpers from './helpers';
 import { DeviceOnPortBase, setup_devices_registry } from './device';
 import { BlockValue } from './blockvalue';
@@ -11,7 +11,7 @@ export class DeviceMotor extends DeviceOnPortBase {
   constructor(port: string, direction_cw: boolean) {
     super(port);
     this.direction_cw = direction_cw;
-    this._default_speed = helpers.get('convert_speed')?.call(50);
+    this._default_speed = helpers.use('convert_speed')?.call(50);
     this._default_then = null;
   }
   static devicename_from_port(port: string) {
@@ -50,8 +50,8 @@ export class DeviceMotor extends DeviceOnPortBase {
     return DeviceMotor.devicename_from_port(this.port);
   }
   setup_code() {
-    Imports.use('pybricks.parameters', 'Direction');
-    Imports.use('pybricks.pupdevices', 'Motor');
+    imports.use('pybricks.parameters', 'Direction');
+    imports.use('pybricks.pupdevices', 'Motor');
     return [
       `${this.devicename} = Motor(Port.${this.port}${this.direction_cw ? '' : ', Direction.COUNTERCLOCKWISE'})`,
       `${this.default_speed_variable} = ${this.default_speed.raw}`,

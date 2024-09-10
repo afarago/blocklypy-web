@@ -1,19 +1,35 @@
-const registry = new Map<string, Set<string>>();
+import { RegistryEntryWithUse, RegistryManager } from './registrymanager';
+import { debug } from './utils';
+export class ImportRegistryEntry implements RegistryEntryWithUse {
+  importedItems: Set<string> = new Set();
+  constructor(...importedItems: string[]) {
+    // debug('>>>> ImportRegistryEntry.constructor', importedItems);
+    importedItems.forEach(elem => this.importedItems.add(elem));
+  }
 
-export function use(module: string, item: string) {
-  if (!registry.has(module)) registry.set(module, new Set());
-  if (item) registry.get(module).add(item);
+  use(...importedItems: any[]) {
+    // debug('>>>> ImportEntry.use', this.importedItems, importedItems);
+    importedItems.forEach(elem => this.importedItems.add(elem));
+  }
+
+  // export function use(module: string, item: string) {
+  //   if (!registry.has(module)) registry.set(module, new Set());
+  //   if (item) registry.get(module).add(item);
+  // }
+
+  static to_global_code(
+    registry: RegistryManager<ImportRegistryEntry>
+  ): string[] {
+    return Array.from(registry.entries()).map(([key, value]) =>
+      value?.payload?.importedItems.size > 0
+        ? `from ${key} import ` +
+          Array.from(value?.payload?.importedItems.keys()).join(', ')
+        : `import ${key}`
+    );
+  }
 }
 
-export function to_global_code() {
-  return Array.from(registry.entries()).map(([key, items]) =>
-    items.size > 0
-      ? `from ${key} import ` + Array.from(items.keys()).join(', ')
-      : `import ${key}`
-  );
-}
-
-export function clear() {
-  //TODO: move to session handling
-  registry.clear();
-}
+const importRegistry = new RegistryManager(
+  (...args: any[]) => new ImportRegistryEntry(...args)
+);
+export default importRegistry;

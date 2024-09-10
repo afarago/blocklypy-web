@@ -7,6 +7,20 @@ class RegistryEntry<T> {
   }
 }
 
+export interface RegistryEntryWithUse {
+  use(...args: any[]): void;
+}
+export interface RegistryEntryWithId {
+  id: string;
+}
+
+function isRegistryEntryWithUse(obj: any): obj is RegistryEntryWithUse {
+  return obj && typeof obj.use === 'function';
+}
+function isRegistryEntryWithId(obj: any): obj is RegistryEntryWithId {
+  return obj;
+}
+
 export class RegistryManager<T> {
   private registry = new Map<string, RegistryEntry<T>>();
   private factory: (...args: any[]) => T;
@@ -24,18 +38,31 @@ export class RegistryManager<T> {
   }
 
   use(id: string, ...args: any[]): T {
-    if (!this.registry.has(id)) {
+    let entry: RegistryEntry<T> = this.registry.get(id);
+    if (!entry) {
       const payload = this.factory(...args);
-      const entry = new RegistryEntry<T>(id, payload);
+      if (isRegistryEntryWithId(payload)) payload.id = id;
+      entry = new RegistryEntry<T>(id, payload);
       this.registry.set(id, entry);
-      return entry as T;
     } else {
-      return this.registry.get(id) as T;
+      if (entry.payload && isRegistryEntryWithUse(entry.payload)) {
+        entry.payload.use(...args);
+      }
     }
+    return entry.payload;
   }
 
   entries(): [string, RegistryEntry<T>][] {
     return [...this.registry.entries()];
+  }
+  values(): RegistryEntry<T>[] {
+    return [...this.registry.values()];
+  }
+  payloads(): T[] {
+    return [...this.registry.values()].map(elem => elem.payload);
+  }
+  keys(): string[] {
+    return [...this.registry.keys()];
   }
 
   clear(): void {
