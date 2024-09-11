@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="css/site.css" />
 
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.min.js"></script>
 
@@ -25,37 +25,6 @@
   <meta name="msapplication-config" content="favicon/browserconfig.xml" />
   <meta name="theme-color" content="#ffffff" />
 </head>
-<style>
-  body {
-    min-height: 100vh;
-    position: relative;
-  }
-
-  body::after {
-    content: '';
-    display: block;
-    height: 50px;
-    /* Set same as footer's height */
-  }
-
-  footer {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    /* width: 100%; */
-    height: 1em;
-    text-align: right;
-    /* background-color: #eee; */
-    padding-top: 1em;
-  }
-
-  #output {
-    font-family: monospace;
-    white-space: pre;
-    padding-bottom: 1em;
-    padding-inline: 1em;
-  }
-</style>
 <body>
   <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -73,6 +42,7 @@
       </div>
     </nav>
   </header>
+
   <div class="container">
     <h3>
       SPIKE to Pybricks Wizard
@@ -90,13 +60,7 @@
             data-placeholder="Select a LEGO SPIKE, Robot Inventor or EV3 Classroom file (.llsp, .lms, .lmsp) to upload" />
         </div>
 
-        <!-- <div class="p-3 d-none" style="position: absolute" id="spinner">
-              <div class="spinner-grow text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
- -->
-        <div id="tab_dummy" class="h-75 border active py-5">
+        <div id="tab-dummy" class="h-75 border active py-5">
           <div class="d-flex justify-content-center">
             <div class="text-center">
               <i class="bi bi-cloud-arrow-up-fill" style="
@@ -109,33 +73,43 @@
             </div>
           </div>
         </div>
-        <div id="tabs_main" class="h-100 d-none" style="min-height: 30vh">
+        <div id="tabs-main" class="h-100 d-none" style="min-height: 30vh">
           <ul class="nav nav-tabs border-0" role="tablist">
             <li class="nav-item p-2">
               <svg width="20" height="20">
-                <use id="svg_program_use" href="img/cat0.svg#icon" xlink:href="img/cat0.svg#icon"></use>
+                <use id="svg-program-use" href="img/cat0.svg#icon" xlink:href="img/cat0.svg#icon"></use>
               </svg>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="#tab_code" id="code" data-bs-toggle="tab">Code</a>
+              <a class="nav-link active" href="#tab-pycode" id="pycode" data-bs-toggle="tab">Pybricks Python
+                Code</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#tab_svg" id="svg" data-bs-toggle="tab">Preview</a>
+              <a class="nav-link" href="#tab-pseudocode" id="pseudocode" data-bs-toggle="tab">Pseudocode</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#tab-svg" id="svg" data-bs-toggle="tab">Preview</a>
             </li>
           </ul>
 
-          <div class="tab-content h-75">
-            <div id="tab_svg" class="tab-pane p-3 h-100 border">
-              <div id="preview_svg"></div>
+          <div id="tab-content-wrapper">
+            <div id="preview-svg-map" class="p-3 float-right">
             </div>
-            <div id="tab_code" class="tab-pane p-3 h-100 border active">
-              <button id="copy-button"><i class="bi bi-copy"></i></button>
-              <pre id="preview_code" style="font-family: 'Courier New', monospace"></pre>
+            <div class="tab-content h-75 border">
+              <div id="tab-svg" class="tab-pane p-3 h-100">
+                <div id="preview-svg"></div>
+              </div>
+              <div id="tab-pycode" class="tab-pane p-3 h-100 active">
+                <button class="copy-button" data-target="preview-pycode"><i class="bi bi-copy"></i></button>
+                <pre id="preview-pycode" style="font-family: 'Courier New', monospace"></pre>
+              </div>
+              <div id="tab-pseudocode" class="tab-pane p-3 h-100">
+                <button class="copy-button" data-target="preview-pseudocode"><i class="bi bi-copy"></i></button>
+                <pre id="preview-pseudocode" style="font-family: 'Courier New', monospace"></pre>
+              </div>
             </div>
           </div>
         </div>
-
-        <input id="selectedtab" type="hidden" name="selectedtab" value="" />
       </div>
     </form>
     </main>

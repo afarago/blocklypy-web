@@ -39,7 +39,6 @@ export interface PyConverterOptions {
     showBlockIds?: boolean;
     showThisStackOnly?: string;
   };
-  output: 'python' | 'plain';
 }
 
 let isAsyncNeeded = false;
@@ -49,9 +48,10 @@ export function setAsyncFlag(value: boolean) {
 
 export function convertFlipperProgramToPython(
   projectData: ScratchProject,
-  options: PyConverterOptions
+  options: PyConverterOptions = {}
 ) {
   // ========================
+  let plainCode, pyCode;
   try {
     //TODO: move to session handling
     clearCaches();
@@ -62,10 +62,7 @@ export function convertFlipperProgramToPython(
     const target1 = projectData.targets[1];
     // ------------------------
     const topLevelStacks = getTopLevelStacks(target1);
-
-    if (options?.output === 'plain') {
-      return generatePlainCodeForStacks(topLevelStacks);
-    }
+    plainCode = generatePlainCodeForStacks(topLevelStacks);
 
     // ------------------------
     for (const varblock of Object.values(target1.variables)) {
@@ -132,11 +129,12 @@ export function convertFlipperProgramToPython(
           : null
       );
 
-    const result = retval2.filter(e => e).join('\r\n\r\n');
-    return result;
+    pyCode = retval2.filter(e => e).join('\r\n\r\n');
   } catch (err) {
     console.error('::ERROR::', err);
   }
+
+  return { plaincode: plainCode, pycode: pyCode };
 }
 
 function generatePlainCodeForStacks(topLevelStacks: Block[][]) {

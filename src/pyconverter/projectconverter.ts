@@ -10,6 +10,7 @@ export async function convertFlipperProjectToPython(
 ) {
   const retval = {
     pycode: null as string,
+    plaincode: null as string,
     projectInfo: null as any,
     svg: null as string,
     project: null as any,
@@ -54,9 +55,10 @@ export async function convertFlipperProjectToPython(
 
   // ========================
   {
-    const projectCode = convertFlipperProgramToPython(projectJson, options);
-    const sections = [projectComment, projectCode].filter(elem => elem);
+    const codes = convertFlipperProgramToPython(projectJson, options);
+    const sections = [projectComment, codes.pycode].filter(elem => elem);
     retval.pycode = sections.join('\n');
+    retval.plaincode = codes.plaincode;
   }
 
   return retval;

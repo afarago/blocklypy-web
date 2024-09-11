@@ -1,21 +1,27 @@
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
+// import Split from 'split.js';
+import $ from 'jquery';
+import 'jqueryui';
 
 function handleFileUpload(file: File) {
   const reader = new FileReader();
   reader.addEventListener('load', event => {
     const input = event.target.result as ArrayBuffer;
-    convertFlipperProjectToPython(input).then(retval => {
-      // const outputArea = document.getElementById('preview_code');
+    const options = {};
+    convertFlipperProjectToPython(input, options).then(retval => {
+      // const outputArea = document.getElementById('preview-code');
       // outputArea.innerText = retval.pycode;
-      $('#preview_svg').html(retval.svg);
-      $('#preview_code').html(retval.pycode);
+      $('#preview-svg').html(retval.svg);
+      $('#preview-svg-map').html(retval.svg).removeClass('d-none');
+      $('#preview-pycode').html(retval.pycode);
+      $('#preview-pseudocode').html(retval.plaincode);
 
       const slotid = retval.projectInfo.slotIndex;
       const sloturl = `img/cat${slotid}.svg#dsmIcon`;
-      $('#svg_program_use').attr('href', sloturl).attr('xlink:href', sloturl);
+      $('#svg-program-use').attr('href', sloturl).attr('xlink:href', sloturl);
 
-      $('#tab_dummy').addClass('d-none');
-      $('#tabs_main').removeClass('d-none');
+      $('#tab-dummy').addClass('d-none');
+      $('#tabs-main').removeClass('d-none');
     });
   });
   reader.readAsArrayBuffer(file);
@@ -38,7 +44,9 @@ dropArea.on('drop', event => {
   event.preventDefault();
   dropArea.removeClass('drop-active');
   const fileList = event.originalEvent.dataTransfer.files;
-  // console.log(fileList);
+
+  ($('#file-selector').get(0) as HTMLInputElement).files = fileList;
+
   handleFileUpload(fileList[0]);
 });
 
@@ -48,12 +56,15 @@ fileSelector.on('change', event => {
   handleFileUpload(target.files[0]);
 });
 
-const copyButton = $('#copy-button');
+const copyButton = $('.copy-button');
 copyButton.on('click', event => {
   event.stopPropagation();
   event.preventDefault();
 
-  const content = $('#preview_code').text();
+  const dataTarget = $(event.target.parentElement).data('target');
+  const content = $('#' + dataTarget).text();
+  // const content = $('#preview-pycode').text();
+  // TODO: data-target
   navigator.clipboard.writeText(content);
 
   copyButton.addClass('success ');

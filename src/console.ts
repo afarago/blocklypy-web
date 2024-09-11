@@ -23,7 +23,6 @@ try {
   // const retval = await converter.convert(file);
   // console.log(retval);
   const option: PyConverterOptions = {
-    output: 'python',
     debug: {
       skipHeader: true,
       skipHelpers: true,
