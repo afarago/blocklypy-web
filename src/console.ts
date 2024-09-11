@@ -23,13 +23,14 @@ try {
   // const retval = await converter.convert(file);
   // console.log(retval);
   const option: PyConverterOptions = {
+    output: 'python',
     debug: {
       skipHeader: true,
       skipHelpers: true,
       skipImports: true,
       skipSetup: true,
-      showOrphanCode: true,
-      showBlockIds: true,
+      // showOrphanCode: true,
+      // showBlockIds: true,
       // showThisStackOnly: 'Y09;djV%E2_0:AMn^hOT',
     },
   };

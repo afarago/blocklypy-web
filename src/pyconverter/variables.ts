@@ -71,3 +71,8 @@ export function clear() {
   //TODO: move to session handling
   registry.clear();
 }
+
+// const variables = new RegistryManager(
+//   (type: VariableRegistryType) => new VariableEntry(type)
+// );
+// export default variables;

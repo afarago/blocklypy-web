@@ -96,7 +96,7 @@ export class Block {
     return input[1][2].toString();
   }
 
-  get_input(name: string, forceSimpleValue = true): BlockValue {
+  get_input(name: string, isPythonMode = false): BlockValue {
     const input = this._block.inputs[name];
     if (!input) return null;
 
@@ -137,13 +137,9 @@ export class Block {
         break;
       case Scratch.ShadowState.NOSHADOW:
         {
-          if (forceSimpleValue)
-            throw new BlockMatchError(
-              'Input is a blocks, use get_inputAsBlock'
-            );
-
-          const block2 = this.getById(input[1] as string);
-          return new BlockValue(block2?.opcode);
+          throw new BlockMatchError('Input is a blocks, use get_inputAsBlock');
+          // const block2 = this.getById(input[1] as string);
+          // return new BlockValue(block2?.opcode);
         }
         break;
       case Scratch.ShadowState.OBSCURED:
@@ -151,7 +147,10 @@ export class Block {
           const ref = input[1];
           if (typeof ref === 'string') {
             const block2 = this.getById(ref.toString());
-            const op = processOperation(block2);
+
+            const op = isPythonMode
+              ? processOperation(block2)
+              : new BlockValue(block2.get_block_description(isPythonMode));
             return op;
           } else if (typeof ref === 'object' && Array.isArray(ref)) {
             //!! assert(ref[0] === 12 || ref[0] === 13);
@@ -181,10 +180,18 @@ export class Block {
     return this._block.fields[name]; // "DIRECTION": [ "clockwise", null ]
   }
 
-  get_block_description() {
-    const inputs_all = Object.entries(this._block.inputs)?.map(
-      ([k, _]) => `${k.toLowerCase()}: ${this.get_input(k, false)?.raw}`
-    );
+  get_block_description(isPythonMode = true): string {
+    const inputs_all = Object.entries(this._block.inputs)
+      ?.filter(([k, _]) => isPythonMode || !k.startsWith('SUBSTACK'))
+      ?.map(([k, _]) => {
+        let value;
+        try {
+          value = this.get_input(k, isPythonMode)?.raw;
+        } catch {
+          value = this.get_inputAsBlock(k).get_block_description(isPythonMode);
+        }
+        return `${k.toLowerCase()}: ${value}`;
+      });
     const fields_all = Object.entries(this._block.fields)?.map(
       ([k, _]) => `${k.toLowerCase()}: ${this.get_field(k)?.raw}`
     );

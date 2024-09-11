@@ -10,11 +10,11 @@ import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
-  debug,
   get_divider,
   indent_code,
 } from './utils';
 import * as Variables from './variables';
+import { INDENT } from './utils';
 
 enum StackGroupType {
   Start = 1,
@@ -39,6 +39,7 @@ export interface PyConverterOptions {
     showBlockIds?: boolean;
     showThisStackOnly?: string;
   };
+  output: 'python' | 'plain';
 }
 
 let isAsyncNeeded = false;
@@ -59,6 +60,14 @@ export function convertFlipperProgramToPython(
     preprocessProcedureDefinitions(projectData);
 
     const target1 = projectData.targets[1];
+    // ------------------------
+    const topLevelStacks = getTopLevelStacks(target1);
+
+    if (options?.output === 'plain') {
+      return generatePlainCodeForStacks(topLevelStacks);
+    }
+
+    // ------------------------
     for (const varblock of Object.values(target1.variables)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
@@ -72,8 +81,6 @@ export function convertFlipperProgramToPython(
       }
     }
 
-    // ------------------------
-    const topLevelStacks = getTopLevelStacks(target1);
     const stackGroups = getStackGroups(topLevelStacks);
 
     // switch to async if there ar multiple start stacks or any event stack
@@ -130,6 +137,40 @@ export function convertFlipperProgramToPython(
   } catch (err) {
     console.error('::ERROR::', err);
   }
+}
+
+function generatePlainCodeForStacks(topLevelStacks: Block[][]) {
+  const genSimpleCodeForStack = (
+    blocks: Block[],
+    doIndentFirst = true
+  ): string[] => {
+    return blocks
+      ?.map((block, index) => {
+        const code: string[] = [
+          (!doIndentFirst || index > 0 ? INDENT : '') +
+            block.get_block_description(false),
+        ];
+        block.substacks?.map((substack, substackindex) => {
+          const substackCode = genSimpleCodeForStack(substack, false)?.map(
+            line => INDENT + line
+          );
+          if (substackindex > 0) code.push(INDENT + '^^^');
+          if (substackCode) code.push(...substackCode);
+        });
+
+        return code;
+      })
+      .flat();
+  };
+  const genSimpleCodeForStacks = (stacks: Block[][]) => {
+    return stacks
+      .map(stack => genSimpleCodeForStack(stack, true))
+      .map(slines => [...slines, ''])
+      .flat();
+  };
+
+  const code = genSimpleCodeForStacks(topLevelStacks);
+  return code.join('\n');
 }
 
 function createSetupCodes() {
