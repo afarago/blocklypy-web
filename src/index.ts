@@ -1,7 +1,7 @@
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 // import Split from 'split.js';
 import $ from 'jquery';
-import 'jqueryui';
+// import 'jqueryui';
 
 function handleFileUpload(file: File) {
   const reader = new FileReader();
