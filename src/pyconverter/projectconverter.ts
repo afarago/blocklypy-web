@@ -1,10 +1,12 @@
 import JSZip from 'jszip';
-import { convertFlipperProgramToPython } from './pyconverter';
-
-const DEBUG_SKIP_HEADER = false;
+import {
+  convertFlipperProgramToPython,
+  PyConverterOptions,
+} from './pyconverter';
 
 export async function convertFlipperProjectToPython(
-  filedata: ArrayBuffer | Buffer
+  filedata: ArrayBuffer | Buffer,
+  options: PyConverterOptions
 ) {
   const retval = {
     pycode: null as string,
@@ -25,7 +27,9 @@ export async function convertFlipperProjectToPython(
     throw `File type should be word-blocks instead of "${projectInfo.type}"`;
   retval.projectInfo = projectInfo;
 
-  const projectComment = extractHeadComment(projectInfo);
+  const projectComment = !options?.debug?.skipHeader
+    ? extractHeadComment(projectInfo)
+    : null;
 
   // ========================
   {
@@ -50,11 +54,8 @@ export async function convertFlipperProjectToPython(
 
   // ========================
   {
-    const projectCode = convertFlipperProgramToPython(projectJson);
-    const sections = [
-      DEBUG_SKIP_HEADER ? null : projectComment,
-      projectCode,
-    ].filter(elem => elem);
+    const projectCode = convertFlipperProgramToPython(projectJson, options);
+    const sections = [projectComment, projectCode].filter(elem => elem);
     retval.pycode = sections.join('\n');
   }
 

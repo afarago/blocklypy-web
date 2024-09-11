@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
+import { PyConverterOptions } from './pyconverter/pyconverter';
 
 try {
   // const __FILE__ = path.join(__dirname, '2/proj1.llsp3');
@@ -12,12 +13,7 @@ try {
   let __FILE__ =
     process.argv?.slice(2)?.find(elem => !elem.startsWith('-')) ?? '';
   if (__FILE__?.length === 0) {
-    __FILE__ = 'c:/Dev/pyllsp4data/spikev3/spikev3test.llsp3'; // line skip
-    // path.join(
-    //     __dirname,
-    //     //'testdata/test1.llsp3'
-    //     '../testdata/test2.lms'
-    //   );
+    __FILE__ = path.join(__dirname, '../testdata/test2.lms');
   }
   console.log('::FILE::', __FILE__);
 
@@ -26,7 +22,18 @@ try {
 
   // const retval = await converter.convert(file);
   // console.log(retval);
-  convertFlipperProjectToPython(file).then(retval => {
+  const option: PyConverterOptions = {
+    debug: {
+      skipHeader: true,
+      skipHelpers: true,
+      skipImports: true,
+      skipSetup: true,
+      showOrphanCode: true,
+      showBlockIds: true,
+      // showThisStackOnly: 'Y09;djV%E2_0:AMn^hOT',
+    },
+  };
+  convertFlipperProjectToPython(file, option).then(retval => {
     const DEBUG_WRITE_PROJECT_JSON = !false;
     if (DEBUG_WRITE_PROJECT_JSON) {
       // write a project.json to the local dir for debug
@@ -36,9 +43,8 @@ try {
         data_pretty
       );
     }
-
     console.log(retval.pycode);
-  });
+  }, null);
 } catch (err) {
   console.error('::ERROR::', err);
 }

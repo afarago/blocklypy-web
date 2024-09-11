@@ -29,16 +29,17 @@ interface StackGroup {
   group: StackGroupType;
   stack: Block[];
 }
-
-// interface ConverterOptions {
-//   debug: {
-//     show_orphan_code: boolean;
-//     skip_helpers: boolean;
-//   };
-// }
-// session
-
-const SHOW_ORPHAN_CODE = false;
+export interface PyConverterOptions {
+  debug?: {
+    showOrphanCode?: boolean;
+    skipHeader?: boolean;
+    skipImports?: boolean;
+    skipHelpers?: boolean;
+    skipSetup?: boolean;
+    showBlockIds?: boolean;
+    showThisStackOnly?: string;
+  };
+}
 
 let isAsyncNeeded = false;
 export function setAsyncFlag(value: boolean) {
@@ -46,8 +47,8 @@ export function setAsyncFlag(value: boolean) {
 }
 
 export function convertFlipperProgramToPython(
-  projectData: ScratchProject
-  // options: ConverterOptions
+  projectData: ScratchProject,
+  options: PyConverterOptions
 ) {
   // ========================
   try {
@@ -84,17 +85,25 @@ export function convertFlipperProgramToPython(
         false;
 
     const programStacks = getPycodeForStackGroups(stackGroups);
-    const programCode = createProgramStacksCode(programStacks);
+    const programCode = createProgramStacksCode(programStacks, options);
 
     const setupCode = createSetupCodes();
 
     const helperCode = HelperEnabledEntry.to_global_code(helpers);
 
-    const codeSections: { name: string; code: string[] }[] = [
-      { name: 'imports', code: ImportRegistryEntry.to_global_code(imports) },
-      { name: 'setup', code: setupCode },
+    const codeSections: { name: string; code: string[]; skip?: boolean }[] = [
+      {
+        name: 'imports',
+        code: ImportRegistryEntry.to_global_code(imports),
+        skip: options?.debug?.skipImports,
+      },
+      { name: 'setup', code: setupCode, skip: options?.debug?.skipSetup },
       { name: 'global variables', code: Variables.to_global_code() },
-      { name: 'helper functions', code: helperCode },
+      {
+        name: 'helper functions',
+        code: helperCode,
+        skip: options?.debug?.skipHelpers,
+      },
       { name: 'program code', code: programCode },
       { name: 'main code', code: createMainProgramCode(programStacks) },
     ];
@@ -105,14 +114,16 @@ export function convertFlipperProgramToPython(
         .replace(AWAIT_PLACEHOLDER, isAsyncNeeded ? 'await ' : '');
     };
 
-    const retval2 = codeSections.map(curr =>
-      curr.code?.length
-        ? [
-            get_divider(`SECTION: ${curr.name.toUpperCase()}`, '='),
-            ...curr.code.map(asyncReplaceFn),
-          ].join('\r\n')
-        : null
-    );
+    const retval2 = codeSections
+      .filter(curr => !curr.skip)
+      .map(curr =>
+        curr.code?.length
+          ? [
+              get_divider(`SECTION: ${curr.name.toUpperCase()}`, '='),
+              ...curr.code.map(asyncReplaceFn),
+            ].join('\r\n')
+          : null
+      );
 
     const result = retval2.filter(e => e).join('\r\n\r\n');
     return result;
@@ -176,18 +187,35 @@ function preprocessProcedureDefinitions(projectData: ScratchProject) {
     });
 }
 
-function createProgramStacksCode(programStacks: OutputCodeStack[]) {
+function createProgramStacksCode(
+  programStacks: OutputCodeStack[],
+  options: PyConverterOptions
+) {
   const stacks = Array.from(programStacks.values()).filter(
     ostack => ostack.code
   );
   return stacks?.length > 0
     ? stacks
+        .filter(
+          ostack =>
+            (!options?.debug?.showThisStackOnly ||
+              ostack.id === options?.debug?.showThisStackOnly) &&
+            (options?.debug?.showOrphanCode ||
+              ostack.group !== StackGroupType.Orphan)
+        )
         .map(ostack =>
           ostack.code.length > 0 && !ostack.isDivider
-            ? [...ostack.code, '']
+            ? [
+                options.debug?.showBlockIds
+                  ? `# BlockId: "${ostack.id}"`
+                  : null,
+                ...ostack.code,
+                '',
+              ]
             : [...ostack.code]
         )
         .flat()
+        .filter(s1 => s1 !== null)
     : null;
 }
 
@@ -220,10 +248,12 @@ function createMainProgramCode(ostacks: OutputCodeStack[]) {
 }
 
 type OutputCodeStack = {
+  id: string;
   code: string[];
   isStartup?: boolean;
   isDivider?: boolean;
   name?: string;
+  group?: StackGroupType;
 };
 
 function getPycodeForStackGroups(
@@ -233,14 +263,14 @@ function getPycodeForStackGroups(
   const aggregatedCodeStacks: OutputCodeStack[] = [];
 
   for (const [group_name, stack_group] of stackGroups.entries()) {
-    if (!SHOW_ORPHAN_CODE && group_name === StackGroupType.Orphan) continue;
-
     // add a header code
     const groupNameStr = StackGroupType[group_name];
     aggregatedCodeStacks.push({
+      id: null,
       code: [get_divider(`GROUP: ${groupNameStr.toUpperCase()}`, '-')],
       isStartup: false,
       isDivider: true,
+      group: group_name,
     });
 
     let lastStackEventMessageId = null;
@@ -284,9 +314,11 @@ function getPycodeForStackGroups(
         } else if (group === StackGroupType.MessageEvent) {
           if (isMessageChanged) {
             aggregatedCodeStacks.push({
+              id: null,
               code: [get_divider(`MESSAGE: ${messageNameRaw}`, '-')],
               isStartup: false,
               isDivider: true,
+              group,
             });
           }
         }
@@ -303,10 +335,12 @@ function getPycodeForStackGroups(
               code.push(...sub_code);
 
               aggregatedCodeStacks.push({
+                id: headBlock._id,
                 code: code,
                 isStartup: group_name === StackGroupType.Start,
                 name: stack_fn,
                 isDivider: false,
+                group,
               });
             }
             break;
@@ -333,9 +367,11 @@ function getPycodeForStackGroups(
 
               // add to stack
               aggregatedCodeStacks.push({
+                id: headBlock._id,
                 code: code,
                 isStartup: true,
                 name: stack_fn,
+                group,
               });
             }
             break;
@@ -351,7 +387,12 @@ function getPycodeForStackGroups(
               // condition function already added once on top
 
               // add to stack
-              aggregatedCodeStacks.push({ code: code, isStartup: false });
+              aggregatedCodeStacks.push({
+                id: headBlock._id,
+                code: code,
+                isStartup: false,
+                group,
+              });
             }
             break;
 
@@ -366,7 +407,12 @@ function getPycodeForStackGroups(
               code.push(...sub_code);
 
               // add to stack, but not to startup
-              aggregatedCodeStacks.push({ code: code, isStartup: false });
+              aggregatedCodeStacks.push({
+                id: headBlock._id,
+                code: code,
+                isStartup: false,
+                group,
+              });
             }
             break;
         }
@@ -410,11 +456,17 @@ function checkAndRegisterMessage(
     const bco = broadcasts.get(lastStackEventMessageId);
     const message_fn = bco.get_pyname();
     aggregatedCodeStacks.push({
+      id: message_fn,
       code: [bco.get_code(aggregatedMessageFns)],
       isStartup: false,
     });
     const stack_fn = `${message_fn}.main_fn`;
-    aggregatedCodeStacks.push({ code: null, isStartup: true, name: stack_fn });
+    aggregatedCodeStacks.push({
+      id: null,
+      code: null,
+      isStartup: true,
+      name: stack_fn,
+    });
 
     aggregatedMessageFns.splice(0, aggregatedMessageFns.length);
     lastStackEventMessageId = messageId;
