@@ -1,5 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
+import helpers from '../helpers';
+import { debug } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
@@ -45,7 +47,9 @@ function data_changevariableby(block: Block) {
   });
 
   const value2 = value.is_variable ? num_eval(value) : value;
-  return [`${variable} = ${value2.raw} + ${value.raw}`];
+  return [
+    `${variable} = ${helpers.use('float_safe').call(new BlockValue(variable, true, true, false))} + ${value2.raw}`,
+  ];
 }
 
 function data_addtolist(block: Block) {
