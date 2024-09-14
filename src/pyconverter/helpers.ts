@@ -119,15 +119,28 @@ def convert_speed_back(deg_s):
       {
         py_fn: `
 def hub_speaker_flipper_play(note, duration):
-    const(NOTES) = ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"]
+    NOTES = ["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"]
     note_abc = NOTES[note%12]
     octave = str(int(note/12))
-    bpm = int(60000 / duration)
-    ${AWAIT_PLACEHOLDER}hub.speaker.play_notes(f"{note_abc}{octave}", bpm)
-
-    # const(NOTE_FREQS) = [16.35, 17.32, 18.35, 19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87]
-    # freq = NOTE_FREQS[note%12] * 2 << (int(note/12) - 1)
-    # hub.speaker.beep(freq, duration)`,
+    bpm = int(60000 / duration * 4)
+    ${AWAIT_PLACEHOLDER}hub.speaker.play_notes(f"{note_abc}{octave}/1", bpm)`,
+        // # const(NOTE_FREQS) = [16.35, 17.32, 18.35, 19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87]
+        // # freq = NOTE_FREQS[note%12] * 2 << (int(note/12) - 1)
+        // # hub.speaker.beep(freq, duration)`,
+        // //TODO: local_fn:
+      },
+    ],
+    [
+      'hub_speaker_iconblocks_play',
+      {
+        // 12 bmp with /4 note is 0.5 sec
+        py_fn: `
+def hub_speaker_iconblocks_play(note):
+    NOTES = ["C4","D4","E4","F4","G4","A4","B4","C5"]
+    note = int(note) if note != "?" else randint(1, 8)
+    note_abc = NOTES[(note-1)%8]
+    bpm = 120
+    ${AWAIT_PLACEHOLDER}hub.speaker.play_notes([f"{note_abc}/4"], bpm)`,
         //TODO: local_fn:
       },
     ],
@@ -185,9 +198,9 @@ def int_safe(value, default=0):
         py_fn: `
 async def event_task(condition_fn, stack_fn):
     while True:
-        while not condition_fn(): yield
+        while not await condition_fn(): yield
         await stack_fn()
-        while condition_fn(): yield`,
+        while await condition_fn(): yield`,
       },
     ],
     [
@@ -366,6 +379,17 @@ def convert_ussensor_distance_back(value, unit):
 def convert_hub_orientation(value):
     return 'Side.' + BlockValue.value(value)?.replace('side', '').toUpperCase()`,
       },
+    ],
+    [
+      'get_pupdevices',
+      {
+        py_fn: `
+def get_pupdevices(class_type, *args):
+    for port in [Port.A,Port.B,Port.C,Port.D,Port.E,Port.F]:
+        try: return class_type(port, *args)
+        except: pass`,
+      },
+      //TODO: wip, this returns the first one - LEGO should use ALL
     ],
   ]
 

@@ -59,7 +59,8 @@ export class DeviceDriveBase extends DeviceBase {
     return this._default_speed;
   }
   get default_speed_variable() {
-    return `${this.devicename}_default_speed`;
+    // default_speeds is anyhow added with motors
+    return `default_speeds[${this.devicename}]`;
   }
   set default_then(value: any) {
     this._default_then = value;
@@ -99,15 +100,19 @@ export class DeviceDriveBase extends DeviceBase {
     this._ports = value;
   }
   setup_code() {
+    const setup_code = super.setup_code();
     // const port_left = this.ports[0];
     // const port_right = this.ports[1];
     // this.motor_left = DeviceMotor.instance(port_left, false);
     // this.motor_right = DeviceMotor.instance(port_right);
-    return [
-      `${this.devicename} = DriveBase(${this.motor_left.devicename}, ${this.motor_right.devicename}, ${this.wheel_diameter}, ${this.axle_track})`,
-      // `${this.rotation_distance_variable} = ${this.rotation_distance}`,
-      `${this.default_speed_variable} = ${this.default_speed.raw}`,
-    ];
+    setup_code.push(
+      ...[
+        `${this.devicename} = DriveBase(${this.motor_left.devicename}, ${this.motor_right.devicename}, ${this.wheel_diameter}, ${this.axle_track})`,
+        // `${this.rotation_distance_variable} = ${this.rotation_distance}`,
+        `${this.default_speed_variable} = ${this.default_speed.raw}`,
+      ]
+    );
+    return setup_code;
   }
   ensure_dependencies() {
     const port_left = this.ports[0];

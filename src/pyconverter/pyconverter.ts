@@ -10,6 +10,7 @@ import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
+  debug,
   get_divider,
   indent_code,
 } from './utils';
@@ -95,28 +96,33 @@ export function convertFlipperProgramToPython(
 
     const helperCode = HelperEnabledEntry.to_global_code(helpers);
 
+    const mainProgramCode = createMainProgramCode(programStacks);
+
     const codeSections: { name: string; code: string[]; skip?: boolean }[] = [
       {
         name: 'imports',
         code: ImportRegistryEntry.to_global_code(imports),
         skip: options?.debug?.skipImports,
       },
-      { name: 'setup', code: setupCode, skip: options?.debug?.skipSetup },
-      { name: 'global variables', code: Variables.to_global_code() },
       {
         name: 'helper functions',
         code: helperCode,
         skip: options?.debug?.skipHelpers,
       },
+      { name: 'setup', code: setupCode, skip: options?.debug?.skipSetup },
+      { name: 'global variables', code: Variables.to_global_code() },
       { name: 'program code', code: programCode },
-      { name: 'main code', code: createMainProgramCode(programStacks) },
+      { name: 'main code', code: mainProgramCode },
     ];
 
     const asyncReplaceFn = (line: string) => {
       return line
-        .replace(ASYNC_PLACEHOLDER, isAsyncNeeded ? 'async ' : '')
-        .replace(AWAIT_PLACEHOLDER, isAsyncNeeded ? 'await ' : '');
+        .replaceAll(ASYNC_PLACEHOLDER, isAsyncNeeded ? 'async ' : '')
+        .replaceAll(AWAIT_PLACEHOLDER, isAsyncNeeded ? 'await ' : '');
     };
+
+    const getSectionName = (name: string, isStart: boolean) =>
+      `#${isStart ? '' : 'end'}region section_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
     const retval2 = codeSections
       .filter(curr => !curr.skip)
@@ -124,7 +130,9 @@ export function convertFlipperProgramToPython(
         curr.code?.length
           ? [
               get_divider(`SECTION: ${curr.name.toUpperCase()}`, '='),
+              getSectionName(curr.name, true),
               ...curr.code.map(asyncReplaceFn),
+              getSectionName(curr.name, false),
             ].join('\r\n')
           : null
       );
@@ -217,8 +225,7 @@ function preprocessMessages(projectData: ScratchProject) {
 function preprocessProcedureDefinitions(projectData: ScratchProject) {
   const target1 = projectData.targets[1];
   Object.entries(target1.blocks)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    .filter(([id, sblock]) => sblock.opcode === 'procedures_definition')
+    .filter(([_, sblock]) => sblock.opcode === 'procedures_definition')
     .forEach(([id, sblock]) => {
       const block = new Block(sblock, id, target1);
       const procdef = extractProcedureDefinition(block);
@@ -268,14 +275,14 @@ function createMainProgramCode(ostacks: OutputCodeStack[]) {
     ];
 
   if (isAsyncNeeded) {
+    imports.use('pybricks.tools', 'multitask, run_task');
+
     // multiple start stacks
     return [
       'async def main():',
       indent_code([
         `await multitask(${[
-          ...startupStacks
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            .map(ostack => ostack.name),
+          ...startupStacks.map(ostack => `${ostack.name}()`),
         ].join(', ')})`,
       ])[0],
       'run_task(main())',
@@ -362,7 +369,7 @@ function getPycodeForStackGroups(
           }
         }
 
-        code.push(`# STACK#${stackCounter}: ${description}`);
+        code.push(`# STACK #${stackCounter}: ${description}`);
 
         const sub_code = process_stack(nextBlocks);
 
@@ -484,15 +491,13 @@ function checkAndRegisterMessage(
 ) {
   const messageRecord = getMessageRecord(currentStack);
   const messageId = messageRecord?.[1];
-  // const messageNameRaw = messageRecord?.[0]?.toString();
-  // const messageName = BroadcastEntry.sanitize(messageNameRaw);
   if (
     aggregatedMessageFns.length &&
     (lastStackEventMessageId !== messageId || forceDump)
   ) {
-    helpers.use('class_Message');
-
     const bco = broadcasts.get(lastStackEventMessageId);
+
+    helpers.use('class_Message');
     const message_fn = bco.get_pyname();
     aggregatedCodeStacks.push({
       id: message_fn,
@@ -512,6 +517,10 @@ function checkAndRegisterMessage(
   }
 
   if (messageId?.length) {
+    if (!broadcasts.has(messageId)) {
+      const messageName = messageRecord[0]?.toString();
+      broadcasts.use(messageId, messageName);
+    }
     aggregatedMessageFns.push(stackActionFn);
     lastStackEventMessageId = messageId;
   }
@@ -533,11 +542,14 @@ function getStackGroups(topLevelStacks: Block[][]) {
       const headBlock = stack[0];
       const op = headBlock.opcode;
       function get_op_group(op: string) {
-        if (op === 'flipperevents_whenProgramStarts') {
+        if (op.match(/(flipper|horizontal)events_whenProgramStarts/)) {
           return StackGroupType.Start;
-        } else if (op.startsWith('flipperevents_when')) {
+        } else if (op.match(/(flipper|horizontal)events_when/)) {
           return StackGroupType.Event;
-        } else if (op.startsWith('event_whenbroadcastreceived')) {
+        } else if (
+          op === 'event_whenbroadcastreceived' ||
+          op === 'horizontalevents_whenBroadcast'
+        ) {
           return StackGroupType.MessageEvent;
         } else if (op === 'procedures_definition') {
           return StackGroupType.MyBlock;
@@ -593,11 +605,20 @@ export function process_stack(blocks: Block[] | null): string[] {
 
 function getMessageRecord(stack: Block[]): BlockField {
   const headBlock = stack?.[0];
-  if (headBlock?.opcode !== 'event_whenbroadcastreceived') return null;
-
-  // [0] is the message name, [1] is the message refid
-  const messageRecord = headBlock.get_fieldObject('BROADCAST_OPTION');
-  return messageRecord;
+  if (headBlock?.opcode === 'event_whenbroadcastreceived') {
+    // [0] is the message name, [1] is the message refid
+    return headBlock.get_fieldObject('BROADCAST_OPTION');
+  } else if (headBlock?.opcode === 'horizontalevents_whenBroadcast') {
+    // "CHOICE": [
+    //   1,
+    //   "zFLqW+b*f2b]lG6nUD/."
+    // ]
+    const eventcolor = headBlock.get_input('CHOICE')?.value?.toString();
+    // let the eventcolor be the message id as well
+    return [eventcolor, eventcolor];
+  } else {
+    return null;
+  }
 }
 
 function getCommentForBlock(block: Block) {
@@ -617,5 +638,6 @@ function convertBlockToCode(block: Block): string[] | null {
     ];
   }
 
+  debug('unknown block', block.get_block_description());
   return [`# unknown: ${block.get_block_description()}`];
 }

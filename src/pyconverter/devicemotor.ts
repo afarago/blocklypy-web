@@ -1,7 +1,8 @@
-import imports from './imports';
-import helpers from './helpers';
-import { DeviceOnPortBase, setup_devices_registry } from './device';
 import { BlockValue } from './blockvalue';
+import { DeviceOnPortBase, setup_devices_registry } from './device';
+import helpers from './helpers';
+import imports from './imports';
+import { CONST_AUTO_PORT } from './utils';
 
 export class DeviceMotor extends DeviceOnPortBase {
   _default_speed: BlockValue = null;
@@ -41,7 +42,7 @@ export class DeviceMotor extends DeviceOnPortBase {
     return this._default_speed;
   }
   get default_speed_variable() {
-    return `${this.devicename}_default_speed`;
+    return `default_speeds[${this.devicename}]`;
   }
   set default_then(value: string) {
     this._default_then = value;
@@ -49,12 +50,30 @@ export class DeviceMotor extends DeviceOnPortBase {
   get devicename() {
     return DeviceMotor.devicename_from_port(this.port);
   }
+  static isDefaultSpeedVariablesAdded = false;
   setup_code() {
+    const setup_code = super.setup_code();
+    const sensor_class = 'Motor';
+    const args: string[] =
+      this.direction_cw !== false ? [] : ['Direction.COUNTERCLOCKWISE'];
+
     imports.use('pybricks.parameters', 'Direction');
-    imports.use('pybricks.pupdevices', 'Motor');
-    return [
-      `${this.devicename} = Motor(Port.${this.port}${this.direction_cw ? '' : ', Direction.COUNTERCLOCKWISE'})`,
-      `${this.default_speed_variable} = ${this.default_speed.raw}`,
-    ];
+    imports.use('pybricks.pupdevices', sensor_class);
+    if (!DeviceMotor.isDefaultSpeedVariablesAdded) {
+      DeviceMotor.isDefaultSpeedVariablesAdded = true;
+      setup_code.push('default_speeds = {}');
+    }
+
+    setup_code.push(
+      ...[
+        `${this.devicename} = ${
+          this.port !== CONST_AUTO_PORT
+            ? `${sensor_class}(${[this.portString].concat(args).join(', ')})`
+            : `${helpers.use('get_pupdevices').call([sensor_class].concat(args).join(', ')).raw}`
+        }`,
+        `${this.default_speed_variable} = ${this.default_speed.raw}`,
+      ]
+    );
+    return setup_code;
   }
 }

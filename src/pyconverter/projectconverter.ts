@@ -24,7 +24,7 @@ export async function convertFlipperProjectToPython(
   if (!manifestFile) throw 'No manifest.json file found in the zip file.';
   const manifestContent = await manifestFile.async('string');
   const projectInfo = JSON.parse(manifestContent);
-  if (projectInfo.type !== 'word-blocks')
+  if (!['word-blocks', 'icon-blocks'].includes(projectInfo.type))
     throw `File type should be word-blocks instead of "${projectInfo.type}"`;
   retval.projectInfo = projectInfo;
 

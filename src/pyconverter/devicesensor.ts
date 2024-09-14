@@ -1,5 +1,7 @@
 import imports from './imports';
 import { DeviceOnPortBase, setup_devices_registry } from './device';
+import helpers from './helpers';
+import { CONST_AUTO_PORT } from './utils';
 
 export class DeviceSensor extends DeviceOnPortBase {
   _sensor_class: string = null;
@@ -31,8 +33,20 @@ export class DeviceSensor extends DeviceOnPortBase {
     return DeviceSensor.devicename_from_port(this.port, this._sensor_class);
   }
   setup_code() {
-    const setup_code = `${this.devicename} = ${this._sensor_class}(Port.${this.port})`;
+    const setup_code = super.setup_code();
+    const sensor_class = this._sensor_class;
+    const args: string[] = [];
 
-    return [setup_code];
+    imports.use('pybricks.pupdevices', sensor_class);
+    setup_code.push(
+      ...[
+        `${this.devicename} = ${
+          this.port !== CONST_AUTO_PORT
+            ? `${sensor_class}(${[this.portString].concat(args).join(', ')})`
+            : `${helpers.use('get_pupdevices').call([sensor_class].concat(args).join(', ')).raw}`
+        }`,
+      ]
+    );
+    return setup_code;
   }
 }

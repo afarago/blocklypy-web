@@ -86,8 +86,10 @@ export function convert_matrix(value: string, brightness = 100) {
     brightness < 100 ? ` * ${round2(brightness / 100, 2)}` : '';
 
   // on/off pixel values only
-  if (value.match(/^[09]{25}$/))
+  if (value.match(/^[09]{25}$/)) {
+    imports.use('pybricks.parameters', 'Icon');
     return `Icon(0b${value.replaceAll('9', '1')})${postfixFactor}`;
+  }
 
   // any pixel values
   const retval = [];
@@ -99,6 +101,8 @@ export function convert_matrix(value: string, brightness = 100) {
     }
     retval.push(row);
   }
+
+  imports.use('pybricks.tools', 'Matrix');
   return `Matrix(${JSON.stringify(retval)})${postfixFactor}`;
 }
 //#endregion old_converters

@@ -1,6 +1,6 @@
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 // import Split from 'split.js';
-import $ from 'jquery';
+//import $ from 'jquery';
 // import 'jqueryui';
 
 function handleFileUpload(file: File) {
@@ -22,6 +22,7 @@ function handleFileUpload(file: File) {
 
       $('#tab-dummy').addClass('d-none');
       $('#tabs-main').removeClass('d-none');
+      updateMapVisibility();
     });
   });
   reader.readAsArrayBuffer(file);
@@ -74,3 +75,12 @@ copyButton.on('click', event => {
     copyButton.children().toggleClass('bi-clipboard-check bi-copy');
   }, 2000);
 });
+
+$("a[data-bs-toggle='tab']").on('shown.bs.tab', _ => {
+  updateMapVisibility();
+});
+
+function updateMapVisibility() {
+  const visible = $("a[data-bs-toggle='tab'].active").attr('id') !== 'svg';
+  $('#preview-svg-map').toggleClass('d-none', !visible);
+}

@@ -25,11 +25,10 @@ export function processOperation(
   returnOnEmpty = 'None'
 ): BlockValue {
   if (block) {
-    const op = block?.opcode;
+    const op = block.opcode;
     if (handlers.operatorHandlers.has(op))
       return handlers.operatorHandlers.get(op)(block);
-
-    debug(`# unknown: ${block?.get_block_description()}`);
+    else debug('unknown block', block.get_block_description());
   }
   return new BlockValue(returnOnEmpty, true);
 }

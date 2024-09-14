@@ -38,6 +38,9 @@ export class BlockValue {
     //const is_string = this.is_string || typeof(this.value) !== 'number'
     //return !this.is_numeric ? this.value : `"${this.value}"`;
   }
+  toString() {
+    return BlockValue.toString(this);
+  }
   static is(value: any) {
     return value?.constructor === BlockValue;
   }
@@ -49,6 +52,9 @@ export class BlockValue {
   }
   static value(value: any) {
     return BlockValue.is(value) ? value.value : value;
+  }
+  static toString(value: any) {
+    return BlockValue.value(value).toString();
   }
 }
 

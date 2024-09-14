@@ -51,13 +51,27 @@ function flipperdisplay_ledImage(block: Block) {
   ];
 }
 
+function horizontaldisplay_ledRandom(_: Block) {
+  const matrix = Array(25)
+    .fill(1)
+    .map(
+      _ =>
+        //Math.floor(Math.random() * 10)
+        Math.floor(Math.random() * 2) * 9
+    )
+    .join('');
+  //TODO: random should be dynamic
+  return [
+    `hub.display.icon(${convert_matrix(BlockValue.toString(matrix), global_pixel_brightness)})`,
+  ];
+}
+
 function flipperdisplay_centerButtonLight(block: Block) {
   const color = helpers.use('convert_color')?.call(block.get_input('COLOR'));
   return [`hub.light.on(${color.value})`];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function flipperdisplay_displayOff(block: Block) {
+function flipperdisplay_displayOff(_: Block) {
   {
     return ['hub.display.off()'];
   }
@@ -70,6 +84,8 @@ export default function display(): HandlersType {
     ['flipperdisplay_centerButtonLight', flipperdisplay_centerButtonLight],
     ['flipperlight_centerButtonLight', flipperdisplay_centerButtonLight],
     ['flipperdisplay_ledImage', flipperdisplay_ledImage],
+    ['horizontaldisplay_ledImage', flipperdisplay_ledImage], // a 0.2 sec delay should be added to horizontaldisplay_ledImage
+    ['horizontaldisplay_ledRandom', horizontaldisplay_ledRandom],
     ['flipperlight_lightDisplayImageOn', flipperdisplay_ledImage],
     ['flipperdisplay_ledMatrixFor', flipperdisplay_ledImageFor], //SPIKEV2
     ['flipperdisplay_ledImageFor', flipperdisplay_ledImageFor],

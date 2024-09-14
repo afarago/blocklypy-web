@@ -96,7 +96,7 @@ export class Block {
     return input[1][2].toString();
   }
 
-  get_input(name: string, isPythonMode = false): BlockValue {
+  get_input(name: string, isPythonMode = true): BlockValue {
     const input = this._block.inputs[name];
     if (!input) return null;
 
@@ -116,7 +116,12 @@ export class Block {
             const first_field = Object.values(block2?._block.fields)[0];
             const first_field_value = first_field[0];
             return first_field_value !== null
-              ? new BlockValue(first_field_value)
+              ? new BlockValue(
+                  first_field_value,
+                  false,
+                  false,
+                  typeof first_field_value !== 'number'
+                )
               : null;
           } else if (is_direct_value) {
             const value_array = input[1] as Scratch.BlockValueArray;

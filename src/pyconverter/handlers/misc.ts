@@ -10,8 +10,7 @@ import * as Variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function flippersensors_resetTimer(block: Block) {
+function flippersensors_resetTimer(_: Block) {
   imports.use('pybricks.tools', 'StopWatch');
   Variables.use('sw_main', 'StopWatch()');
 
@@ -52,8 +51,7 @@ function flipperdisplay_ultrasonicLightUp(block: Block) {
   return [`${d}.lights.on([${value.raw?.toString().split(' ').join(', ')}])`];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function flippersensors_resetYaw(block: Block) {
+function flippersensors_resetYaw(_: Block) {
   return ['hub.imu.reset_heading()'];
 }
 
@@ -65,6 +63,13 @@ function event_broadcast(block: Block) {
   return [
     `${AWAIT_PLACEHOLDER}${message_pyname}.broadcast_exec(${do_wait ? 'True' : 'False'})`,
   ];
+}
+
+function horizontalevents_broadcast(block: Block) {
+  const message_id = block.get_input('CHOICE')?.value?.toString();
+  const message_pyname = broadcasts.use(message_id, message_id).get_pyname();
+
+  return [`${AWAIT_PLACEHOLDER}${message_pyname}.broadcast_exec(False)`];
 }
 
 function procedures_call(block: Block) {
@@ -123,6 +128,7 @@ export default function misc(): HandlersType {
     ['flippersensors_resetYaw', flippersensors_resetYaw],
     ['event_broadcast', event_broadcast],
     ['event_broadcastandwait', event_broadcast],
+    ['horizontalevents_broadcast', horizontalevents_broadcast],
     ['procedures_call', procedures_call],
   ]);
   const operatorHandlers: any = null;

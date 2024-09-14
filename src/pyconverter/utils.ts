@@ -8,6 +8,7 @@ export const CONST_INCHES = 'inches';
 export const CONST_ROTATIONS = 'rotations';
 export const CONST_DEGREES = 'degrees';
 export const CONST_SECONDS = 'seconds';
+export const CONST_AUTO_PORT = 'AUTO';
 
 export function get_divider(text: string, fillchar = '-', width = 80) {
   // # ------------------------------ python example ------------------------------ #

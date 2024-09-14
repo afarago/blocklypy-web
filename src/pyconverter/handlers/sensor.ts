@@ -1,9 +1,10 @@
-import helpers from '../helpers';
-import { HandlersType, OperatorHandler } from './handlers';
-import { calc_comparator } from '../converters';
-import { BlockValue } from '../blockvalue';
 import { Block } from '../block';
+import { BlockValue } from '../blockvalue';
+import { calc_comparator } from '../converters';
 import { DeviceSensor } from '../devicesensor';
+import helpers from '../helpers';
+import { AWAIT_PLACEHOLDER, CONST_AUTO_PORT } from '../utils';
+import { HandlersType, OperatorHandler } from './handlers';
 
 // function flippermoresensors_deviceType(block: Block) {
 // TODO get PUPDevice of the current device for the info object!
@@ -43,19 +44,34 @@ function flippersensors_color(block: Block) {
 
   return helpers
     .use('convert_color_back')
-    ?.call(new BlockValue(`${d}.color()`, true));
+    ?.call(new BlockValue(`${AWAIT_PLACEHOLDER}${d}.color()`, true));
 }
 
 function flippersensors_isColor(block: Block) {
-  const port = block.get_input('PORT').value?.toString();
-  const color1 = block.get_input(
-    block?.opcode.includes('_is') ? 'VALUE' : 'OPTION'
+  const port = BlockValue.toString(block.get_input('PORT'));
+  const color = block.get_input(
+    block?.opcode === 'flippersensors_isColor' ? 'VALUE' : 'OPTION'
   );
+
+  return _isColor(block, port, color);
+}
+
+function horizontalevents_whenColor(block: Block) {
+  const port = CONST_AUTO_PORT;
+  const color = block.get_input('COLOR');
+
+  return _isColor(block, port, color);
+}
+
+function _isColor(_: Block, port: string, color1: BlockValue) {
   const color = helpers.use('convert_color')?.call(color1);
 
-  const device = DeviceSensor.instance(port, 'ColorSensor'); //!! what if port is a variable??
+  const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
-  return new BlockValue(`${d}.color() == ${color.value}`, true);
+  return new BlockValue(
+    `${AWAIT_PLACEHOLDER}${d}.color() == ${color.value}`,
+    true
+  );
 }
 
 function flippersensors_reflectivity(block: Block) {
@@ -63,7 +79,7 @@ function flippersensors_reflectivity(block: Block) {
 
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
-  return new BlockValue(`${d}.reflection()`, true);
+  return new BlockValue(`${AWAIT_PLACEHOLDER}${d}.reflection()`, true);
 }
 
 function flippersensors_isReflectivity(block: Block) {
@@ -74,24 +90,35 @@ function flippersensors_isReflectivity(block: Block) {
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
   return new BlockValue(
-    `${d}.reflection() ${comparator.value} ${helpers.use('float_safe')?.call(value).raw}`,
+    `${AWAIT_PLACEHOLDER}${d}.reflection() ${comparator.value} ${helpers.use('float_safe')?.call(value).raw}`,
     true
   );
 }
 
 function flippersensors_isPressed(block: Block) {
-  const port = block.get_input('PORT').value?.toString();
+  const port = BlockValue.toString(block.get_input('PORT'));
   const option = block.get_field('OPTION'); // pressed, hardpressed, released, pressurechanged
 
+  return _isPressed(block, port, option);
+}
+
+function horizontalevents_whenPressed(block: Block) {
+  const port = CONST_AUTO_PORT;
+  const option = block.get_input('OPTION'); // pressed, hardpressed, released, pressurechanged
+
+  return _isPressed(block, port, option);
+}
+
+function _isPressed(_: Block, port: string, option: BlockValue) {
   const device = DeviceSensor.instance(port, 'ForceSensor');
   const d = device.devicename;
-  switch (option.value) {
+  switch (option?.value) {
     case 'pressed':
-      return new BlockValue(`${d}.pressed()`, true);
+      return new BlockValue(`${AWAIT_PLACEHOLDER}${d}.pressed()`, true);
     case 'released':
-      return new BlockValue(`not ${d}.pressed()`, true);
+      return new BlockValue(`not ${AWAIT_PLACEHOLDER}${d}.pressed()`, true);
     case 'hardpressed':
-      return new BlockValue(`${d}.pressed(10)`, true);
+      return new BlockValue(`${AWAIT_PLACEHOLDER}${d}.pressed(10)`, true);
     case 'pressurechanged':
       throw new Error('pressurechanged - Not implemented yet');
   }
@@ -106,29 +133,47 @@ function flippersensors_distance(block: Block) {
 
   return helpers
     .use('convert_ussensor_distance_back')
-    ?.call(new BlockValue(`${d}.distance()`, true), unit);
+    ?.call(new BlockValue(`${AWAIT_PLACEHOLDER}${d}.distance()`, true), unit);
 }
 
 function flippersensors_isDistance(block: Block) {
   const port = block.get_input('PORT')?.value?.toString();
-  const unit = block.get_field('UNIT');
+  const unit = block.get_field('UNIT')?.value?.toString();
   const value = block.get_input('VALUE');
+  const comparator = block.get_field('COMPARATOR');
 
+  return _isDinstance(block, port, value, unit, comparator);
+}
+
+function horizontalevents_whenCloserThan(block: Block) {
+  const port = CONST_AUTO_PORT;
+  const unit = '%';
+  const value = block.get_input('DISTANCE');
+  const comparator = new BlockValue('<');
+
+  return _isDinstance(block, port, value, unit, comparator);
+}
+
+function _isDinstance(
+  _: Block,
+  port: string,
+  value: BlockValue,
+  unit: string,
+  comparator: BlockValue
+) {
+  const comparator1 = calc_comparator(comparator);
   const adjusted_value = helpers
     .use('convert_ussensor_distance')
     ?.call(helpers.use('float_safe')?.call(value), unit);
 
-  const comparator = calc_comparator(block.get_field('COMPARATOR'));
   //TODO: if comparator is ==, we should use range, instead of simple comparison (e.g. 1% means x>0% or y<2%)
-
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');
   const d = device.devicename;
   return new BlockValue(
-    `${d}.distance() ${comparator.value} ${adjusted_value.raw}`,
+    `${AWAIT_PLACEHOLDER}${d}.distance() ${comparator1.value} ${adjusted_value.raw}`,
     true
   );
 }
-
 function flippersensors_buttonIsPressed(block: Block) {
   const button = block.get_field('BUTTON')?.value;
   const event = block.get_field('EVENT')?.value; // pressed, released
@@ -151,6 +196,7 @@ export default function sensor(): HandlersType {
     ['flippersensors_color', flippersensors_color],
     ['flippersensors_isColor', flippersensors_isColor],
     ['flipperevents_whenColor', flippersensors_isColor],
+    ['horizontalevents_whenColor', horizontalevents_whenColor],
 
     ['flippersensors_reflectivity', flippersensors_reflectivity],
     ['flippersensors_isReflectivity', flippersensors_isReflectivity],
@@ -159,10 +205,12 @@ export default function sensor(): HandlersType {
     // ["flippersensors_pressed", flippersensors_pressed],
     ['flippersensors_isPressed', flippersensors_isPressed],
     ['flipperevents_whenPressed', flippersensors_isPressed],
+    ['horizontalevents_whenPressed', horizontalevents_whenPressed],
 
     ['flippersensors_distance', flippersensors_distance],
     ['flippersensors_isDistance', flippersensors_isDistance],
     ['flipperevents_whenDistance', flippersensors_isDistance],
+    ['horizontalevents_whenCloserThan', horizontalevents_whenCloserThan],
 
     ['flippersensors_buttonIsPressed', flippersensors_buttonIsPressed],
     ['flipperevents_whenButton', flippersensors_buttonIsPressed],

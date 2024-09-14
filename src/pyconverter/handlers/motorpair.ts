@@ -159,7 +159,7 @@ function flippermove_startSteer(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   const d = device.devicename;
   return [
-    `${AWAIT_PLACEHOLDER}${d}.run(${device.default_speed_variable}, ${steer_value})`,
+    `${AWAIT_PLACEHOLDER}${d}.drive(${device.default_speed_variable}, ${steer_value})`,
   ];
 }
 
@@ -201,8 +201,7 @@ function flippermove_move(block: Block) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function flippermove_stopMove(block: Block) {
+function flippermove_stopMove(_: Block) {
   const device = DeviceDriveBase.instance();
   const d = device.devicename;
   return [`${AWAIT_PLACEHOLDER}${d}.stop()`];
@@ -218,7 +217,7 @@ function flippermove_startMove(block: Block) {
   const result = direction_forward
     ? device.default_speed
     : num_eval('-', device.default_speed);
-  return [`${AWAIT_PLACEHOLDER}${d}.run(${BlockValue.raw(result)})`];
+  return [`${AWAIT_PLACEHOLDER}${d}.drive(${BlockValue.raw(result)})`];
 }
 
 function flippermove_setDistance(block: Block) {

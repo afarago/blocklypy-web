@@ -24,10 +24,10 @@ try {
   // console.log(retval);
   const option: PyConverterOptions = {
     debug: {
-      skipHeader: true,
-      skipHelpers: true,
-      skipImports: true,
-      skipSetup: true,
+      // skipHeader: true,
+      // skipHelpers: true,
+      // skipImports: true,
+      // skipSetup: true,
       // showOrphanCode: true,
       // showBlockIds: true,
       // showThisStackOnly: 'Y09;djV%E2_0:AMn^hOT',

@@ -1,6 +1,6 @@
 cmd /c npm run build
 
-xcopy /Y dist\*.* ..\pyllsp4pub\dist
+xcopy /Y /S dist\* ..\pyllsp4pub\dist
 
 pushd .
 cd ..\pyllsp4pub

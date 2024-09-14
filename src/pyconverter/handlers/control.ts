@@ -24,7 +24,7 @@ function control_repeat(block: Block) {
 
 function control_repeat_until(block: Block) {
   const condition_block = block.get_inputAsBlock('CONDITION');
-  // wait until block has a flaw, needs to have the return value from falsy to truthy
+  // wait until block has a logical flaw, needs to have the return value from falsy to truthy
   const condition_value = processOperation(condition_block, 'True');
 
   const sub_code = pyconverter.process_stack(block.substacks[0]);
