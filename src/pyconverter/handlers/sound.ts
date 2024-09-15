@@ -1,8 +1,9 @@
 import { Block } from '../block';
+import { BlockValue } from '../blockvalue';
 import helpers from '../helpers';
 import imports from '../imports';
 import { AWAIT_PLACEHOLDER } from '../utils';
-import { BlockHandler, HandlersType } from './handlers';
+import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function flippersound_beepForTime(block: Block) {
   const note = block.get_input('NOTE'); // 48 = C, .. 1-8 = C
@@ -29,6 +30,22 @@ function horizontalsound_playMusicSoundUntilDone(block: Block) {
   ];
 }
 
+function sound_setvolumeto(block: Block) {
+  const volume = block.get_input('VOLUME');
+  return [`hub.speaker.volume(${volume.raw})`];
+}
+
+function sound_changevolumeby(block: Block) {
+  const volume = block.get_input('VOLUME');
+  return [
+    `hub.speaker.volume(hub.speaker.volume() + ${helpers.use('int_safe').call(volume).raw})`,
+  ];
+}
+
+function sound_volume(_block: Block) {
+  return new BlockValue('hub.speaker.volume()', true);
+}
+
 export default function sound(): HandlersType {
   const blockHandlers = new Map<string, BlockHandler>([
     ['flippersound_beepForTime', flippersound_beepForTime],
@@ -36,8 +53,12 @@ export default function sound(): HandlersType {
       'horizontalsound_playMusicSoundUntilDone',
       horizontalsound_playMusicSoundUntilDone,
     ],
+    ['sound_setvolumeto', sound_setvolumeto],
+    ['sound_changevolumeby', sound_changevolumeby],
   ]);
-  const operatorHandlers: any = null;
+  const operatorHandlers = new Map<string, OperatorHandler>([
+    ['sound_volume', sound_volume],
+  ]);
 
   return { blockHandlers, operatorHandlers };
 }

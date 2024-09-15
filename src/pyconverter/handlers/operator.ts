@@ -67,7 +67,10 @@ function operator_contains(block: Block) {
   const string1 = helpers.use('str')?.call(block.get_input('STRING1'));
   const string2 = helpers.use('str')?.call(block.get_input('STRING2'));
 
-  return new BlockValue(`${string2.raw} in ${string1.raw}`, true);
+  return new BlockValue(
+    `${string1.raw}.lower().find(${string2.raw}.lower()) >= 0`,
+    true
+  );
 }
 
 function operator_length(block: Block) {
