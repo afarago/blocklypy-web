@@ -1,4 +1,5 @@
 import helpers from './helpers';
+import imports from './imports';
 
 export class BlockValue {
   private _value: string | number | boolean;
@@ -68,10 +69,18 @@ export function num_eval(
     if (Array.isArray(a)) return num_eval(...(a as [any]));
     return !BlockValue.is_dynamic(a) ? BlockValue.raw(a) : a;
   } else if (arguments.length === 2) {
-    if (a !== '-') return null;
     const b1 = num_eval(b);
-    if (!BlockValue.is_dynamic(b1)) return -b1;
-    else return new BlockValue(`-${BlockValue.raw(b1)}`, true);
+    const allow_local = !BlockValue.is_dynamic(b1);
+    if (a === '-') {
+      return allow_local ? -b1 : new BlockValue(`-${BlockValue.raw(b1)}`, true);
+    } else if (a === 'abs') {
+      if (allow_local) {
+        return Math.abs(b1);
+      } else {
+        imports.use('umath', null);
+        return new BlockValue(`umath.fabs(${BlockValue.raw(b1)})`, true);
+      }
+    }
   } else if (arguments.length >= 3) {
     const a1 = num_eval(a);
     const c1 = num_eval(c);
