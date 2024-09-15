@@ -1,17 +1,20 @@
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
 import { calc_comparator } from '../converters';
+import { DeviceOnPortBase } from '../device';
 import { DeviceSensor } from '../devicesensor';
 import helpers from '../helpers';
 import { AWAIT_PLACEHOLDER, CONST_AUTO_PORT } from '../utils';
 import { HandlersType, OperatorHandler } from './handlers';
 
-// function flippermoresensors_deviceType(block: Block) {
-// TODO get PUPDevice of the current device for the info object!
-// }
+function flippermoresensors_deviceType(block: Block) {
+  const port = DeviceOnPortBase.portToString(
+    block.get_input('PORT')?.toString()
+  );
+  return helpers.use('pupdevice_type').call(port);
+}
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function flippersensors_orientation(block: Block) {
+function flippersensors_orientation(_block: Block) {
   return helpers
     .use('calc_hub_orientation_back')
     ?.call(new BlockValue('hub.imu.up()', true));
@@ -186,7 +189,7 @@ function flippersensors_buttonIsPressed(block: Block) {
 export default function sensor(): HandlersType {
   const blockHandlers: any = null;
   const operatorHandlers = new Map<string, OperatorHandler>([
-    // ["flippermoresensors_deviceType", flippermoresensors_deviceType],
+    ['flippermoresensors_deviceType', flippermoresensors_deviceType],
 
     ['flippersensors_orientationAxis', flippersensors_orientationAxis],
     ['flippersensors_orientation', flippersensors_orientation],

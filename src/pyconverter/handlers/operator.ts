@@ -2,23 +2,9 @@ import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
 import helpers from '../helpers';
 import imports from '../imports';
-import { _debug } from '../utils';
+import { _debug, sanitize } from '../utils';
 import * as Variables from '../variables';
 import { handlers, HandlersType, OperatorHandler } from './handlers';
-
-// TODO: split operators as handlers by map
-
-function operator_and_or(block: Block) {
-  const op = block?.opcode;
-  const operand1 = block?.get_inputAsBlock('OPERAND1');
-  const operand2 = block?.get_inputAsBlock('OPERAND2');
-  const code_condition1 = processOperation(operand1);
-  const code_condition2 = processOperation(operand2);
-  return new BlockValue(
-    `(${code_condition1.raw}) ${op.includes('and') ? 'and' : 'or'} (${code_condition2.raw})`,
-    true
-  );
-}
 
 export function processOperation(
   block: Block,
@@ -31,6 +17,18 @@ export function processOperation(
     else _debug('unknown block', block.get_block_description());
   }
   return new BlockValue(returnOnEmpty, true);
+}
+
+function operator_and_or(block: Block) {
+  const op = block?.opcode;
+  const operand1 = block?.get_inputAsBlock('OPERAND1');
+  const operand2 = block?.get_inputAsBlock('OPERAND2');
+  const code_condition1 = processOperation(operand1);
+  const code_condition2 = processOperation(operand2);
+  return new BlockValue(
+    `(${code_condition1.raw}) ${op.includes('and') ? 'and' : 'or'} (${code_condition2.raw})`,
+    true
+  );
 }
 
 function flipperevents_whenCondition(block: Block) {
@@ -232,9 +230,9 @@ function operator_not(block: Block) {
   return new BlockValue(`not (${code_condition.raw})`, true);
 }
 
-function argument_reporter_string(block: Block) {
-  const value = block.get_field('VALUE');
-  return new BlockValue(value.value, true, true, false);
+function argument_reporter_string_number_boolean(block: Block) {
+  const value = sanitize(block.get_field('VALUE').toString());
+  return new BlockValue(value, true, true, false);
 }
 
 export default function operations(): HandlersType {
@@ -263,8 +261,11 @@ export default function operations(): HandlersType {
     ['flippersensors_timer', flippersensors_timer],
     ['flipperevents_whenTimer', flipperevents_whenTimer],
     ['flipperevents_whenCondition', flipperevents_whenCondition],
-    ['argument_reporter_string_number', argument_reporter_string],
-    ['argument_reporter_boolean', argument_reporter_string],
+    [
+      'argument_reporter_string_number',
+      argument_reporter_string_number_boolean,
+    ],
+    ['argument_reporter_boolean', argument_reporter_string_number_boolean],
   ]);
 
   return { blockHandlers, operatorHandlers };

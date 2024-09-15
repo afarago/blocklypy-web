@@ -30,3 +30,26 @@ export function indent_code(value: string | string[]) {
   if (Array.isArray(value)) return value.map(line => INDENT + line);
   else return [INDENT + value];
 }
+
+export function sanitize(key: string) {
+  return key
+    .trim()
+    .toLowerCase()
+    .replace(/[ .-]|^\s?\d+/gim, '_')
+    .replace(
+      /[áéíóöőúüű]/g,
+      c =>
+        ({
+          á: 'a',
+          é: 'e',
+          í: 'i',
+          ó: 'o',
+          ö: 'o',
+          ő: 'o',
+          ú: 'u',
+          ü: 'u',
+          ű: 'u',
+        })[c]
+    )
+    .replace(/[^a-zA-Z0-9_]/gim, '');
+}

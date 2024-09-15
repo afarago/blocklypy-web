@@ -1,4 +1,5 @@
 import { BlockValue } from './blockvalue';
+import { sanitize } from './utils';
 
 type VariableRegistryType = {
   value: string | BlockValue;
@@ -44,16 +45,6 @@ export function use(
     registry.set(name, elem);
   }
   return elem.py_name_unique;
-}
-
-export function sanitize(key: string) {
-  // TODO: select only valid e.g. must start with char
-  key = key
-    .trim()
-    .replace(/[ .-]/gim, '_')
-    .replace(/[^a-zA-Z0-9_]/gim, '')
-    .toLowerCase();
-  return key;
 }
 
 export function convert(name: string, is_list = false) {

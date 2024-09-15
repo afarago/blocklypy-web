@@ -29,7 +29,10 @@ export class DeviceOnPortBase extends DeviceBase {
     imports.use('pybricks.parameters', 'Port');
   }
   get portString(): string {
-    return `Port.${this.port}`;
+    return DeviceOnPortBase.portToString(this.port);
+  }
+  static portToString(port: string): string {
+    return `Port.${port}`;
   }
   setup_code(): string[] {
     return super.setup_code();

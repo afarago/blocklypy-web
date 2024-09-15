@@ -25,7 +25,7 @@ export class RegistryManager<T> {
   private registry = new Map<string, RegistryEntry<T>>();
   private factory: (...args: any[]) => T;
 
-  constructor(factory: (...args: any[]) => T) {
+  constructor(factory?: (...args: any[]) => T) {
     this.factory = factory;
   }
 
@@ -40,7 +40,8 @@ export class RegistryManager<T> {
   use(id: string, ...args: any[]): T {
     let entry: RegistryEntry<T> = this.registry.get(id);
     if (!entry) {
-      const payload = this.factory(...args);
+      const payload =
+        typeof this.factory === 'function' ? this.factory(...args) : args[0];
       if (isRegistryEntryWithId(payload)) payload.id = id;
       entry = new RegistryEntry<T>(id, payload);
       this.registry.set(id, entry);

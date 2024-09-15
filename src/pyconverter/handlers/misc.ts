@@ -3,9 +3,9 @@ import { BlockValue } from '../blockvalue';
 import broadcasts from '../broadcasts';
 import { DeviceSensor } from '../devicesensor';
 import imports from '../imports';
-import * as Procedures from '../procedures';
+import procedures from '../procedures';
 import PyConverter from '../pyconverter';
-import { AWAIT_PLACEHOLDER } from '../utils';
+import { _debug, AWAIT_PLACEHOLDER } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
@@ -72,7 +72,7 @@ function horizontalevents_broadcast(block: Block) {
 
 function procedures_call(block: Block) {
   const proccode = block._block?.mutation?.proccode;
-  const procdef = Procedures.get(proccode);
+  const procdef = procedures.get(proccode);
 
   function defaultValueForType(type: string) {
     if (type === 'string') return new BlockValue('', false, false, true);

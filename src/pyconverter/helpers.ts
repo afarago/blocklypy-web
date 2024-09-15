@@ -19,7 +19,7 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
   constructor() {}
 
   call(...args: any[]): BlockValue {
-    const fn_item = functionsRegistry.get(this.id);
+    const fn_item = helperFunctionsMap.get(this.id);
 
     if (fn_item) {
       // check if static local conversion is available
@@ -65,7 +65,7 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
     const codes = Array.from(registry.entries())
       .filter(([, value]) => value.payload.isPyFnEnabled)
       .map(([key]) => {
-        const fn_item = functionsRegistry.get(key);
+        const fn_item = helperFunctionsMap.get(key);
         return fn_item.py_fn?.trim().split('\r\n');
       })
       .flat();
@@ -74,7 +74,7 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
   }
 }
 
-const functionsRegistry = new Map<string, HelperFunctionDefintion>(
+const helperFunctionsMap = new Map<string, HelperFunctionDefintion>(
   [
     // const
     [
@@ -391,6 +391,15 @@ def get_pupdevices(class_type, *args):
       },
       //TODO: wip, this returns the first one - LEGO should use ALL
     ],
+    [
+      'pupdevice_type',
+      {
+        py_fn: `
+def pupdevice_type(port):
+    try: return PUPDevice(port).info()['id']
+    except: return None`,
+      },
+    ],
   ]
 
   // num_eval: {
@@ -399,5 +408,5 @@ def get_pupdevices(class_type, *args):
   // },
 );
 
-const helperRegistry = new RegistryManager(() => new HelperEnabledEntry());
-export default helperRegistry;
+const helpers = new RegistryManager(() => new HelperEnabledEntry());
+export default helpers;

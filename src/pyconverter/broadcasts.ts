@@ -1,4 +1,6 @@
 import { RegistryManager } from './registrymanager';
+import { sanitize } from './utils';
+
 export class BroadcastEntry {
   name: string;
 
@@ -11,19 +13,7 @@ export class BroadcastEntry {
   }
 
   get_pyname() {
-    return `message_${BroadcastEntry.sanitize(this.name)}`;
-  }
-
-  private static sanitize(key: string) {
-    key = key
-      ?.trim()
-      .replace(/[ .-]/gim, '_')
-      .replace(/[^a-zA-Z0-9_]/gim, '')
-      .toLowerCase();
-    // TODO: select only valid e.g. must start with char
-    // TODO: check uniqueness
-    // TODO: add prefix
-    return key;
+    return `message_${sanitize(this.name)}`;
   }
 }
 

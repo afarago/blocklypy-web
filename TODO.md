@@ -1,9 +1,7 @@
 # List of TODO items
 
 ## NEXT
-- add list variable fns and expressions
 - multi motor handlers
-- device type - register properties that can be changed from default value / accept or reject it
 - session based running instead of static registry / clear up states --> remove global registries...
 - convert RegistryManager for variables and procedures
 

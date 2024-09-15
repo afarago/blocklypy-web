@@ -1,7 +1,8 @@
 import { BlockValue } from './blockvalue';
 import { processOperation } from './handlers/operator';
-import { ProcedureArg, ProcedureDefinition } from './procedures';
+import procedures, { ProcedureArg, ProcedureDefinition } from './procedures';
 import * as Scratch from './scratch';
+import { _debug, sanitize } from './utils';
 import * as Variables from './variables';
 
 export class BlockMatchError extends Error {}
@@ -234,40 +235,41 @@ export class Block {
   }
 }
 
-export function extractProcedureDefinition(block: Block): ProcedureDefinition {
-  const block2 = block.get_inputAsBlock('custom_block', false);
-  // this is a procedures_prototype
-
+export function extractProcedureDefinition(
+  block: Block,
+  useCache = false
+): ProcedureDefinition {
+  const block2 = block.get_inputAsBlock('custom_block', false); // this is a procedures_prototype
   const proccode = block2._block.mutation.proccode;
-  const blockname = Variables.sanitize(
-    proccode.match(/^(.*?)(?= %[sb])|^.*/)?.[0]
-  );
-  const argumentnames1 = Array.from(
-    JSON.parse(block2._block.mutation.argumentnames) as string[]
-  ).map(e => Variables.sanitize(e));
+  if (useCache) return procedures.get(proccode);
 
+  const blockname = sanitize(proccode.match(/^(.*?)(?= %[sb])|^.*/)?.[0]);
   const argumenttypes: string[] = [];
   const argumentids: string[] = [];
-  // const argumentnames2: string[] = [];
+  const argumentnames: string[] = [];
   Object.entries(block2._block.inputs).forEach(([key, v3]) => {
     const blockId3 = v3[1];
     if (typeof blockId3 !== 'string') return null;
     const block3 = block2.getById(blockId3);
-    // const argname = Variables.sanitize(
-    //   block3.get_field('VALUE')?.value?.toString()
-    // );
     const argtype = block3.opcode.replace('argument_reporter_', '');
-    const argtype_mod = argtype === 'string_number' ? 'string' : 'boolean';
+    const argname = sanitize(block3.get_field('VALUE')?.toString());
 
+    // do not check duplicates, scrach cannot handle this anyhow
+    //if (argumentnames.indexOf(argname) >= 0) argname = `${argname}_${1}`;
+    if (argumentnames.indexOf(argname) >= 0)
+      _debug(`duplicate argname at ${proccode} - ${argname}/${key}`);
+
+    argumentnames.push(argname);
     argumentids.push(key);
-    argumenttypes.push(argtype_mod);
+    argumenttypes.push(argtype === 'string_number' ? 'string' : 'boolean');
     // argumentnames2.push(argname);
   });
 
-  return new ProcedureDefinition(
-    proccode,
+  const retval = new ProcedureDefinition(
+    proccode, // will act as id
     blockname,
-    argumentnames1.reduce((aggr, val, idx) => {
+    block._id,
+    argumentnames.reduce((aggr, val, idx) => {
       aggr.set(val, {
         name: val,
         id: argumentids[idx],
@@ -276,4 +278,6 @@ export function extractProcedureDefinition(block: Block): ProcedureDefinition {
       return aggr;
     }, new Map<string, ProcedureArg>())
   );
+
+  return retval;
 }

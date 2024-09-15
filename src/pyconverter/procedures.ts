@@ -1,11 +1,21 @@
+import { RegistryEntryWithId, RegistryManager } from './registrymanager';
+import { _debug } from './utils';
+
 export type ProcedureArg = { name: string; id: string; type: string };
-export class ProcedureDefinition {
+export class ProcedureDefinition implements RegistryEntryWithId {
   id: string;
   name: string;
+  blockid: string;
   args: Map<string, ProcedureArg>;
 
-  constructor(id: string, name: string, args: Map<string, ProcedureArg>) {
-    this.id = id;
+  constructor(
+    id: string,
+    name: string,
+    blockid: string,
+    args: Map<string, ProcedureArg>
+  ) {
+    this.id = id; // "proccode" field
+    this.blockid = blockid;
     this.name = name;
     this.args = args;
   }
@@ -21,32 +31,15 @@ export class ProcedureDefinition {
 
     return `${this.getPyName(functionPrefix)}(${signature_params.join(', ')})`;
   }
+
+  // static getArgDefByArgBlockId(id: string) {
+  //   for (const proc of proceduresRegistry.values()) {
+  //     for (const arg of proc.payload.args.values()) {
+  //       if (arg.id === id) return arg;
+  //     }
+  //   }
+  // }
 }
 
-export const registry = new Map<string, ProcedureDefinition>();
-
-export function register(input: ProcedureDefinition) {
-  const elem = registry.get(input.id);
-  if (!elem) registry.set(input.id, input);
-
-  return elem;
-}
-
-export function get(key: string) {
-  return registry.get(key);
-}
-
-export function sanitize(key: string) {
-  // TODO: select only valid e.g. must start with char
-  key = key
-    .trim()
-    .replace(/[ .-]/gim, '_')
-    .replace(/[^a-zA-Z0-9_]/gim, '')
-    .toLowerCase();
-  return key;
-}
-
-export function clear() {
-  //TODO: move to session handling
-  registry.clear();
-}
+const procedures = new RegistryManager<ProcedureDefinition>();
+export default procedures;

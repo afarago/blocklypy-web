@@ -28,7 +28,7 @@ export class ImportRegistryEntry implements RegistryEntryWithUse {
   }
 }
 
-const importRegistry = new RegistryManager(
+const imports = new RegistryManager(
   (...args: any[]) => new ImportRegistryEntry(...args)
 );
-export default importRegistry;
+export default imports;

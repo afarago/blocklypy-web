@@ -7,7 +7,8 @@ import { initMotorPairMovementPair } from './handlers/motorpair';
 import { processOperation } from './handlers/operator';
 import helpers, { HelperEnabledEntry } from './helpers';
 import imports, { ImportRegistryEntry } from './imports';
-import * as Procedures from './procedures';
+import procedures from './procedures';
+import PyConverterOptions from './pyconverteroptions';
 import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
@@ -17,7 +18,6 @@ import {
   indent_code,
 } from './utils';
 import * as Variables from './variables';
-import PyConverterOptions from './pyconverteroptions';
 
 enum StackGroupType {
   Start = 1,
@@ -221,7 +221,7 @@ export default class PyConverter {
     helpers.clear();
     imports.clear();
     Variables.clear();
-    Procedures.clear();
+    procedures.clear();
   }
 
   preprocessMessages(projectData: ScratchProject) {
@@ -238,7 +238,7 @@ export default class PyConverter {
       .forEach(([id, sblock]) => {
         const block = new Block(sblock, id, target1);
         const procdef = extractProcedureDefinition(block);
-        Procedures.register(procdef);
+        procedures.use(procdef.id, procdef);
       });
   }
 
@@ -340,7 +340,7 @@ export default class PyConverter {
           const messageRecord = this.getMessageRecord(currentStack);
           const messageId = messageRecord?.[1];
           const messageNameRaw = messageRecord?.[0]?.toString();
-          // const messageName = broadcasts.sanitize(messageNameRaw);
+          // const messageName = sanitize(messageNameRaw);
           const isMessageChanged = lastStackEventMessageId !== messageId;
           lastStackEventMessageId = this.checkAndRegisterMessage(
             currentStack,
@@ -352,8 +352,9 @@ export default class PyConverter {
           );
 
           if (group === StackGroupType.MyBlock) {
-            const functionDef = extractProcedureDefinition(headBlock);
-            Procedures.register(functionDef);
+            const functionDef = extractProcedureDefinition(headBlock, true);
+            //procedures.use(functionDef.id, functionDef);
+            // Procedures.register(functionDef);
 
             stack_fn = functionDef.getPyName('myblock_');
             funcSignature = functionDef.getPyDefinition();
