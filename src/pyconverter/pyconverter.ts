@@ -1,7 +1,9 @@
 import { Block, extractProcedureDefinition } from './block';
 import broadcasts from './broadcasts';
 import { setup_devices_clear, setup_devices_registry } from './device';
+import { DeviceDriveBase } from './devicedrivebase';
 import { handlers } from './handlers/handlers';
+import { initMotorPairMovementPair } from './handlers/motorpair';
 import { processOperation } from './handlers/operator';
 import helpers, { HelperEnabledEntry } from './helpers';
 import imports, { ImportRegistryEntry } from './imports';
@@ -10,12 +12,11 @@ import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
   ASYNC_PLACEHOLDER,
   AWAIT_PLACEHOLDER,
-  debug,
   get_divider,
+  INDENT,
   indent_code,
 } from './utils';
 import * as Variables from './variables';
-import { INDENT } from './utils';
 
 enum StackGroupType {
   Start = 1,
@@ -62,7 +63,9 @@ export function convertFlipperProgramToPython(
 
     const target1 = projectData.targets[1];
     // ------------------------
-    const topLevelStacks = getTopLevelStacks(target1);
+    const topLevelStacks = prepareTopLevelStacks(target1);
+
+    // ------------------------
     plainCode = generatePlainCodeForStacks(topLevelStacks);
 
     // ------------------------
@@ -80,6 +83,7 @@ export function convertFlipperProgramToPython(
     }
 
     const stackGroups = getStackGroups(topLevelStacks);
+    preprocessMotorPairInfo(stackGroups);
 
     // switch to async if there ar multiple start stacks or any event stack
     if (!isAsyncNeeded)
@@ -89,7 +93,7 @@ export function convertFlipperProgramToPython(
         (stackGroups.get(StackGroupType.MessageEvent)?.length ?? 0) > 0 ||
         false;
 
-    const programStacks = getPycodeForStackGroups(stackGroups);
+    const programStacks = getPycodeForStackGroups(stackGroups, options);
     const programCode = createProgramStacksCode(programStacks, options);
 
     const setupCode = createSetupCodes();
@@ -244,10 +248,9 @@ function createProgramStacksCode(
     ? stacks
         .filter(
           ostack =>
-            (!options?.debug?.showThisStackOnly ||
-              ostack.id === options?.debug?.showThisStackOnly) &&
-            (options?.debug?.showOrphanCode ||
-              ostack.group !== StackGroupType.Orphan)
+            !options?.debug?.showThisStackOnly ||
+            ostack.id === options?.debug?.showThisStackOnly
+          // && (options?.debug?.showOrphanCode || ostack.group !== StackGroupType.Orphan)
         )
         .map(ostack =>
           ostack.code.length > 0 && !ostack.isDivider
@@ -303,7 +306,8 @@ type OutputCodeStack = {
 };
 
 function getPycodeForStackGroups(
-  stackGroups: Map<StackGroupType, StackGroup[]>
+  stackGroups: Map<StackGroupType, StackGroup[]>,
+  options: PyConverterOptions
 ) {
   let stackCounter = 0;
   const aggregatedCodeStacks: OutputCodeStack[] = [];
@@ -444,6 +448,8 @@ function getPycodeForStackGroups(
 
           default:
             {
+              if (!options?.debug?.showOrphanCode) continue;
+
               code.push(
                 '### this code has no hat block and will not be running'
               );
@@ -528,7 +534,7 @@ function checkAndRegisterMessage(
   return lastStackEventMessageId;
 }
 
-function getTopLevelStacks(target1: ScratchTarget) {
+function prepareTopLevelStacks(target1: ScratchTarget) {
   return Object.entries(target1.blocks)
     .filter(([, block]) => block.topLevel && !block.shadow)
     .map(([id, block]) => {
@@ -585,6 +591,29 @@ function getStackGroups(topLevelStacks: Block[][]) {
   return retval;
 }
 
+function preprocessMotorPairInfo(
+  stackGroups: Map<StackGroupType, StackGroup[]>
+) {
+  function _process() {
+    for (const [stack_type, stack_group] of stackGroups.entries()) {
+      if (stack_type === StackGroupType.Orphan) continue;
+      for (const stack of stack_group) {
+        for (const block of stack.stack) {
+          const op = block.opcode;
+          if (op === 'flippermove_setMovementPair') {
+            initMotorPairMovementPair(block);
+            return true; // only one setMovementPair is regarded
+          }
+        }
+      }
+    }
+  }
+  if (!_process()) initMotorPairMovementPair(null, ['A', 'B']);
+
+  const device = DeviceDriveBase.instance();
+  device.ensure_dependencies();
+}
+
 export function process_stack(blocks: Block[] | null): string[] {
   const retval: string[] = [];
 
@@ -638,6 +667,6 @@ function convertBlockToCode(block: Block): string[] | null {
     ];
   }
 
-  debug('unknown block', block.get_block_description());
+  // _debug('unknown block', block.get_block_description());
   return [`# unknown: ${block.get_block_description()}`];
 }

@@ -2,7 +2,7 @@ import { BlockValue } from './blockvalue';
 import { flipperColorsMap, round2 } from './converters';
 import imports from './imports';
 import { RegistryEntryWithId, RegistryManager } from './registrymanager';
-import { AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES, debug } from './utils';
+import { _debug, AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES } from './utils';
 
 interface HelperFunctionDefintion {
   py_fn?: string;
@@ -50,7 +50,7 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
         //!! fn_item.py_dependencies?.forEach(fn_name2 => py_register(fn_name2));
       }
     } else {
-      debug(`WARN: missing helper function called "${this.id}"`);
+      _debug(`WARN: missing helper function called "${this.id}"`);
     }
 
     return new BlockValue(

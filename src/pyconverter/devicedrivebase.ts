@@ -12,7 +12,6 @@ export class DeviceDriveBase extends DeviceBase {
   _ports: any;
   _wheel_diameter: any;
   _axle_track: any;
-  _default_speed: any;
   _default_then: null;
   _rotation_distance: number;
   motor_left: any;
@@ -22,7 +21,6 @@ export class DeviceDriveBase extends DeviceBase {
     this._ports = ports;
     this._wheel_diameter = wheel_diameter;
     this._axle_track = axle_track;
-    this._default_speed = helpers.use('convert_speed')?.call(50);
     this._default_then = null;
   }
   static DEVICENAME = 'drivebase';
@@ -39,24 +37,14 @@ export class DeviceDriveBase extends DeviceBase {
       elem = new DeviceDriveBase(ports, wheel_diameter, axle_track);
       setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
     } else {
-      // TODO: init/reinit motors??
       elem.ports = ports ?? elem._ports;
       elem.wheel_diameter = wheel_diameter ?? elem._wheel_diameter;
       elem.axle_track = axle_track ?? elem._axle_track;
     }
     return elem;
   }
-  get_speed(value: any) {
-    return value === null ? this.default_speed : value;
-  }
   get_then() {
     return this._default_then;
-  }
-  set default_speed(value) {
-    this._default_speed = value;
-  }
-  get default_speed() {
-    return this._default_speed;
   }
   get default_speed_variable() {
     // default_speeds is anyhow added with motors
@@ -109,7 +97,7 @@ export class DeviceDriveBase extends DeviceBase {
       ...[
         `${this.devicename} = DriveBase(${this.motor_left.devicename}, ${this.motor_right.devicename}, ${this.wheel_diameter}, ${this.axle_track})`,
         // `${this.rotation_distance_variable} = ${this.rotation_distance}`,
-        `${this.default_speed_variable} = ${this.default_speed.raw}`,
+        `${this.default_speed_variable} = ${helpers.use('convert_speed')?.call(50).raw}`,
       ]
     );
     return setup_code;

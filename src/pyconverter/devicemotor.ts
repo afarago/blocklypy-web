@@ -1,18 +1,15 @@
-import { BlockValue } from './blockvalue';
 import { DeviceOnPortBase, setup_devices_registry } from './device';
 import helpers from './helpers';
 import imports from './imports';
 import { CONST_AUTO_PORT } from './utils';
 
 export class DeviceMotor extends DeviceOnPortBase {
-  _default_speed: BlockValue = null;
   _default_then: string = null;
   direction_cw: boolean = null;
 
   constructor(port: string, direction_cw: boolean) {
     super(port);
     this.direction_cw = direction_cw;
-    this._default_speed = helpers.use('convert_speed')?.call(50);
     this._default_then = null;
   }
   static devicename_from_port(port: string) {
@@ -29,17 +26,8 @@ export class DeviceMotor extends DeviceOnPortBase {
     }
     return elem;
   }
-  get_speed(value?: number) {
-    return !value ? this._default_speed : value;
-  }
   get_then() {
     return this._default_then;
-  }
-  set default_speed(value) {
-    this._default_speed = value;
-  }
-  get default_speed() {
-    return this._default_speed;
   }
   get default_speed_variable() {
     return `default_speeds[${this.devicename}]`;
@@ -71,7 +59,7 @@ export class DeviceMotor extends DeviceOnPortBase {
             ? `${sensor_class}(${[this.portString].concat(args).join(', ')})`
             : `${helpers.use('get_pupdevices').call([sensor_class].concat(args).join(', ')).raw}`
         }`,
-        `${this.default_speed_variable} = ${this.default_speed.raw}`,
+        `${this.default_speed_variable} = ${helpers.use('convert_speed')?.call(50).raw}`,
       ]
     );
     return setup_code;

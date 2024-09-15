@@ -30,7 +30,6 @@ function _motorSetSpeed(block: Block, isFullMode: boolean) {
   // const d = device.devicename;
 
   const value = helpers.use('convert_speed')?.call(speed);
-  device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
 

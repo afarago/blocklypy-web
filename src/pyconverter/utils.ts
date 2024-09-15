@@ -16,7 +16,7 @@ export function get_divider(text: string, fillchar = '-', width = 80) {
   return `# ${fillchar.repeat(Math.floor(len / 2))} ${text} ${fillchar.repeat(Math.ceil(len / 2))} #`;
 }
 
-export function debug(...args: any[]) {
+export function _debug(...args: any[]) {
   const prefix = getCurrentLine
     ? (() => {
         const line = getCurrentLine({ frames: +3 });

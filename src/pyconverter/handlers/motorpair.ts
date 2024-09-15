@@ -19,7 +19,8 @@ function _process_flippermove(
   value: BlockValue,
   device: DeviceDriveBase,
   direction: string,
-  steer?: BlockValue
+  steer?: BlockValue,
+  speed?: BlockValue
 ) {
   const d = device.devicename;
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
@@ -59,9 +60,11 @@ function _process_flippermove(
       //TODO: handle steering != 0 for time
     }
 
+    const speed1 = speed ? speed.raw : device.default_speed_variable;
+
     retval.push(
       ...[
-        `${AWAIT_PLACEHOLDER}${d}.drive(${direction_sign}${device.default_speed_variable}, ${steer_value})`,
+        `${AWAIT_PLACEHOLDER}${d}.drive(${direction_sign}${speed1}, ${steer_value})`,
         `${AWAIT_PLACEHOLDER}wait(${time.raw})`,
         `${stop_fn}`,
       ]
@@ -144,10 +147,31 @@ function flippermove_steer(block: Block) {
   );
 }
 
+function flippermoremove_steerDistanceAtSpeed(block: Block) {
+  const steer = block.get_input('STEERING');
+  const steer_adjusted = steer; // TODO
+  const value = block.get_input('DISTANCE');
+  const unit = block.get_field('UNIT');
+  const speed = helpers.use('convert_speed').call(block.get_input('SPEED'));
+
+  const device = DeviceDriveBase.instance() as DeviceDriveBase;
+  // inputs: steering, value
+  return _process_flippermove(
+    block.opcode,
+    unit,
+    value,
+    device,
+    null,
+    steer_adjusted,
+    speed
+  );
+}
+
 function flippermove_startSteer(block: Block) {
   const steer = block.get_input('STEERING');
   //TODO: handle as value can stick in "straight: 0" instead of "0" when adding and removing variable
   // const steer_adjusted = steer; // TODO
+  const speed = block.get_input('SPEED');
 
   //TODO: write a Helper for steer adjust, how to branch?
   const steer_value = parseInt(steer.value.toString());
@@ -158,10 +182,33 @@ function flippermove_startSteer(block: Block) {
 
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   const d = device.devicename;
-  return [
-    `${AWAIT_PLACEHOLDER}${d}.drive(${device.default_speed_variable}, ${steer_value})`,
-  ];
+  const speed1 = speed
+    ? helpers.use('convert_speed').call(speed)
+    : device.default_speed_variable;
+  return [`${AWAIT_PLACEHOLDER}${d}.drive(${speed1}, ${steer_value})`];
 }
+
+// function flippermoremove_startSteerAtPower(block: Block) {
+//   const steer = block.get_input('STEERING');
+//   //TODO: handle as value can stick in "straight: 0" instead of "0" when adding and removing variable
+//   // const steer_adjusted = steer; // TODO
+//   const power = block.get_input('POWER');
+
+//   //TODO: write a Helper for steer adjust, how to branch?
+//   const steer_value = parseInt(steer.value.toString());
+//   if (steer_value !== 0)
+//     throw new Error(
+//       `Steering direction ${steer.raw} for ${block.opcode} is not yet implemented here`
+//     );
+
+//   const device = DeviceDriveBase.instance() as DeviceDriveBase;
+//   const dl = device.motor_left.devicename;
+//   const dr = device.motor_right.devicename;
+//   return [
+//     `${AWAIT_PLACEHOLDER}${dl}.dc(${power})`,
+//     `${AWAIT_PLACEHOLDER}${dr}.dc(${power})`,
+//   ];
+// }
 
 function flippermoremove_movementSetStopMethod(block: Block) {
   const stop = parseInt(block.get_field('STOP')?.value?.toString());
@@ -180,7 +227,6 @@ function flippermove_movementSpeed(block: Block) {
   // const d = device.devicename;
 
   const value = helpers.use('convert_speed')?.call(speed);
-  device.default_speed = value;
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
 
@@ -214,10 +260,15 @@ function flippermove_startMove(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   const d = device.devicename;
 
-  const result = direction_forward
-    ? device.default_speed
-    : num_eval('-', device.default_speed);
-  return [`${AWAIT_PLACEHOLDER}${d}.drive(${BlockValue.raw(result)})`];
+  const speed = new BlockValue(
+    device.default_speed_variable,
+    true,
+    true,
+    false
+  );
+  return [
+    `${AWAIT_PLACEHOLDER}${d}.drive(${direction_forward ? '' : '-'},${BlockValue.raw(speed)})`,
+  ];
 }
 
 function flippermove_setDistance(block: Block) {
@@ -240,11 +291,20 @@ function flippermove_setDistance(block: Block) {
   ];
 }
 
+export function initMotorPairMovementPair(block?: Block, pair?: string[]) {
+  const ports = block
+    ? block.get_input('PAIR')?.value?.toString().split('')
+    : pair;
+  return DeviceDriveBase.instance(ports);
+}
+
 function flippermove_setMovementPair(block: Block) {
   const ports = block.get_input('PAIR')?.value?.toString().split('');
-  const device = DeviceDriveBase.instance(ports) as DeviceDriveBase;
+
+  // this handler is only a placeholder, initMotorPairMovementPair will only be called once in the preprocess phase
+  const device = DeviceDriveBase.instance();
   return [
-    `# setting drivebase motor pair to ${device.ports} - this will apply for the complete code`,
+    `# setting drivebase motor pair to ${ports.join(', ')} - first one ${device.ports.join(', ')} is applied for the complete code`,
   ];
 }
 
@@ -261,7 +321,13 @@ export default function motorpair(): HandlersType {
       flippermoremove_movementSetStopMethod,
     ],
     ['flippermove_startSteer', flippermove_startSteer],
+    ['flippermoremove_startSteerAtSpeed', flippermove_startSteer],
+    // ['flippermoremove_startSteerAtPower', flippermoremove_startSteerAtPower],
     ['flippermove_steer', flippermove_steer],
+    [
+      'flippermoremove_steerDistanceAtSpeed',
+      flippermoremove_steerDistanceAtSpeed,
+    ],
   ]);
   const operatorHandlers: any = null;
 

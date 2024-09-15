@@ -1,7 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
 import helpers from '../helpers';
-import { debug } from '../utils';
+import { _debug } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
