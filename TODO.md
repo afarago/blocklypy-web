@@ -3,6 +3,8 @@
 ## NEXT
 - session based running instead of static registry /  clear up states --> remove global registries...
 - convert RegistryManager for setup_devices_registry
+- implement steering direction for distance as well
+- keep BlockValue actual contained type: string/num/bool/unknown and perform conversions based on this / leave some float_safe / str out, get raw(acceps: string / string|num)
 
 ## LATER
 - handle multi port Motor

@@ -4,6 +4,7 @@ import { calc_stop } from '../converters';
 import { DeviceDriveBase } from '../devicedrivebase';
 import helpers from '../helpers';
 import {
+  _debug,
   AWAIT_PLACEHOLDER,
   CONST_CM,
   CONST_DEGREES,
@@ -24,12 +25,76 @@ function _process_flippermove(
 ) {
   const d = device.devicename;
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
-  let direction_sign;
+  let direction_sign = '';
 
-  //TODO: handle direction=null, steer=0... scenarios
+  if (unit.value !== CONST_SECONDS) {
+    return _move_distance();
+  } else {
+    return _move_seconds();
+  }
 
-  //=== SECONDS
-  if (unit.value === CONST_SECONDS) {
+  // ----------------------------
+  function _move_distance() {
+    //=== CM and INCHES
+    let distance;
+    if (unit.value === CONST_CM || unit.value === CONST_INCHES) {
+      distance = helpers.use('convert_distance')?.call(value, unit);
+    } else if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
+      const factor =
+        device.rotation_distance *
+        (unit.value === CONST_ROTATIONS ? 1 : 1 / 360);
+      distance = num_eval(value, '*', factor);
+    } else {
+      throw new Error(`Unknown unit ${unit.value}`);
+    }
+
+    //== DIRECTION
+    let steer_value = 0;
+    if (direction) {
+      //--- STRAIGHT
+      if (direction === 'forward' || direction === 'back') {
+        direction_sign = direction === 'forward' ? '' : '-';
+        return [
+          `${AWAIT_PLACEHOLDER}${d}.straight(${direction_sign}${distance.raw}${postfix_then})`,
+        ];
+      }
+      //--- SPIN TURN
+      else if (direction === 'clockwise' || direction === 'counterclockwise') {
+        direction_sign = direction === 'clockwise' ? '' : '-';
+        // rot_deg = distance / (axle_track * PI)
+        // NOTE: not using variable for axle_track - we assume this is constant for the complete program
+        const rot_deg = helpers
+          .use('round')
+          ?.call(
+            num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
+            2
+          );
+        return [
+          `${AWAIT_PLACEHOLDER}${d}.turn(${direction_sign}${rot_deg.raw}${postfix_then})`,
+        ];
+      }
+    }
+
+    //== STEERING
+    else if (steer) {
+      steer_value = parseInt(steer.value.toString());
+      // steer==0 is simply means 'forward'
+      if (steer_value === 0) direction_sign = '';
+      else
+        throw new Error(
+          `Steering direction ${steer.raw} for ${op} with ${unit.raw} is not yet implemented here`
+        );
+      //TODO: handle steering != 0 for distance using curve
+      // 0=straight/r=??, 50=pivotturn (D=axle_track/2), 100=spinturn (D=0)
+      // robot_rotation = (PI*wheel_size)/(PI*D) ...?
+
+      return [
+        `${AWAIT_PLACEHOLDER}${d}.straight(${direction_sign}${distance.raw}${postfix_then})`,
+      ];
+    }
+  }
+
+  function _move_seconds() {
     const time = helpers.use('convert_time')?.call(value);
     const stop_fn =
       device.get_then() === 'Stop.COAST'
@@ -39,93 +104,36 @@ function _process_flippermove(
     const retval = [];
 
     let steer_value = 0;
+    let steer_spd_multiplier, fwd_spd_multiplier;
     if (direction) {
       if (direction === 'clockwise' || direction === 'counterclockwise') {
-        //TODO: handle pivot turn (cw/ccw) for time
-        throw new Error(
-          `Steering direction ${direction} for ${op} is not yet implemented here`
-        );
+        steer_spd_multiplier = direction === 'clockwise' ? 1.0 : -1.0;
+        fwd_spd_multiplier = 0; // spin turn
+      } else if (direction === 'forward' || direction === 'back') {
+        steer_spd_multiplier = 0;
+        fwd_spd_multiplier = direction === 'forward' ? 1.0 : -1.0;
       }
-
-      direction_sign =
-        direction === 'forward' || direction === 'clockwise' ? '' : '-';
     } else if (steer) {
-      steer_value = parseInt(steer.value.toString());
-      // steer==0 is simply means 'forward'
-      if (steer_value === 0) direction_sign = '';
-      else
-        throw new Error(
-          `Steering direction ${steer.raw} for ${op} with ${unit.raw} is not yet implemented here`
-        );
-      //TODO: handle steering != 0 for time
+      steer_value = num_eval(helpers.use('int_safe').call(steer), '/', 100);
+      steer_spd_multiplier = steer_value;
+      fwd_spd_multiplier = num_eval(1, '-', ['abs', steer_value]);
     }
 
-    const speed1 = speed ? speed.raw : device.default_speed_variable;
+    const speed1 = speed
+      ? speed
+      : new BlockValue(device.default_speed_variable, true);
+    const fwd_speed = num_eval(fwd_spd_multiplier, '*', speed1);
+    const steer_speed = num_eval(steer_spd_multiplier, '*', speed1);
 
     retval.push(
       ...[
-        `${AWAIT_PLACEHOLDER}${d}.drive(${direction_sign}${speed1}, ${steer_value})`,
+        `${AWAIT_PLACEHOLDER}${d}.drive(${fwd_speed.raw}, ${steer_speed.raw})`,
         `${AWAIT_PLACEHOLDER}wait(${time.raw})`,
         `${stop_fn}`,
       ]
     );
 
     return retval;
-  }
-
-  //=== CM and INCHES
-  let distance;
-  if (unit.value === CONST_CM || unit.value === CONST_INCHES) {
-    distance = helpers.use('convert_distance')?.call(value, unit);
-  } else if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
-    const factor =
-      device.rotation_distance * (unit.value === CONST_ROTATIONS ? 1 : 1 / 360);
-    distance = num_eval(value, '*', factor);
-  } else {
-    throw new Error(`Unknown unit ${unit.value}`);
-  }
-
-  //== DIRECTION
-  let steer_value = 0;
-  if (direction) {
-    //--- STRAIGHT
-    if (direction === 'forward' || direction === 'back') {
-      direction_sign = direction === 'forward' ? '' : '-';
-      return [
-        `${AWAIT_PLACEHOLDER}${d}.straight(${direction_sign}${distance.raw}${postfix_then})`,
-      ];
-    }
-    //--- PIVOT TURN
-    else if (direction === 'clockwise' || direction === 'counterclockwise') {
-      direction_sign = direction === 'clockwise' ? '' : '-';
-      // rot_deg = distance / (axle_track * PI)
-      //TODO: use axle_track_variable
-      const rot_deg = helpers
-        .use('round')
-        ?.call(
-          num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
-          2
-        );
-      return [
-        `${AWAIT_PLACEHOLDER}${d}.turn(${direction_sign}${rot_deg.raw}${postfix_then})`,
-      ];
-    }
-  }
-
-  //== STEERING
-  else if (steer) {
-    steer_value = parseInt(steer.value.toString());
-    // steer==0 is simply means 'forward'
-    if (steer_value === 0) direction_sign = '';
-    else
-      throw new Error(
-        `Steering direction ${steer.raw} for ${op} with ${unit.raw} is not yet implemented here`
-      );
-    //TODO: handle steering != 0 for time
-
-    return [
-      `${AWAIT_PLACEHOLDER}${d}.straight(${direction_sign}${distance.raw}${postfix_then})`,
-    ];
   }
 }
 
