@@ -17,7 +17,7 @@ import {
   INDENT,
   indent_code,
 } from './utils';
-import * as Variables from './variables';
+import variables, { VariableRegistryEntry } from './variables';
 
 enum StackGroupType {
   Start = 1,
@@ -57,10 +57,11 @@ export default class PyConverter {
       //TODO: move to session handling
       this.clearCaches();
 
+      const target1 = projectData.targets[1];
       this.preprocessMessages(projectData);
       this.preprocessProcedureDefinitions(projectData);
+      this.preprocessVariables(target1);
 
-      const target1 = projectData.targets[1];
       // ------------------------
       const topLevelStacks = this.prepareTopLevelStacks(target1);
 
@@ -68,19 +69,6 @@ export default class PyConverter {
       plainCode = this.generatePlainCodeForStacks(topLevelStacks);
 
       // ------------------------
-      for (const varblock of Object.values(target1.variables)) {
-        if (Array.isArray(varblock)) {
-          const name = varblock[0];
-          Variables.use(name, null, false);
-        }
-      }
-      for (const varblock of Object.values(target1.lists)) {
-        if (Array.isArray(varblock)) {
-          const name = varblock[0];
-          Variables.use(name, null, true);
-        }
-      }
-
       const stackGroups = this.getStackGroups(topLevelStacks);
       this.preprocessStackGroups(stackGroups);
 
@@ -117,7 +105,10 @@ export default class PyConverter {
           code: setupCode,
           skip: this._options?.debug?.skipSetup,
         },
-        { name: 'global variables', code: Variables.to_global_code() },
+        {
+          name: 'global variables',
+          code: VariableRegistryEntry.to_global_code(variables),
+        },
         { name: 'program code', code: programCode },
         { name: 'main code', code: mainProgramCode },
       ];
@@ -150,6 +141,23 @@ export default class PyConverter {
     }
 
     return { plaincode: plainCode, pycode: pyCode };
+  }
+
+  private preprocessVariables(target1: ScratchTarget) {
+    for (const varblock of Object.values(target1.variables)) {
+      if (Array.isArray(varblock)) {
+        const name = varblock[0];
+        const entry = variables.use([name, false], null, false);
+        entry.generateUniqueName();
+      }
+    }
+    for (const varblock of Object.values(target1.lists)) {
+      if (Array.isArray(varblock)) {
+        const name = varblock[0];
+        const entry = variables.use([name, true], null, true);
+        entry.generateUniqueName();
+      }
+    }
   }
 
   generatePlainCodeForStacks(topLevelStacks: Block[][]) {
@@ -220,7 +228,7 @@ export default class PyConverter {
     setup_devices_clear();
     helpers.clear();
     imports.clear();
-    Variables.clear();
+    variables.clear();
     procedures.clear();
   }
 

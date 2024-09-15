@@ -3,7 +3,7 @@ import { processOperation } from './handlers/operator';
 import procedures, { ProcedureArg, ProcedureDefinition } from './procedures';
 import * as Scratch from './scratch';
 import { _debug, sanitize } from './utils';
-import * as Variables from './variables';
+import variables from './variables';
 
 export class BlockMatchError extends Error {}
 
@@ -160,12 +160,12 @@ export class Block {
             return op;
           } else if (typeof ref === 'object' && Array.isArray(ref)) {
             //!! assert(ref[0] === 12 || ref[0] === 13);
-            const var_name = Variables.convert(
+            const var_entry = variables.get([
               ref[1].toString(),
-              ref[0] === Scratch.BlockValueType.LIST
-            );
+              ref[0] === Scratch.BlockValueType.LIST,
+            ]);
             // const var_ref = ref[2]
-            return new BlockValue(var_name, true, true);
+            return new BlockValue(var_entry.py_name_unique, true, true);
           }
         }
         break;

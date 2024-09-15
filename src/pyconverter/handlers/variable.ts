@@ -2,7 +2,7 @@ import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
 import helpers from '../helpers';
 import { _debug } from '../utils';
-import * as Variables from '../variables';
+import variables from '../variables';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function _readParameters(
@@ -17,10 +17,10 @@ function _readParameters(
 ) {
   const item = options.item ? block.get_input('ITEM') : undefined;
   const variable = options.variable
-    ? Variables.convert(block.get_field('VARIABLE').value?.toString(), false)
+    ? variables.get([block.get_field('VARIABLE')?.toString(), false])
     : undefined;
   const list = options.list
-    ? Variables.convert(block.get_field('LIST').value?.toString(), true)
+    ? variables.get([block.get_field('LIST')?.toString(), true])
     : undefined;
   const index = options.index
     ? num_eval(block.get_input('INDEX'), '-', 1, true)
@@ -37,7 +37,7 @@ function data_setvariableto(block: Block) {
   });
 
   // here variable value can be strong or number, keep it as is
-  return [`${variable} = ${BlockValue.raw(value)}`];
+  return [`${variable.py_name_unique} = ${BlockValue.raw(value)}`];
 }
 
 function data_changevariableby(block: Block) {
@@ -48,7 +48,7 @@ function data_changevariableby(block: Block) {
 
   const value2 = value.is_variable ? num_eval(value) : value;
   return [
-    `${variable} = ${helpers.use('float_safe').call(new BlockValue(variable, true, true, false))} + ${value2.raw}`,
+    `${variable.py_name_unique} = ${helpers.use('float_safe').call(new BlockValue(variable.py_name_unique, true, true, false))} + ${value2.raw}`,
   ];
 }
 
@@ -58,7 +58,7 @@ function data_addtolist(block: Block) {
     item: true,
   });
 
-  return [`${list}.append(${item.raw})`];
+  return [`${list.py_name_unique}.append(${item.raw})`];
 }
 
 function data_deleteoflist(block: Block) {
@@ -67,7 +67,7 @@ function data_deleteoflist(block: Block) {
     index: true,
   });
 
-  return [`del ${list}[${index.raw}]`];
+  return [`del ${list.py_name_unique}[${index.raw}]`];
 }
 
 function data_deletealloflist(block: Block) {
@@ -75,7 +75,7 @@ function data_deletealloflist(block: Block) {
     list: true,
   });
 
-  return [`${list}.clear()`];
+  return [`${list.py_name_unique}.clear()`];
 }
 
 function data_insertatlist(block: Block) {
@@ -85,7 +85,7 @@ function data_insertatlist(block: Block) {
     item: true,
   });
 
-  return [`${list}.insert(${index.raw}, ${item.raw})`];
+  return [`${list.py_name_unique}.insert(${index.raw}, ${item.raw})`];
 }
 
 function data_replaceitemoflist(block: Block) {
@@ -95,7 +95,7 @@ function data_replaceitemoflist(block: Block) {
     item: true,
   });
 
-  return [`${list}[${index.raw}] = ${item.raw}`];
+  return [`${list.py_name_unique}[${index.raw}] = ${item.raw}`];
 }
 
 function data_itemoflist(block: Block) {
@@ -104,7 +104,7 @@ function data_itemoflist(block: Block) {
     index: true,
   });
 
-  return new BlockValue(`${list}[${index.raw}]`, true);
+  return new BlockValue(`${list.py_name_unique}[${index.raw}]`, true);
 }
 
 function data_itemnumoflist(block: Block) {
@@ -114,7 +114,7 @@ function data_itemnumoflist(block: Block) {
   });
 
   // TODO: add safe error handling
-  return new BlockValue(`${list}.index(${item.raw}) + 1`, true);
+  return new BlockValue(`${list.py_name_unique}.index(${item.raw}) + 1`, true);
 }
 
 function data_lengthoflist(block: Block) {
@@ -122,7 +122,7 @@ function data_lengthoflist(block: Block) {
     list: true,
   });
 
-  return new BlockValue(`len(${list})`, true);
+  return new BlockValue(`len(${list.py_name_unique})`, true);
 }
 
 function data_listcontainsitem(block: Block) {
@@ -132,10 +132,13 @@ function data_listcontainsitem(block: Block) {
   });
 
   // TODO: add safe error handling
-  return new BlockValue(`(${list}.index(${item.raw}) != None)`, true);
+  return new BlockValue(
+    `(${list.py_name_unique}.index(${item.raw}) != None)`,
+    true
+  );
 }
 
-export default function variables(): HandlersType {
+export default function variablesHandlers(): HandlersType {
   const blockHandlers = new Map<string, BlockHandler>([
     ['data_setvariableto', data_setvariableto],
     ['data_changevariableby', data_changevariableby],

@@ -6,13 +6,13 @@ import imports from '../imports';
 import procedures from '../procedures';
 import PyConverter from '../pyconverter';
 import { _debug, AWAIT_PLACEHOLDER } from '../utils';
-import * as Variables from '../variables';
+import variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
 
 function flippersensors_resetTimer(_: Block) {
   imports.use('pybricks.tools', 'StopWatch');
-  Variables.use('sw_main', 'StopWatch()');
+  variables.use('sw_main', 'StopWatch()');
 
   return ['sw_main.reset()'];
 }

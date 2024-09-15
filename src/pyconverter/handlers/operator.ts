@@ -3,7 +3,7 @@ import { BlockValue } from '../blockvalue';
 import helpers from '../helpers';
 import imports from '../imports';
 import { _debug, sanitize } from '../utils';
-import * as Variables from '../variables';
+import variables from '../variables';
 import { handlers, HandlersType, OperatorHandler } from './handlers';
 
 export function processOperation(
@@ -40,14 +40,14 @@ function flipperevents_whenTimer(block: Block) {
   const value = helpers.use('convert_time')?.call(block.get_input('VALUE'));
 
   imports.use('pybricks.tools', 'StopWatch');
-  Variables.use('sw_main', 'StopWatch()');
+  variables.use('sw_main', 'StopWatch()');
 
   return new BlockValue(`sw_main.time() > ${value.raw}`, true);
 }
 
 function flippersensors_timer() {
   imports.use('pybricks.tools', 'StopWatch');
-  Variables.use('sw_main', 'StopWatch()');
+  variables.use('sw_main', 'StopWatch()');
 
   return new BlockValue('sw_main.time()', true);
 }
