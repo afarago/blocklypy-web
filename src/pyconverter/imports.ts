@@ -1,5 +1,4 @@
 import { RegistryEntryWithUse, RegistryManager } from './registrymanager';
-import { debug } from './utils';
 export class ImportRegistryEntry implements RegistryEntryWithUse {
   importedItems: Set<string> = new Set();
   constructor(...importedItems: string[]) {

@@ -1,20 +1,20 @@
 import { Block } from '../block';
 import helpers from '../helpers';
 import imports from '../imports';
-import * as pyconverter from '../pyconverter';
+import PyConverter from '../pyconverter';
 import { AWAIT_PLACEHOLDER, indent_code } from '../utils';
 import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
 
 function control_forever(block: Block) {
-  const sub_code = pyconverter.process_stack(block.substacks[0]);
+  const sub_code = PyConverter.process_stack(block.substacks[0]);
 
   return ['while True:', ...sub_code];
 }
 
 function control_repeat(block: Block) {
   const times = block.get_input('TIMES');
-  const sub_code = pyconverter.process_stack(block.substacks[0]);
+  const sub_code = PyConverter.process_stack(block.substacks[0]);
 
   return [
     `for _ in range(${helpers.use('int_safe')?.call(times).raw}):`,
@@ -27,7 +27,7 @@ function control_repeat_until(block: Block) {
   // wait until block has a logical flaw, needs to have the return value from falsy to truthy
   const condition_value = processOperation(condition_block, 'True');
 
-  const sub_code = pyconverter.process_stack(block.substacks[0]);
+  const sub_code = PyConverter.process_stack(block.substacks[0]);
 
   return [`while not (${condition_value.raw}):`, ...sub_code];
 }
@@ -48,7 +48,7 @@ function control_if_and_if_else(block: Block) {
 
   retval.push(`if ${condition_value.raw}:`);
   if (block.substacks[0]) {
-    const sub_code = pyconverter.process_stack(block.substacks[0]);
+    const sub_code = PyConverter.process_stack(block.substacks[0]);
     retval.push(...sub_code);
   } else {
     retval.push(...indent_code('pass'));
@@ -56,7 +56,7 @@ function control_if_and_if_else(block: Block) {
 
   if (block.opcode === 'control_if_else') {
     retval.push('else:');
-    const sub_code = pyconverter.process_stack(block.substacks[1]);
+    const sub_code = PyConverter.process_stack(block.substacks[1]);
     retval.push(...sub_code);
   }
   return retval;
@@ -67,7 +67,7 @@ function control_wait_until(block: Block) {
   // wait until block has a flaw, needs to have the return value from falsy to truthy
   const condition_value = processOperation(condition_block, 'True');
 
-  const sub_code = pyconverter.process_stack(null); // empty substack -> results in pass
+  const sub_code = PyConverter.process_stack(null); // empty substack -> results in pass
 
   return [`while not (${condition_value.raw}):`, ...sub_code];
 }

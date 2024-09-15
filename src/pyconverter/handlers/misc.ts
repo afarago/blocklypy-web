@@ -4,7 +4,7 @@ import broadcasts from '../broadcasts';
 import { DeviceSensor } from '../devicesensor';
 import imports from '../imports';
 import * as Procedures from '../procedures';
-import { process_stack, setAsyncFlag } from '../pyconverter';
+import PyConverter from '../pyconverter';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import * as Variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
@@ -19,7 +19,7 @@ function flippersensors_resetTimer(_: Block) {
 
 function flippercontrol_fork(block: Block) {
   function create_substack_fn(count: number, stack: Block[]) {
-    const sub_code = process_stack(stack);
+    const sub_code = PyConverter.process_stack(stack);
     const substack_fn = `substack${count}_fn`;
     return [substack_fn, [`def ${substack_fn}():`, ...sub_code]];
   }
@@ -32,8 +32,6 @@ function flippercontrol_fork(block: Block) {
     2,
     block.substacks[1]
   );
-
-  setAsyncFlag(true);
 
   return [
     ...sub_elem_code1,

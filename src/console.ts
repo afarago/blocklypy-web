@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
-import { PyConverterOptions } from './pyconverter/pyconverter';
+import PyConverterOptions from './pyconverter/pyconverteroptions';
 
 try {
   // const __FILE__ = path.join(__dirname, '2/proj1.llsp3');

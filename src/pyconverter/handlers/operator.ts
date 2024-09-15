@@ -2,7 +2,7 @@ import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
 import helpers from '../helpers';
 import imports from '../imports';
-import { debug } from '../utils';
+import { _debug } from '../utils';
 import * as Variables from '../variables';
 import { handlers, HandlersType, OperatorHandler } from './handlers';
 
@@ -28,7 +28,7 @@ export function processOperation(
     const op = block.opcode;
     if (handlers.operatorHandlers.has(op))
       return handlers.operatorHandlers.get(op)(block);
-    else debug('unknown block', block.get_block_description());
+    else _debug('unknown block', block.get_block_description());
   }
   return new BlockValue(returnOnEmpty, true);
 }

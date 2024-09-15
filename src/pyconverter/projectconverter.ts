@@ -1,8 +1,6 @@
 import JSZip from 'jszip';
-import {
-  convertFlipperProgramToPython,
-  PyConverterOptions,
-} from './pyconverter';
+import PyConverter from './pyconverter';
+import PyConverterOptions from './pyconverteroptions';
 
 export async function convertFlipperProjectToPython(
   filedata: ArrayBuffer | Buffer,
@@ -55,7 +53,7 @@ export async function convertFlipperProjectToPython(
 
   // ========================
   {
-    const codes = convertFlipperProgramToPython(projectJson, options);
+    const codes = new PyConverter(options).convert(projectJson);
     const sections = [projectComment, codes.pycode].filter(elem => elem);
     retval.pycode = sections.join('\n');
     retval.plaincode = codes.plaincode;
