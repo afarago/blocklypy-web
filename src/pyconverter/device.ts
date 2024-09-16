@@ -1,6 +1,4 @@
-import imports from './imports';
-
-export const setup_devices_registry = new Map<string, DeviceBase>();
+import getContext from './context';
 
 export class DeviceBase {
   _ports: string[];
@@ -20,6 +18,9 @@ export class DeviceBase {
   ensure_dependencies() {
     // NOOP
   }
+  static createRegistry() {
+    return new Map<string, DeviceBase>();
+  }
 }
 
 export class DeviceOnPortBase extends DeviceBase {
@@ -27,7 +28,7 @@ export class DeviceOnPortBase extends DeviceBase {
   constructor(port: string) {
     super();
     this.port = port;
-    imports.use('pybricks.parameters', 'Port');
+    getContext().imports.use('pybricks.parameters', 'Port');
   }
   get portString(): string {
     return DeviceOnPortBase.portToString(this.port);
@@ -38,9 +39,4 @@ export class DeviceOnPortBase extends DeviceBase {
   setup_code(): string[] {
     return super.setup_code();
   }
-}
-
-export function setup_devices_clear() {
-  //TODO: move to session handling
-  setup_devices_registry.clear();
 }

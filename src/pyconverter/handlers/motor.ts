@@ -1,4 +1,4 @@
-import helpers from '../helpers';
+import getContext from '../context';
 import {
   AWAIT_PLACEHOLDER,
   CONST_ROTATIONS,
@@ -26,7 +26,7 @@ function _motorSetSpeed(block: Block, isFullMode: boolean) {
     ? block.get_input('PORT')?.toString()
     : CONST_AUTO_PORT;
   const speed = block.get_input('SPEED');
-  const value = helpers.use('convert_speed')?.call(speed);
+  const value = getContext().helpers.use('convert_speed')?.call(speed);
 
   return port.split('').map(port => {
     const device = DeviceMotor.instance(port);
@@ -94,13 +94,15 @@ function _flippermotor_motorTurn(
     const value2 = num_eval(
       [direction_multiplier * (unit === CONST_ROTATIONS ? 360 : 1)],
       '*',
-      helpers.use('float_safe')?.call(value)
+      getContext().helpers.use('float_safe')?.call(value)
     );
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_angle(${device.default_speed_variable}, ${value2.raw}${postfix_then})`,
     ];
   } else if (unit === CONST_SECONDS) {
-    const value_adjusted = helpers.use('convert_time')?.call(value);
+    const value_adjusted = getContext()
+      .helpers.use('convert_time')
+      ?.call(value);
     return [
       `${AWAIT_PLACEHOLDER}${d}.run_time(${direction_multiplier > 0 ? '' : '-'}${device.default_speed_variable}, ${value_adjusted.raw}${postfix_then})`,
     ];
@@ -132,7 +134,7 @@ function flippermotor_motorGoDirectionToPosition(block: Block) {
   }
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
   const value = num_eval(
-    helpers.use('float_safe')?.call(position.value),
+    getContext().helpers.use('float_safe')?.call(position.value),
     '%',
     360
   );
@@ -211,8 +213,8 @@ function flippermotor_speed(block: Block) {
   const device = DeviceMotor.instance(port);
   const d = device.devicename;
 
-  return helpers
-    .use('convert_speed_back')
+  return getContext()
+    .helpers.use('convert_speed_back')
     ?.call(new BlockValue(`${d}.speed()`, true));
 }
 

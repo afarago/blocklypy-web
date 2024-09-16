@@ -1,8 +1,8 @@
-import { RegistryEntryWithId, RegistryManager } from './registrymanager';
+import { RegistryPayloadWithId, RegistryManager } from './registrymanager';
 import { _debug } from './utils';
 
 export type ProcedureArg = { name: string; id: string; type: string };
-export class ProcedureDefinition implements RegistryEntryWithId {
+export class ProcedureRegistryPayload implements RegistryPayloadWithId {
   id: string;
   name: string;
   blockid: string;
@@ -39,7 +39,8 @@ export class ProcedureDefinition implements RegistryEntryWithId {
   //     }
   //   }
   // }
-}
 
-const procedures = new RegistryManager<ProcedureDefinition>();
-export default procedures;
+  static createRegistry() {
+    return new RegistryManager<ProcedureRegistryPayload>();
+  }
+}

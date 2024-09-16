@@ -1,5 +1,4 @@
-import helpers from './helpers';
-import imports from './imports';
+import getContext from './context';
 
 export class BlockValue {
   private _value: string | number | boolean;
@@ -77,7 +76,7 @@ export function num_eval(
       if (allow_local) {
         return Math.abs(b1);
       } else {
-        imports.use('umath', null);
+        getContext().imports.use('umath', null);
         return new BlockValue(`umath.fabs(${BlockValue.raw(b1)})`, true);
       }
     }
@@ -100,7 +99,7 @@ export function num_eval(
     } else {
       const conv_function = isInteger ? 'int_safe' : 'float_safe';
       return new BlockValue(
-        `${helpers.use(conv_function)?.call(a1).raw} ${b} ${helpers.use(conv_function)?.call(c1).raw}`,
+        `${getContext().helpers.use(conv_function)?.call(a1).raw} ${b} ${getContext().helpers.use(conv_function)?.call(c1).raw}`,
         true
       );
     }

@@ -3,7 +3,7 @@ import { BlockValue } from '../blockvalue';
 import { calc_comparator } from '../converters';
 import { DeviceOnPortBase } from '../device';
 import { DeviceSensor } from '../devicesensor';
-import helpers from '../helpers';
+import getContext from '../context';
 import { AWAIT_PLACEHOLDER, CONST_AUTO_PORT } from '../utils';
 import { HandlersType, OperatorHandler } from './handlers';
 
@@ -11,12 +11,12 @@ function flippermoresensors_deviceType(block: Block) {
   const port = DeviceOnPortBase.portToString(
     block.get_input('PORT')?.toString()
   );
-  return helpers.use('pupdevice_type').call(port);
+  return getContext().helpers.use('pupdevice_type').call(port);
 }
 
 function flippersensors_orientation(_block: Block) {
-  return helpers
-    .use('calc_hub_orientation_back')
+  return getContext()
+    .helpers.use('calc_hub_orientation_back')
     ?.call(new BlockValue('hub.imu.up()', true));
 }
 
@@ -25,7 +25,7 @@ function flippersensors_isorientation(block: Block) {
     block?.opcode.includes('_is') ? 'ORIENTATION' : 'VALUE'
   )?.value;
   return new BlockValue(
-    `hub.imu.up() == ${helpers.use('calc_hub_orientation')?.call(orientation).value}`,
+    `hub.imu.up() == ${getContext().helpers.use('calc_hub_orientation')?.call(orientation).value}`,
     true
   );
 }
@@ -45,8 +45,8 @@ function flippersensors_color(block: Block) {
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
 
-  return helpers
-    .use('convert_color_back')
+  return getContext()
+    .helpers.use('convert_color_back')
     ?.call(new BlockValue(`${AWAIT_PLACEHOLDER}${d}.color()`, true));
 }
 
@@ -67,7 +67,7 @@ function horizontalevents_whenColor(block: Block) {
 }
 
 function _isColor(_: Block, port: string, color1: BlockValue) {
-  const color = helpers.use('convert_color')?.call(color1);
+  const color = getContext().helpers.use('convert_color')?.call(color1);
 
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
@@ -93,7 +93,7 @@ function flippersensors_isReflectivity(block: Block) {
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
   return new BlockValue(
-    `${AWAIT_PLACEHOLDER}${d}.reflection() ${comparator.value} ${helpers.use('float_safe')?.call(value).raw}`,
+    `${AWAIT_PLACEHOLDER}${d}.reflection() ${comparator.value} ${getContext().helpers.use('float_safe')?.call(value).raw}`,
     true
   );
 }
@@ -134,8 +134,8 @@ function flippersensors_distance(block: Block) {
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');
   const d = device.devicename;
 
-  return helpers
-    .use('convert_ussensor_distance_back')
+  return getContext()
+    .helpers.use('convert_ussensor_distance_back')
     ?.call(new BlockValue(`${AWAIT_PLACEHOLDER}${d}.distance()`, true), unit);
 }
 
@@ -165,9 +165,9 @@ function _isDinstance(
   comparator: BlockValue
 ) {
   const comparator1 = calc_comparator(comparator);
-  const adjusted_value = helpers
-    .use('convert_ussensor_distance')
-    ?.call(helpers.use('float_safe')?.call(value), unit);
+  const adjusted_value = getContext()
+    .helpers.use('convert_ussensor_distance')
+    ?.call(getContext().helpers.use('float_safe')?.call(value), unit);
 
   //TODO: if comparator is ==, we should use range, instead of simple comparison (e.g. 1% means x>0% or y<2%)
   const device = DeviceSensor.instance(port, 'UltrasonicSensor');

@@ -1,6 +1,5 @@
 import { Block } from '../block';
-import helpers from '../helpers';
-import imports from '../imports';
+import getContext from '../context';
 import PyConverter from '../pyconverter';
 import { AWAIT_PLACEHOLDER, indent_code } from '../utils';
 import { BlockHandler, HandlersType } from './handlers';
@@ -17,7 +16,7 @@ function control_repeat(block: Block) {
   const sub_code = PyConverter.process_stack(block.substacks[0]);
 
   return [
-    `for _ in range(${helpers.use('int_safe')?.call(times).raw}):`,
+    `for _ in range(${getContext().helpers.use('int_safe')?.call(times).raw}):`,
     ...sub_code,
   ];
 }
@@ -33,11 +32,11 @@ function control_repeat_until(block: Block) {
 }
 
 function control_wait(block: Block) {
-  const duration = helpers
-    .use('convert_time')
+  const duration = getContext()
+    .helpers.use('convert_time')
     .call(block.get_input('DURATION'));
 
-  imports.use('pybricks.tools', 'wait');
+  getContext().imports.use('pybricks.tools', 'wait');
   return [`${AWAIT_PLACEHOLDER}wait(${duration.raw})`];
 }
 

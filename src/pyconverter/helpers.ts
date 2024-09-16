@@ -1,7 +1,7 @@
 import { BlockValue } from './blockvalue';
 import { flipperColorsMap, round2 } from './converters';
-import imports from './imports';
-import { RegistryEntryWithId, RegistryManager } from './registrymanager';
+import getContext from './context';
+import { RegistryPayloadWithId, RegistryManager } from './registrymanager';
 import { _debug, AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES } from './utils';
 
 interface HelperFunctionDefintion {
@@ -12,7 +12,7 @@ interface HelperFunctionDefintion {
   local_fn_condition?: (args: any[]) => boolean;
 }
 
-export class HelperEnabledEntry implements RegistryEntryWithId {
+export class HelperEnabledRegistryPayload implements RegistryPayloadWithId {
   id: string;
   private isPyFnEnabled: boolean;
 
@@ -60,7 +60,7 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
   }
 
   static to_global_code(
-    registry: RegistryManager<HelperEnabledEntry>
+    registry: RegistryManager<HelperEnabledRegistryPayload>
   ): string[] {
     const codes = Array.from(registry.entries())
       .filter(([, value]) => value.payload.isPyFnEnabled)
@@ -71,6 +71,10 @@ export class HelperEnabledEntry implements RegistryEntryWithId {
       .flat();
 
     return codes;
+  }
+
+  static createRegistry() {
+    return new RegistryManager(() => new HelperEnabledRegistryPayload());
   }
 }
 
@@ -288,7 +292,7 @@ def convert_distance(value, unit):
           const colors = Array.from(flipperColorsMap.values());
           const color_value = value in colors ? colors[value] : 'Color.NONE';
 
-          imports.use('pybricks.parameters', 'Color');
+          getContext().imports.use('pybricks.parameters', 'Color');
           return color_value;
         },
         py_fn: `
@@ -407,6 +411,3 @@ def pupdevice_type(port):
   //   local_dynamic_fn: num_eval,
   // },
 );
-
-const helpers = new RegistryManager(() => new HelperEnabledEntry());
-export default helpers;

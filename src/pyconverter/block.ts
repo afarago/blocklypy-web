@@ -1,9 +1,9 @@
 import { BlockValue } from './blockvalue';
 import { processOperation } from './handlers/operator';
-import procedures, { ProcedureArg, ProcedureDefinition } from './procedures';
+import { ProcedureArg, ProcedureRegistryPayload } from './procedures';
 import * as Scratch from './scratch';
 import { _debug, sanitize } from './utils';
-import variables from './variables';
+import getContext from './context';
 
 export class BlockMatchError extends Error {}
 
@@ -160,7 +160,7 @@ export class Block {
             return op;
           } else if (typeof ref === 'object' && Array.isArray(ref)) {
             //!! assert(ref[0] === 12 || ref[0] === 13);
-            const var_entry = variables.get([
+            const var_entry = getContext().variables.get([
               ref[1].toString(),
               ref[0] === Scratch.BlockValueType.LIST,
             ]);
@@ -238,10 +238,10 @@ export class Block {
 export function extractProcedureDefinition(
   block: Block,
   useCache = false
-): ProcedureDefinition {
+): ProcedureRegistryPayload {
   const block2 = block.get_inputAsBlock('custom_block', false); // this is a procedures_prototype
   const proccode = block2._block.mutation.proccode;
-  if (useCache) return procedures.get(proccode);
+  if (useCache) return getContext().procedures.get(proccode);
 
   const blockname = sanitize(proccode.match(/^(.*?)(?= %[sb])|^.*/)?.[0]);
   const argumenttypes: string[] = [];
@@ -265,7 +265,7 @@ export function extractProcedureDefinition(
     // argumentnames2.push(argname);
   });
 
-  const retval = new ProcedureDefinition(
+  const retval = new ProcedureRegistryPayload(
     proccode, // will act as id
     blockname,
     block._id,

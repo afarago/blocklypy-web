@@ -10,25 +10,25 @@ class RegistryEntry<T> {
     return typeof id === 'string' ? id : JSON.stringify(id);
   }
 }
-export interface RegistryEntryWithUse {
+export interface RegistryPayloadWithUse {
   use(...args: any[]): void;
 }
-export interface RegistryEntryWithId {
+export interface RegistryPayloadWithId {
   id: RegistryEntryIdType;
 }
-export interface RegistryEntryWithParent<T> {
+export interface RegistryPayloadWithParent<T> {
   parent: RegistryManager<T>;
 }
 
-function isRegistryEntryWithUse(obj: any): obj is RegistryEntryWithUse {
+function isRegistryPayloadWithUse(obj: any): obj is RegistryPayloadWithUse {
   return obj && typeof obj.use === 'function';
 }
-function isRegistryEntryWithId(obj: any): obj is RegistryEntryWithId {
+function isRegistryPayloadWithId(obj: any): obj is RegistryPayloadWithId {
   return obj;
 }
-function isRegistryEntryWithParent<T>(
+function isRegistryPayloadWithParent<T>(
   obj: any
-): obj is RegistryEntryWithParent<T> {
+): obj is RegistryPayloadWithParent<T> {
   return obj;
 }
 
@@ -55,12 +55,12 @@ export class RegistryManager<T> {
     if (!entry) {
       const payload =
         typeof this.factory === 'function' ? this.factory(...args) : args[0];
-      if (isRegistryEntryWithId(payload)) payload.id = id;
-      if (isRegistryEntryWithParent(payload)) payload.parent = this;
+      if (isRegistryPayloadWithId(payload)) payload.id = id;
+      if (isRegistryPayloadWithParent(payload)) payload.parent = this;
       entry = new RegistryEntry<T>(id, payload);
       this.registry.set(RegistryEntry.idToString(id), entry);
     } else {
-      if (entry.payload && isRegistryEntryWithUse(entry.payload)) {
+      if (entry.payload && isRegistryPayloadWithUse(entry.payload)) {
         entry.payload.use(...args);
       }
     }

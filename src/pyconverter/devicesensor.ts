@@ -1,6 +1,5 @@
-import imports from './imports';
-import { DeviceOnPortBase, setup_devices_registry } from './device';
-import helpers from './helpers';
+import { DeviceOnPortBase } from './device';
+import getContext from './context';
 import { CONST_AUTO_PORT } from './utils';
 
 export class DeviceSensor extends DeviceOnPortBase {
@@ -14,16 +13,16 @@ export class DeviceSensor extends DeviceOnPortBase {
   }
   static instance(port: string, sensor_class = 'PUPDevice') {
     const devname = DeviceSensor.devicename_from_port(port, sensor_class);
-    let elem = setup_devices_registry.get(devname);
+    let elem = getContext().setup_devices_registry.get(devname);
     if (!elem) {
-      imports.use(
+      getContext().imports.use(
         sensor_class === 'PUPDevice'
           ? 'pybricks.iodevices'
           : 'pybricks.pupdevices',
         sensor_class
       );
       elem = new DeviceSensor(port, sensor_class);
-      setup_devices_registry.set(devname, elem);
+      getContext().setup_devices_registry.set(devname, elem);
     } else {
       // NOOP
     }
@@ -37,13 +36,13 @@ export class DeviceSensor extends DeviceOnPortBase {
     const sensor_class = this._sensor_class;
     const args: string[] = [];
 
-    imports.use('pybricks.pupdevices', sensor_class);
+    getContext().imports.use('pybricks.pupdevices', sensor_class);
     setup_code.push(
       ...[
         `${this.devicename} = ${
           this.port !== CONST_AUTO_PORT
             ? `${sensor_class}(${[this.portString].concat(args).join(', ')})`
-            : `${helpers.use('get_pupdevices').call([sensor_class].concat(args).join(', ')).raw}`
+            : `${getContext().helpers.use('get_pupdevices').call([sensor_class].concat(args).join(', ')).raw}`
         }`,
       ]
     );

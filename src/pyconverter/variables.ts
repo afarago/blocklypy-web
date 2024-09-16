@@ -1,23 +1,23 @@
 import { BlockValue } from './blockvalue';
 import {
-  RegistryEntryWithId,
-  RegistryEntryWithParent,
+  RegistryPayloadWithId,
+  RegistryPayloadWithParent,
   RegistryManager,
 } from './registrymanager';
 import { _debug, sanitize } from './utils';
 
-type VariableRegistryEntryIdType = string | [string, boolean];
-export class VariableRegistryEntry
+type VariableRegistryPayloadIdType = string | [string, boolean];
+export class VariableRegistryPayload
   implements
-    RegistryEntryWithId,
-    RegistryEntryWithParent<VariableRegistryEntry>
+    RegistryPayloadWithId,
+    RegistryPayloadWithParent<VariableRegistryPayload>
 {
-  id: VariableRegistryEntryIdType; //id=name: string;
+  id: VariableRegistryPayloadIdType; //id=name: string;
   value: string | BlockValue;
   is_list: boolean;
   py_name_base: string;
   py_name_unique: string;
-  parent: RegistryManager<VariableRegistryEntry>;
+  parent: RegistryManager<VariableRegistryPayload>;
 
   constructor(value: string | BlockValue, is_list: boolean) {
     this.value = value;
@@ -40,16 +40,17 @@ export class VariableRegistryEntry
     })(this.py_name_base);
   }
 
-  static to_global_code(registry: RegistryManager<VariableRegistryEntry>) {
+  static to_global_code(registry: RegistryManager<VariableRegistryPayload>) {
     return Array.from(registry.entries()).map(
       ([_, value]) =>
         `${value.payload.py_name_unique} = ${value.payload.value || (!value.payload.is_list ? 'None' : '[]')}`
     );
   }
-}
 
-const variables = new RegistryManager<VariableRegistryEntry>(
-  (value: string | BlockValue, is_list: boolean) =>
-    new VariableRegistryEntry(value, is_list)
-);
-export default variables;
+  static createRegistry() {
+    return new RegistryManager(
+      (value: string | BlockValue, is_list: boolean) =>
+        new VariableRegistryPayload(value, is_list)
+    );
+  }
+}

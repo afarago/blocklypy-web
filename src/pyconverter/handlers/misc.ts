@@ -1,18 +1,15 @@
 import { Block, BlockMatchError } from '../block';
 import { BlockValue } from '../blockvalue';
-import broadcasts from '../broadcasts';
+import getContext from '../context';
 import { DeviceSensor } from '../devicesensor';
-import imports from '../imports';
-import procedures from '../procedures';
 import PyConverter from '../pyconverter';
 import { _debug, AWAIT_PLACEHOLDER } from '../utils';
-import variables from '../variables';
 import { BlockHandler, HandlersType } from './handlers';
 import { processOperation } from './operator';
 
 function flippersensors_resetTimer(_: Block) {
-  imports.use('pybricks.tools', 'StopWatch');
-  variables.use('sw_main', 'StopWatch()');
+  getContext().imports.use('pybricks.tools', 'StopWatch');
+  getContext().variables.use('sw_main', 'StopWatch()');
 
   return ['sw_main.reset()'];
 }
@@ -56,7 +53,7 @@ function flippersensors_resetYaw(_: Block) {
 function event_broadcast(block: Block) {
   const message_id = block.get_inputAsShadowId('BROADCAST_INPUT');
   const do_wait = block.opcode === 'event_broadcastandwait';
-  const message_pyname = broadcasts.get(message_id).get_pyname();
+  const message_pyname = getContext().broadcasts.get(message_id).get_pyname();
 
   return [
     `${AWAIT_PLACEHOLDER}${message_pyname}.broadcast_exec(${do_wait ? 'True' : 'False'})`,
@@ -65,14 +62,16 @@ function event_broadcast(block: Block) {
 
 function horizontalevents_broadcast(block: Block) {
   const message_id = block.get_input('CHOICE')?.value?.toString();
-  const message_pyname = broadcasts.use(message_id, message_id).get_pyname();
+  const message_pyname = getContext()
+    .broadcasts.use(message_id, message_id)
+    .get_pyname();
 
   return [`${AWAIT_PLACEHOLDER}${message_pyname}.broadcast_exec(False)`];
 }
 
 function procedures_call(block: Block) {
   const proccode = block._block?.mutation?.proccode;
-  const procdef = procedures.get(proccode);
+  const procdef = getContext().procedures.get(proccode);
 
   function defaultValueForType(type: string) {
     if (type === 'string') return new BlockValue('', false, false, true);

@@ -1,8 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
-import helpers from '../helpers';
+import getContext from '../context';
 import { _debug } from '../utils';
-import variables from '../variables';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function _readParameters(
@@ -17,10 +16,13 @@ function _readParameters(
 ) {
   const item = options.item ? block.get_input('ITEM') : undefined;
   const variable = options.variable
-    ? variables.get([block.get_field('VARIABLE')?.toString(), false])
+    ? getContext().variables.get([
+        block.get_field('VARIABLE')?.toString(),
+        false,
+      ])
     : undefined;
   const list = options.list
-    ? variables.get([block.get_field('LIST')?.toString(), true])
+    ? getContext().variables.get([block.get_field('LIST')?.toString(), true])
     : undefined;
   const index = options.index
     ? num_eval(block.get_input('INDEX'), '-', 1, true)
@@ -48,7 +50,11 @@ function data_changevariableby(block: Block) {
 
   const value2 = value.is_variable ? num_eval(value) : value;
   return [
-    `${variable.py_name_unique} = ${helpers.use('float_safe').call(new BlockValue(variable.py_name_unique, true, true, false))} + ${value2.raw}`,
+    `${variable.py_name_unique} = ${getContext()
+      .helpers.use('float_safe')
+      .call(
+        new BlockValue(variable.py_name_unique, true, true, false)
+      )} + ${value2.raw}`,
   ];
 }
 

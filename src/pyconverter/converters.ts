@@ -1,5 +1,4 @@
-import imports from './imports';
-import helpers from './helpers';
+import getContext from './context';
 import { BlockValue } from './blockvalue';
 
 enum FLIPPERSTOP {
@@ -59,7 +58,7 @@ export const flipperColorsMap = new Map([
 ]);
 
 export function calc_stop(value = -1) {
-  imports.use('pybricks.parameters', 'Stop');
+  getContext().imports.use('pybricks.parameters', 'Stop');
 
   if (flipperStopMap.has(value)) return flipperStopMap.get(value);
 }
@@ -87,7 +86,7 @@ export function convert_matrix(value: string, brightness = 100) {
 
   // on/off pixel values only
   if (value.match(/^[09]{25}$/)) {
-    imports.use('pybricks.parameters', 'Icon');
+    getContext().imports.use('pybricks.parameters', 'Icon');
     return `Icon(0b${value.replaceAll('9', '1')})${postfixFactor}`;
   }
 
@@ -97,12 +96,14 @@ export function convert_matrix(value: string, brightness = 100) {
     const row = [];
     for (let x = 0; x < 5; x++) {
       const c = value.slice(idx++, idx);
-      row.push(helpers.use('convert_brightness')?.call(parseInt(c)).value);
+      row.push(
+        getContext().helpers.use('convert_brightness')?.call(parseInt(c)).value
+      );
     }
     retval.push(row);
   }
 
-  imports.use('pybricks.tools', 'Matrix');
+  getContext().imports.use('pybricks.tools', 'Matrix');
   return `Matrix(${JSON.stringify(retval)})${postfixFactor}`;
 }
 //#endregion old_converters

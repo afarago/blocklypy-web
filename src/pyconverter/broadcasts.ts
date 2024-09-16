@@ -1,7 +1,7 @@
 import { RegistryManager } from './registrymanager';
 import { sanitize } from './utils';
 
-export class BroadcastEntry {
+export class BroadcastRegistryPayload {
   name: string;
 
   constructor(name: string) {
@@ -15,9 +15,10 @@ export class BroadcastEntry {
   get_pyname() {
     return `message_${sanitize(this.name)}`;
   }
-}
 
-const broadcasts = new RegistryManager(
-  (name: string) => new BroadcastEntry(name)
-);
-export default broadcasts;
+  static createRegistry() {
+    return new RegistryManager(
+      (name: string) => new BroadcastRegistryPayload(name)
+    );
+  }
+}
