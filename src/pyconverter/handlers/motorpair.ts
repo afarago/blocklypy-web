@@ -255,13 +255,13 @@ function flippermove_move(block: Block) {
 }
 
 function horizontalmove_move(direction: string, block: Block) {
-  const value = block.get_input('ROTATIONS')?.value?.toString();
+  const value = block.get_input('ROTATIONS');
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
 
   return _process_flippermove(
     block.opcode,
     CONST_ROTATIONS,
-    BlockValue.toString(value),
+    value,
     device,
     direction,
     null
@@ -312,11 +312,15 @@ function flippermove_setDistance(block: Block) {
   ];
 }
 
-export function initMotorPairMovementPair(block?: Block, pair?: string[]) {
+export function initMotorPairMovementPair(
+  block?: Block,
+  pair?: string[],
+  isUsed = true
+) {
   const ports = block
     ? block.get_input('PAIR')?.value?.toString().split('')
     : pair;
-  return DeviceDriveBase.instance(ports);
+  return DeviceDriveBase.instance(ports, undefined, undefined, isUsed);
 }
 
 function flippermove_setMovementPair(block: Block) {

@@ -6,6 +6,7 @@ export class DeviceBase {
   _ports: string[];
   _wheel_diameter: any;
   _axle_track: any;
+
   constructor() {}
   get devicename(): string | null {
     return null;

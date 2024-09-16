@@ -5,6 +5,7 @@ import {
   CONST_DEGREES,
   CONST_SECONDS,
   CONST_AUTO_PORT,
+  _debug,
 } from '../utils';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 import { calc_stop } from '../converters';
@@ -22,15 +23,15 @@ function horizontalmotor_motorSetSpeed(Block: Block) {
 
 function _motorSetSpeed(block: Block, isFullMode: boolean) {
   const port = isFullMode
-    ? BlockValue.toString(block.get_input('PORT'))
+    ? block.get_input('PORT')?.toString()
     : CONST_AUTO_PORT;
   const speed = block.get_input('SPEED');
-
-  const device = DeviceMotor.instance(port);
-  // const d = device.devicename;
-
   const value = helpers.use('convert_speed')?.call(speed);
-  return [`${device.default_speed_variable} = ${value.raw}`];
+
+  return port.split('').map(port => {
+    const device = DeviceMotor.instance(port);
+    return `${device.default_speed_variable} = ${value.raw}`;
+  });
 }
 
 function flippermoremotor_motorSetStopMethod(block: Block) {
@@ -38,17 +39,19 @@ function flippermoremotor_motorSetStopMethod(block: Block) {
   const stop = parseInt(block.get_field('STOP').value.toString()); // hold=2, break=1, coast=0
   const stop_then = calc_stop(stop);
 
-  const device = DeviceMotor.instance(port);
-  const d = device.devicename;
-  device.default_then = stop_then;
-  return [`# setting ${d} stop at end to ${stop_then}`];
+  return port.split('').map(port => {
+    const device = DeviceMotor.instance(port);
+    const d = device.devicename;
+    device.default_then = stop_then;
+    return `# setting ${d} stop at end to ${stop_then}`;
+  });
 }
 
-function horizontalmotor_motorTurnRotations(block: Block) {
+function horizontalmotor_motorTurnRotations(
+  direction_mul: 1 | -1,
+  block: Block
+) {
   const rotations = block.get_input('ROTATIONS');
-  const direction_mul = block.opcode.toLowerCase().includes('counterclockwise')
-    ? -1
-    : +1;
 
   return _flippermotor_motorTurn(
     block,
@@ -140,22 +143,25 @@ function flippermotor_motorGoDirectionToPosition(block: Block) {
   return retval;
 }
 
-function flippermotor_motorStop(block: Block) {
-  return _motorStop(block, true);
-}
-
-function horizontalmotor_motorStop(block: Block) {
-  return _motorStop(block, false);
-}
-
-function _motorStop(block: Block, isFullMode: boolean) {
+function motor_motorStop(isFullMode: boolean, block: Block) {
   const port = isFullMode
-    ? BlockValue.toString(block.get_input('PORT'))
+    ? block.get_input('PORT')?.toString()
     : CONST_AUTO_PORT;
 
-  const device = DeviceMotor.instance(port);
-  const d = device.devicename;
-  return [`${AWAIT_PLACEHOLDER}${d}.stop()`];
+  return port.split('').map(port => {
+    const device = DeviceMotor.instance(port);
+    const d = device.devicename;
+
+    switch (device.default_then) {
+      case 'Stop.HOLD':
+        return `${d}.hold()`;
+      case 'Stop.COAST':
+        return `${d}.stop()`;
+      case 'Stop.BRAKE':
+      default:
+        return `${d}.brake()`;
+    }
+  });
 }
 
 function flippermotor_motorStartDirection(block: Block) {
@@ -163,20 +169,22 @@ function flippermotor_motorStartDirection(block: Block) {
   const direction = block.get_input('DIRECTION');
   const direction_sign = direction.value === 'clockwise' ? '' : '-';
 
-  const device = DeviceMotor.instance(port);
-  const d = device.devicename;
-  return [
-    `${AWAIT_PLACEHOLDER}${d}.run(${direction_sign}${device.default_speed_variable})`,
-  ];
+  return port.split('').map(port => {
+    const device = DeviceMotor.instance(port);
+    const d = device.devicename;
+    return `${d}.run(${direction_sign}${device.default_speed_variable})`;
+  });
 }
 
 function flippermoremotor_motorStartPower(block: Block) {
   const port = block.get_input('PORT')?.toString();
   const power = block.get_input('POWER');
 
-  const device = DeviceMotor.instance(port);
-  const d = device.devicename;
-  return [`${AWAIT_PLACEHOLDER}${d}.dc(${power.raw})`];
+  return port.split('').map(port => {
+    const device = DeviceMotor.instance(port);
+    const d = device.devicename;
+    return `${d}.dc(${power.raw})`;
+  });
 }
 
 function flippermotor_absolutePosition(block: Block) {
@@ -221,20 +229,20 @@ export default function motor(): HandlersType {
     ['flippermotor_motorSetSpeed', flippermotor_motorSetSpeed],
     ['horizontalmotor_motorSetSpeed', horizontalmotor_motorSetSpeed],
     ['flippermotor_motorStartDirection', flippermotor_motorStartDirection],
-    ['flippermotor_motorStop', flippermotor_motorStop],
-    ['horizontalmotor_motorStop', horizontalmotor_motorStop],
+    ['flippermotor_motorStop', motor_motorStop.bind(this, true)],
+    ['horizontalmotor_motorStop', motor_motorStop.bind(this, false)],
     [
       'flippermotor_motorGoDirectionToPosition',
       flippermotor_motorGoDirectionToPosition,
     ],
     ['flippermotor_motorTurnForDirection', flippermotor_motorTurnForDirection],
     [
-      'horizontalmotor_motorTurnCounterClockwiseRotations',
-      horizontalmotor_motorTurnRotations,
+      'horizontalmotor_motorTurnClockwiseRotations',
+      horizontalmotor_motorTurnRotations.bind(this, +1),
     ],
     [
-      'horizontalmotor_motorTurnClockwiseRotations',
-      horizontalmotor_motorTurnRotations,
+      'horizontalmotor_motorTurnCounterClockwiseRotations',
+      horizontalmotor_motorTurnRotations.bind(this, -1),
     ],
     [
       'flippermoremotor_motorSetStopMethod',

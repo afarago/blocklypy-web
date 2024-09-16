@@ -10,7 +10,6 @@ import sensor from './sensor';
 import sound from './sound';
 import misc from './misc';
 
-// export type BlockHandlerFunction = (block: Block) => string[] | null
 export type BlockHandler = (block: Block) => string[] | null;
 export type OperatorHandler = (block: Block) => BlockValue | null;
 export interface HandlersType {

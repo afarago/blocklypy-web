@@ -1,6 +1,10 @@
 import { Block, extractProcedureDefinition } from './block';
 import broadcasts from './broadcasts';
-import { setup_devices_clear, setup_devices_registry } from './device';
+import {
+  DeviceOnPortBase,
+  setup_devices_clear,
+  setup_devices_registry,
+} from './device';
 import { DeviceDriveBase } from './devicedrivebase';
 import { handlers } from './handlers/handlers';
 import { initMotorPairMovementPair } from './handlers/motorpair';
@@ -199,27 +203,34 @@ export default class PyConverter {
     setupCodes.push('hub = PrimeHub()');
     imports.use('pybricks.hubs', 'PrimeHub');
 
+    // ensure dependencies
     for (const elem of setup_devices_registry.values()) {
       elem.ensure_dependencies();
     }
 
+    // process and add all devices
     const remainingItems = [...setup_devices_registry.values()];
-    while (remainingItems.length) {
-      // TODO: safeguard against circular dependency
-      for (const elem1 of remainingItems.entries()) {
-        const [idx, elem] = elem1;
-        if (
-          elem.dependencies?.every(elem2 => !remainingItems.includes(elem2))
-        ) {
-          remainingItems.splice(idx, 1);
 
-          const code = elem.setup_code();
-          if (code) setupCodes.push(...code);
+    // anything that is connected to a port
+    Array.from(remainingItems.filter(elem => elem instanceof DeviceOnPortBase))
+      .sort((a: DeviceOnPortBase, b: DeviceOnPortBase) =>
+        a.portString.localeCompare(b.portString)
+      )
+      .forEach(elem => {
+        const code = elem.setup_code();
+        if (code) setupCodes.push(...code);
 
-          break;
-        }
-      }
-    }
+        const idx = remainingItems.indexOf(elem);
+        remainingItems.splice(idx, 1);
+      });
+
+    remainingItems
+      .sort((a, b) => a.devicename.localeCompare(b.devicename))
+      .forEach(elem => {
+        const code = elem.setup_code();
+        if (code) setupCodes.push(...code);
+      });
+
     return setupCodes;
   }
 
@@ -605,7 +616,7 @@ export default class PyConverter {
         for (const block of stack.stack) {
           const op = block.opcode;
           if (op === 'flippermove_setMovementPair' && !motorpairFound) {
-            initMotorPairMovementPair(block);
+            initMotorPairMovementPair(block, undefined, true);
             motorpairFound = true;
             // only one/first setMovementPair is taken into account
           }
@@ -616,8 +627,14 @@ export default class PyConverter {
       }
     }
 
-    if (!motorpairFound) initMotorPairMovementPair(null, ['A', 'B']);
-    const device = DeviceDriveBase.instance();
+    //TODO: only if no setMovementPair is used
+    if (!motorpairFound) initMotorPairMovementPair(null, ['A', 'B'], false);
+    const device = DeviceDriveBase.instance(
+      undefined,
+      undefined,
+      undefined,
+      false
+    );
     device.ensure_dependencies();
   }
 

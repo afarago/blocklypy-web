@@ -13,10 +13,10 @@
   "scripts": {
     "dev": "npm run start:console:dev",
     "console": "tsx  ./src/console.ts",
-    "console:dev": "cross-var nodemon --exec \"cls && tsx ./src/console.ts ./testdata/test4.lms --inspect\"",
+    "console:dev": "nodemon --exec \"cls && tsx ./src/console.ts\"",
     "server": "tsx  ./src/server.ts",
     "server:dev": "nodemon --exec tsx ./src/server.ts",
-    "curl1": "curl -X POST -F \"file=@testdata/test2.lms\" http://localhost:3000/upload",
+    "curl1": "curl -X POST -F \"file=@testdata/test4.lms\" http://localhost:3000/upload",
     "build": "webpack --mode=production --node-env=production",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",

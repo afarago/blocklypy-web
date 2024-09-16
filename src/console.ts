@@ -24,8 +24,8 @@ try {
   // console.log(retval);
   const option: PyConverterOptions = {
     debug: {
-      // skipHeader: true,
-      // skipHelpers: true,
+      skipHeader: true,
+      skipHelpers: true,
       // skipImports: true,
       // skipSetup: true,
       // showOrphanCode: true,

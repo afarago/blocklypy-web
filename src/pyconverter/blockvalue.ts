@@ -54,7 +54,7 @@ export class BlockValue {
   static value(value: any) {
     return BlockValue.is(value) ? value.value : value;
   }
-  static toString(value: any) {
+  static toString(value: any): string {
     return BlockValue.value(value).toString();
   }
 }

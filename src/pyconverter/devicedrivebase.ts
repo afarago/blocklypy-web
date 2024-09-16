@@ -16,30 +16,43 @@ export class DeviceDriveBase extends DeviceBase {
   _rotation_distance: number;
   motor_left: any;
   motor_right: any;
-  constructor(ports: any, wheel_diameter: any, axle_track: any) {
+  isExplicitlyUsed: boolean;
+  constructor(
+    ports: any,
+    wheel_diameter: any,
+    axle_track: any,
+    isExplicitlyUsed = true
+  ) {
     super();
     this._ports = ports;
     this._wheel_diameter = wheel_diameter;
     this._axle_track = axle_track;
     this._default_then = null;
+    this.isExplicitlyUsed = isExplicitlyUsed; // DeviceDriveBase might be "preregistered" to default ports if not explicitely specified - we only add it if it really used later
   }
   static DEVICENAME = 'drivebase';
   static instance(
     ports?: string[] | null,
     wheel_diameter?: any,
-    axle_track?: any
+    axle_track?: any,
+    isExplicitlyUsed = true
   ) {
     let elem = setup_devices_registry.get(
       DeviceDriveBase.DEVICENAME
     ) as DeviceDriveBase;
     if (!elem) {
-      imports.use('pybricks.robotics', 'DriveBase');
-      elem = new DeviceDriveBase(ports, wheel_diameter, axle_track);
+      elem = new DeviceDriveBase(
+        ports,
+        wheel_diameter,
+        axle_track,
+        isExplicitlyUsed
+      );
       setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
     } else {
       elem.ports = ports ?? elem._ports;
       elem.wheel_diameter = wheel_diameter ?? elem._wheel_diameter;
       elem.axle_track = axle_track ?? elem._axle_track;
+      if (!elem.isExplicitlyUsed) elem.isExplicitlyUsed = isExplicitlyUsed;
     }
     return elem;
   }
@@ -88,11 +101,9 @@ export class DeviceDriveBase extends DeviceBase {
     this._ports = value;
   }
   setup_code() {
+    if (!this.isExplicitlyUsed) return;
+
     const setup_code = super.setup_code();
-    // const port_left = this.ports[0];
-    // const port_right = this.ports[1];
-    // this.motor_left = DeviceMotor.instance(port_left, false);
-    // this.motor_right = DeviceMotor.instance(port_right);
     setup_code.push(
       ...[
         `${this.devicename} = DriveBase(${this.motor_left.devicename}, ${this.motor_right.devicename}, ${this.wheel_diameter}, ${this.axle_track})`,
@@ -103,13 +114,16 @@ export class DeviceDriveBase extends DeviceBase {
     return setup_code;
   }
   ensure_dependencies() {
-    const port_left = this.ports[0];
-    const port_right = this.ports[1];
+    if (!this.isExplicitlyUsed) return;
 
-    this.motor_left = DeviceMotor.instance(port_left, false);
-    this.motor_left.ensure_dependencies();
+    const genMotor = (port: string, cw: boolean) => {
+      const dev = DeviceMotor.instance(port, cw);
+      dev.ensure_dependencies();
+      return dev;
+    };
 
-    this.motor_right = DeviceMotor.instance(port_right, true);
-    this.motor_right.ensure_dependencies();
+    imports.use('pybricks.robotics', 'DriveBase');
+    this.motor_left = genMotor(this.ports[0], false);
+    this.motor_right = genMotor(this.ports[1], true);
   }
 }
