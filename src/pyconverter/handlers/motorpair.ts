@@ -16,7 +16,7 @@ import { BlockHandler, HandlersType } from './handlers';
 
 function _process_flippermove(
   op: string,
-  unit: BlockValue,
+  unit: string,
   value: BlockValue,
   device: DeviceDriveBase,
   direction: string,
@@ -27,7 +27,7 @@ function _process_flippermove(
   const postfix_then = device.get_then() ? `, ${device.get_then()}` : '';
   let direction_sign = '';
 
-  if (unit.value !== CONST_SECONDS) {
+  if (unit !== CONST_SECONDS) {
     return _move_distance();
   } else {
     return _move_seconds();
@@ -37,15 +37,14 @@ function _process_flippermove(
   function _move_distance() {
     //=== CM and INCHES
     let distance;
-    if (unit.value === CONST_CM || unit.value === CONST_INCHES) {
+    if (unit === CONST_CM || unit === CONST_INCHES) {
       distance = helpers.use('convert_distance')?.call(value, unit);
-    } else if (unit.value === CONST_ROTATIONS || unit.value === CONST_DEGREES) {
+    } else if (unit === CONST_ROTATIONS || unit === CONST_DEGREES) {
       const factor =
-        device.rotation_distance *
-        (unit.value === CONST_ROTATIONS ? 1 : 1 / 360);
+        device.rotation_distance * (unit === CONST_ROTATIONS ? 1 : 1 / 360);
       distance = num_eval(value, '*', factor);
     } else {
-      throw new Error(`Unknown unit ${unit.value}`);
+      throw new Error(`Unknown unit ${unit}`);
     }
 
     //== DIRECTION
@@ -82,7 +81,7 @@ function _process_flippermove(
       if (steer_value === 0) direction_sign = '';
       else
         throw new Error(
-          `Steering direction ${steer.raw} for ${op} with ${unit.raw} is not yet implemented here`
+          `Steering direction ${steer.raw} for ${op} with ${unit} is not yet implemented here`
         );
       //TODO: handle steering != 0 for distance using curve
       // 0=straight/r=??, 50=pivotturn (D=axle_track/2), 100=spinturn (D=0)
@@ -147,7 +146,7 @@ function flippermove_steer(block: Block) {
   // inputs: steering, value
   return _process_flippermove(
     block.opcode,
-    unit,
+    unit?.toString(),
     value,
     device,
     null,
@@ -159,7 +158,7 @@ function flippermoremove_steerDistanceAtSpeed(block: Block) {
   const steer = block.get_input('STEERING');
   const steer_adjusted = steer; // TODO
   const value = block.get_input('DISTANCE');
-  const unit = block.get_field('UNIT');
+  const unit = block.get_field('UNIT')?.toString();
   const speed = helpers.use('convert_speed').call(block.get_input('SPEED'));
 
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
@@ -239,9 +238,9 @@ function flippermove_movementSpeed(block: Block) {
 }
 
 function flippermove_move(block: Block) {
-  const direction = block.get_input('DIRECTION');
+  const direction = block.get_input('DIRECTION')?.toString();
   const value = block.get_input('VALUE');
-  const unit = block.get_field('UNIT');
+  const unit = block.get_field('UNIT')?.toString();
 
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
 
@@ -250,7 +249,21 @@ function flippermove_move(block: Block) {
     unit,
     value,
     device,
-    direction?.value?.toString(),
+    direction,
+    null
+  );
+}
+
+function horizontalmove_move(direction: string, block: Block) {
+  const value = block.get_input('ROTATIONS')?.value?.toString();
+  const device = DeviceDriveBase.instance() as DeviceDriveBase;
+
+  return _process_flippermove(
+    block.opcode,
+    CONST_ROTATIONS,
+    BlockValue.toString(value),
+    device,
+    direction,
     null
   );
 }
@@ -322,8 +335,10 @@ export default function motorpair(): HandlersType {
     ['flippermove_setDistance', flippermove_setDistance],
     ['flippermove_startMove', flippermove_startMove],
     ['flippermove_stopMove', flippermove_stopMove],
+    ['horizontalmove_moveStop', flippermove_stopMove],
     ['flippermove_move', flippermove_move],
     ['flippermove_movementSpeed', flippermove_movementSpeed],
+    ['horizontalmove_moveSetSpeed', flippermove_movementSpeed],
     [
       'flippermoremove_movementSetStopMethod',
       flippermoremove_movementSetStopMethod,
@@ -335,6 +350,17 @@ export default function motorpair(): HandlersType {
     [
       'flippermoremove_steerDistanceAtSpeed',
       flippermoremove_steerDistanceAtSpeed,
+    ],
+
+    ['horizontalmove_moveForward', horizontalmove_move.bind(this, 'forward')],
+    ['horizontalmove_moveBackward', horizontalmove_move.bind(this, 'back')],
+    [
+      'horizontalmove_moveTurnClockwiseRotations',
+      horizontalmove_move.bind(this, 'clockwise'),
+    ],
+    [
+      'horizontalmove_moveTurnCounterClockwiseRotations',
+      horizontalmove_move.bind(this, 'counterclockwise'),
     ],
   ]);
   const operatorHandlers: any = null;
