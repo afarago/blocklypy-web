@@ -93,7 +93,7 @@ export default class PyConverter {
 
       const codeSections: { name: string; code: string[]; skip?: boolean }[] = [
         {
-          name: 'getContext().imports',
+          name: 'imports',
           code: ImportRegistryPayload.to_global_code(getContext().imports),
           skip: this._options?.debug?.skipImports,
         },
