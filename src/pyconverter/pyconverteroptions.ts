@@ -7,5 +7,6 @@ export default interface PyConverterOptions {
     skipSetup?: boolean;
     showBlockIds?: boolean;
     showThisStackOnly?: string;
+    dumpProjectJSONlocally?: boolean;
   };
 }

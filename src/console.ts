@@ -34,8 +34,7 @@ try {
     },
   };
   convertFlipperProjectToPython(file, option).then(retval => {
-    const DEBUG_WRITE_PROJECT_JSON = !false;
-    if (DEBUG_WRITE_PROJECT_JSON) {
+    if (option.debug?.dumpProjectJSONlocally) {
       // write a project.json to the local dir for debug
       const data_pretty = JSON.stringify(retval.project, null, 2);
       fs.writeFileSync(
