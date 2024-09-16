@@ -22,11 +22,22 @@ export const handleFileUpload = async (req: Request, res: Response) => {
   try {
     const file = req.files.file as UploadedFile;
     const fileData = file.data as Buffer;
-    const retval = await convertFlipperProjectToPython(fileData);
+    const retval = await convertFlipperProjectToPython(fileData, {});
 
-    res.send(retval);
+    const format = req.query['format'];
+    switch (format) {
+      case 'json':
+        return res.send(retval);
+      default:
+      case 'py':
+        return res.send(retval.pycode);
+      case 'plain':
+        return res.send(retval.plaincode);
+      case 'svg':
+        return res.send(retval.svg);
+    }
   } catch (err) {
-    res.status(400).send(err);
+    return res.status(400).send(err);
     //res.status(500).send('Error processing the zip file.');
   }
 };

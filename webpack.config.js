@@ -17,10 +17,17 @@ const config = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html',
+      template: 'static/index.html',
     }),
     new CopyWebpackPlugin({
-      patterns: [{ from: 'static' }],
+      patterns: [
+        {
+          from: 'static',
+          globOptions: {
+            ignore: ['**/index.html'],
+          },
+        },
+      ],
     }),
   ],
   module: {
