@@ -99,6 +99,11 @@ function procedures_call(block: Block) {
   ];
 }
 
+function horizontaldisplaymonitor_displayWriteWithBuiltInDelay(block: Block) {
+  const text = block.get_input('TEXT');
+  return [`print(${text.raw})`];
+}
+
 // function handleBlock(block: Block, op: string) {
 //   switch (op) {
 //     case 'flippersensors_resetTimer':
@@ -128,6 +133,10 @@ export default function misc(): HandlersType {
     ['event_broadcastandwait', event_broadcast],
     ['horizontalevents_broadcast', horizontalevents_broadcast],
     ['procedures_call', procedures_call],
+    [
+      'horizontaldisplaymonitor_displayWriteWithBuiltInDelay',
+      horizontaldisplaymonitor_displayWriteWithBuiltInDelay,
+    ],
   ]);
   const operatorHandlers: any = null;
 
