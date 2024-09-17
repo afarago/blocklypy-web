@@ -29,16 +29,18 @@ function handleFileUpload(file: File) {
   });
 }
 
-// fetch('sample/sample.llsp3')
-//   .then(async data => {
-//     const data2 = await data.blob();
-//     const file = new File([data2], 'sample.llsp3');
-//     console.log('>>> loaded', data2);
-//     handleFileUpload(file);
-//   })
-//   .catch((error: any) => {
-//     console.error('>>> error', error);
-//   });
+$('.example-content-button').on('click', event => {
+  const path = event.target.dataset.file;
+  fetch(path)
+    .then(async data => {
+      const data2 = await data.blob();
+      const file = new File([data2], 'sample.llsp3');
+      handleFileUpload(file);
+    })
+    .catch((error: any) => {
+      console.error('>>> error', error);
+    });
+});
 
 const dropArea = $('#maincontainer');
 dropArea.on('dragover', event => {
@@ -69,18 +71,19 @@ fileSelector.on('change', event => {
   handleFileUpload(target.files[0]);
 });
 
-const copyButton = $('.copy-button');
-copyButton.on('click', event => {
+$('.copy-button').on('click', event => {
+  console.log('copy-button');
   event.stopPropagation();
   event.preventDefault();
 
+  const copyButton = $(event.target.parentElement);
   const dataTarget = $(event.target.parentElement).data('target');
   const content = $('#' + dataTarget).text();
   // const content = $('#preview-pycode').text();
   // TODO: data-target
   navigator.clipboard.writeText(content);
 
-  copyButton.addClass('success ');
+  copyButton.addClass('success');
   copyButton.children().toggleClass('bi-clipboard-check bi-copy');
   setTimeout(() => {
     copyButton.removeClass('success');
