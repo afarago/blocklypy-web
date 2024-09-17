@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import express, { Request, Response } from 'express';
 import fileUpload, { UploadedFile } from 'express-fileupload';
-import context, { GlobalContext } from './pyconverter/context';
+import context, { Context } from './pyconverter/context';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 import { _debug } from './pyconverter/utils';
 
@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(fileUpload());
 
 // initialize context handling
-const asyncLocalStorage = new AsyncLocalStorage<GlobalContext>();
+const asyncLocalStorage = new AsyncLocalStorage<Context>();
 context.init(() => asyncLocalStorage.getStore());
 
 // POST route for file upload

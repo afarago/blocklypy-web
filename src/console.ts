@@ -31,6 +31,7 @@ try {
       // showOrphanCode: true,
       // showBlockIds: true,
       // showThisStackOnly: 'Y09;djV%E2_0:AMn^hOT',
+      dumpProjectJSONlocally: true,
     },
   };
 

@@ -7,16 +7,17 @@ import { HelperEnabledRegistryPayload } from './helpers';
 import { DeviceBase } from './device';
 import { _debug } from './utils';
 
-interface Context {
+export interface Context {
   imports: RegistryManager<ImportRegistryPayload>;
   broadcasts: RegistryManager<BroadcastRegistryPayload>;
   variables: RegistryManager<VariableRegistryPayload>;
   procedures: RegistryManager<ProcedureRegistryPayload>;
   helpers: RegistryManager<HelperEnabledRegistryPayload>;
   setup_devices_registry: Map<string, DeviceBase>;
+  clear?: () => void;
 }
 
-export class GlobalContext implements Context {
+class GlobalContext implements Context {
   imports: RegistryManager<ImportRegistryPayload>;
   broadcasts: RegistryManager<BroadcastRegistryPayload>;
   variables: RegistryManager<VariableRegistryPayload>;
@@ -31,6 +32,15 @@ export class GlobalContext implements Context {
     this.procedures = ProcedureRegistryPayload.createRegistry();
     this.helpers = HelperEnabledRegistryPayload.createRegistry();
     this.setup_devices_registry = DeviceBase.createRegistry();
+  }
+
+  clear() {
+    this.imports.clear();
+    this.broadcasts.clear();
+    this.variables.clear();
+    this.procedures.clear();
+    this.helpers.clear();
+    this.setup_devices_registry.clear();
   }
 }
 export class GlobalContextManager {
@@ -51,6 +61,10 @@ export class GlobalContextManager {
 
   createContext(): Context {
     return new GlobalContext();
+  }
+
+  clear() {
+    this._contextProxyFn()?.clear();
   }
 
   _getContext(): Context {
