@@ -1,7 +1,7 @@
 import { BlockValue } from './blockvalue';
+import context from './context';
 import { flipperColorsMap, round2 } from './converters';
-import getContext from './context';
-import { RegistryPayloadWithId, RegistryManager } from './registrymanager';
+import { RegistryManager, RegistryPayloadWithId } from './registrymanager';
 import { _debug, AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES } from './utils';
 
 interface HelperFunctionDefintion {
@@ -292,7 +292,7 @@ def convert_distance(value, unit):
           const colors = Array.from(flipperColorsMap.values());
           const color_value = value in colors ? colors[value] : 'Color.NONE';
 
-          getContext().imports.use('pybricks.parameters', 'Color');
+          context.imports.use('pybricks.parameters', 'Color');
           return color_value;
         },
         py_fn: `

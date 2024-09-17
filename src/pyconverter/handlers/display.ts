@@ -1,7 +1,7 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
+import context from '../context';
 import { convert_matrix } from '../converters';
-import getContext from '../context';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import { BlockHandler, HandlersType } from './handlers';
 
@@ -21,7 +21,7 @@ function flipperdisplay_ledOn(block: Block) {
   const x1 = num_eval(x, '-', 1);
   const y1 = num_eval(y, '-', 1);
   return [
-    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${getContext().helpers.use('float_safe')?.call(brightness).raw})`,
+    `hub.display.pixel(${x1.raw}, ${y1.raw}, ${context.helpers.use('float_safe')?.call(brightness).raw})`,
   ];
 }
 
@@ -29,13 +29,13 @@ function flipperdisplay_ledText(block: Block) {
   const text = block.get_input('TEXT');
   const expr = text?.is_string
     ? BlockValue.raw(text)
-    : getContext().helpers.use('str')?.call(text).value;
+    : context.helpers.use('str')?.call(text).value;
   return [`${AWAIT_PLACEHOLDER}hub.display.text(${expr})`];
 }
 
 function flipperdisplay_ledImageFor(block: Block) {
-  const value = getContext()
-    .helpers.use('convert_time')
+  const value = context.helpers
+    .use('convert_time')
     ?.call(block.get_input('VALUE'));
   const matrix = block.get_input('MATRIX');
 
@@ -69,8 +69,8 @@ function horizontaldisplay_ledRandom(_: Block) {
 }
 
 function flipperdisplay_centerButtonLight(block: Block) {
-  const color = getContext()
-    .helpers.use('convert_color')
+  const color = context.helpers
+    .use('convert_color')
     ?.call(block.get_input('COLOR'));
   return [`hub.light.on(${color.value})`];
 }

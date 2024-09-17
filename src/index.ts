@@ -1,13 +1,15 @@
+import context from './pyconverter/context';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 // import Split from 'split.js';
 //import $ from 'jquery';
 // import 'jqueryui';
 
 function handleFileUpload(file: File) {
-  const reader = new FileReader();
-  reader.addEventListener('load', event => {
-    const input = event.target.result as ArrayBuffer;
+  file.arrayBuffer().then(async input => {
     const options = {};
+
+    const contextData = context.createContext();
+    context.init(() => contextData);
     convertFlipperProjectToPython(input, options).then(retval => {
       // const outputArea = document.getElementById('preview-code');
       // outputArea.innerText = retval.pycode;
@@ -25,8 +27,18 @@ function handleFileUpload(file: File) {
       updateMapVisibility();
     });
   });
-  reader.readAsArrayBuffer(file);
 }
+
+// fetch('sample/sample.llsp3')
+//   .then(async data => {
+//     const data2 = await data.blob();
+//     const file = new File([data2], 'sample.llsp3');
+//     console.log('>>> loaded', data2);
+//     handleFileUpload(file);
+//   })
+//   .catch((error: any) => {
+//     console.error('>>> error', error);
+//   });
 
 const dropArea = $('#maincontainer');
 dropArea.on('dragover', event => {

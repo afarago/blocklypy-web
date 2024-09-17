@@ -1,4 +1,4 @@
-import getContext from './context';
+import context from './context';
 import { DeviceBase } from './device';
 import { DeviceMotor } from './devicemotor';
 
@@ -36,7 +36,7 @@ export class DeviceDriveBase extends DeviceBase {
     axle_track?: any,
     isExplicitlyUsed = true
   ) {
-    let elem = getContext().setup_devices_registry.get(
+    let elem = context.setup_devices_registry.get(
       DeviceDriveBase.DEVICENAME
     ) as DeviceDriveBase;
     if (!elem) {
@@ -46,7 +46,7 @@ export class DeviceDriveBase extends DeviceBase {
         axle_track,
         isExplicitlyUsed
       );
-      getContext().setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
+      context.setup_devices_registry.set(DeviceDriveBase.DEVICENAME, elem);
     } else {
       elem.ports = ports ?? elem._ports;
       elem.wheel_diameter = wheel_diameter ?? elem._wheel_diameter;
@@ -107,7 +107,7 @@ export class DeviceDriveBase extends DeviceBase {
       ...[
         `${this.devicename} = DriveBase(${this.motor_left.devicename}, ${this.motor_right.devicename}, ${this.wheel_diameter}, ${this.axle_track})`,
         // `${this.rotation_distance_variable} = ${this.rotation_distance}`,
-        `${this.default_speed_variable} = ${getContext().helpers.use('convert_speed')?.call(50).raw}`,
+        `${this.default_speed_variable} = ${context.helpers.use('convert_speed')?.call(50).raw}`,
       ]
     );
     return setup_code;
@@ -121,7 +121,7 @@ export class DeviceDriveBase extends DeviceBase {
       return dev;
     };
 
-    getContext().imports.use('pybricks.robotics', 'DriveBase');
+    context.imports.use('pybricks.robotics', 'DriveBase');
     this.motor_left = genMotor(this.ports[0], false);
     this.motor_right = genMotor(this.ports[1], true);
   }

@@ -3,7 +3,7 @@ import { processOperation } from './handlers/operator';
 import { ProcedureArg, ProcedureRegistryPayload } from './procedures';
 import * as Scratch from './scratch';
 import { _debug, sanitize } from './utils';
-import getContext from './context';
+import context from './context';
 
 export class BlockMatchError extends Error {}
 
@@ -160,7 +160,7 @@ export class Block {
             return op;
           } else if (typeof ref === 'object' && Array.isArray(ref)) {
             //!! assert(ref[0] === 12 || ref[0] === 13);
-            const var_entry = getContext().variables.get([
+            const var_entry = context.variables.get([
               ref[1].toString(),
               ref[0] === Scratch.BlockValueType.LIST,
             ]);
@@ -241,7 +241,7 @@ export function extractProcedureDefinition(
 ): ProcedureRegistryPayload {
   const block2 = block.get_inputAsBlock('custom_block', false); // this is a procedures_prototype
   const proccode = block2._block.mutation.proccode;
-  if (useCache) return getContext().procedures.get(proccode);
+  if (useCache) return context.procedures.get(proccode);
 
   const blockname = sanitize(proccode.match(/^(.*?)(?= %[sb])|^.*/)?.[0]);
   const argumenttypes: string[] = [];

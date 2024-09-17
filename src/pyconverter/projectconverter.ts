@@ -59,6 +59,12 @@ export async function convertFlipperProjectToPython(
     retval.plaincode = codes.plaincode;
   }
 
+  // const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  // for (let i = 0; i < 10; i++) {
+  //   await delay(500);
+  //   console.log('.');
+  // }
+
   return retval;
 }
 

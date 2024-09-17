@@ -1,4 +1,5 @@
 import { Block, extractProcedureDefinition } from './block';
+import context from './context';
 import { DeviceOnPortBase } from './device';
 import { DeviceDriveBase } from './devicedrivebase';
 import { handlers } from './handlers/handlers';
@@ -6,7 +7,6 @@ import { initMotorPairMovementPair } from './handlers/motorpair';
 import { processOperation } from './handlers/operator';
 import { HelperEnabledRegistryPayload } from './helpers';
 import { ImportRegistryPayload } from './imports';
-import getContext, { newContext } from './context';
 import PyConverterOptions from './pyconverteroptions';
 import { BlockField, ScratchProject, ScratchTarget } from './scratch';
 import {
@@ -54,9 +54,6 @@ export default class PyConverter {
     // ========================
     let plainCode, pyCode;
     try {
-      //TODO: move to session handling
-      newContext();
-
       const target1 = projectData.targets[1];
       this.preprocessMessages(projectData);
       this.preprocessProcedureDefinitions(projectData);
@@ -86,7 +83,7 @@ export default class PyConverter {
       const setupCode = this.createSetupCodes();
 
       const helperCode = HelperEnabledRegistryPayload.to_global_code(
-        getContext().helpers
+        context.helpers
       );
 
       const mainProgramCode = this.createMainProgramCode(programStacks);
@@ -94,7 +91,7 @@ export default class PyConverter {
       const codeSections: { name: string; code: string[]; skip?: boolean }[] = [
         {
           name: 'imports',
-          code: ImportRegistryPayload.to_global_code(getContext().imports),
+          code: ImportRegistryPayload.to_global_code(context.imports),
           skip: this._options?.debug?.skipImports,
         },
         {
@@ -109,7 +106,7 @@ export default class PyConverter {
         },
         {
           name: 'global variables',
-          code: VariableRegistryPayload.to_global_code(getContext().variables),
+          code: VariableRegistryPayload.to_global_code(context.variables),
         },
         { name: 'program code', code: programCode },
         { name: 'main code', code: mainProgramCode },
@@ -149,14 +146,14 @@ export default class PyConverter {
     for (const varblock of Object.values(target1.variables)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
-        const entry = getContext().variables.use([name, false], null, false);
+        const entry = context.variables.use([name, false], null, false);
         entry.generateUniqueName();
       }
     }
     for (const varblock of Object.values(target1.lists)) {
       if (Array.isArray(varblock)) {
         const name = varblock[0];
-        const entry = getContext().variables.use([name, true], null, true);
+        const entry = context.variables.use([name, true], null, true);
         entry.generateUniqueName();
       }
     }
@@ -199,15 +196,15 @@ export default class PyConverter {
   createSetupCodes() {
     const setupCodes = [];
     setupCodes.push('hub = PrimeHub()');
-    getContext().imports.use('pybricks.hubs', 'PrimeHub');
+    context.imports.use('pybricks.hubs', 'PrimeHub');
 
     // ensure dependencies
-    for (const elem of getContext().setup_devices_registry.values()) {
+    for (const elem of context.setup_devices_registry.values()) {
       elem.ensure_dependencies();
     }
 
     // process and add all devices
-    const remainingItems = [...getContext().setup_devices_registry.values()];
+    const remainingItems = [...context.setup_devices_registry.values()];
 
     // anything that is connected to a port
     Array.from(remainingItems.filter(elem => elem instanceof DeviceOnPortBase))
@@ -235,7 +232,7 @@ export default class PyConverter {
   preprocessMessages(projectData: ScratchProject) {
     const target0 = projectData.targets[0];
     Object.entries(target0.broadcasts).forEach(([id, name]) =>
-      getContext().broadcasts.use(id, name)
+      context.broadcasts.use(id, name)
     );
   }
 
@@ -246,7 +243,7 @@ export default class PyConverter {
       .forEach(([id, sblock]) => {
         const block = new Block(sblock, id, target1);
         const procdef = extractProcedureDefinition(block);
-        getContext().procedures.use(procdef.id, procdef);
+        context.procedures.use(procdef.id, procdef);
       });
   }
 
@@ -288,7 +285,7 @@ export default class PyConverter {
       ];
 
     if (this._isAsyncNeeded) {
-      getContext().imports.use('pybricks.tools', 'multitask, run_task');
+      context.imports.use('pybricks.tools', 'multitask, run_task');
 
       // multiple start stacks
       return [
@@ -417,7 +414,7 @@ export default class PyConverter {
                 code.push(`async def ${stack_fn}():`);
                 code.push(
                   ...indent_code([
-                    `await ${getContext().helpers.use('event_task')?.call(stack_cond_fn, stackActionFn).raw}`,
+                    `await ${context.helpers.use('event_task')?.call(stack_cond_fn, stackActionFn).raw}`,
                   ])
                 );
 
@@ -507,9 +504,9 @@ export default class PyConverter {
       aggregatedMessageFns.length &&
       (lastStackEventMessageId !== messageId || forceDump)
     ) {
-      const bco = getContext().broadcasts.get(lastStackEventMessageId);
+      const bco = context.broadcasts.get(lastStackEventMessageId);
 
-      getContext().helpers.use('class_Message');
+      context.helpers.use('class_Message');
       const message_fn = bco.get_pyname();
       aggregatedCodeStacks.push({
         id: message_fn,
@@ -529,9 +526,9 @@ export default class PyConverter {
     }
 
     if (messageId?.length) {
-      if (!getContext().broadcasts.has(messageId)) {
+      if (!context.broadcasts.has(messageId)) {
         const messageName = messageRecord[0]?.toString();
-        getContext().broadcasts.use(messageId, messageName);
+        context.broadcasts.use(messageId, messageName);
       }
       aggregatedMessageFns.push(stackActionFn);
       lastStackEventMessageId = messageId;

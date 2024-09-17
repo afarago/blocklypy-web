@@ -1,6 +1,7 @@
-import express from 'express';
+import { AsyncLocalStorage } from 'async_hooks';
+import express, { Request, Response } from 'express';
 import fileUpload, { UploadedFile } from 'express-fileupload';
-import { Request, Response } from 'express';
+import context, { GlobalContext } from './pyconverter/context';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 import { _debug } from './pyconverter/utils';
 
@@ -13,6 +14,10 @@ app.use(express.json());
 // Middleware to handle file uploads
 app.use(fileUpload());
 
+// initialize context handling
+const asyncLocalStorage = new AsyncLocalStorage<GlobalContext>();
+context.init(() => asyncLocalStorage.getStore());
+
 // GET route
 // POST route for file upload
 export const handleFileUpload = async (req: Request, res: Response) => {
@@ -20,28 +25,29 @@ export const handleFileUpload = async (req: Request, res: Response) => {
     return res.status(400).send('No files were uploaded.');
   }
 
-  try {
-    const file = req?.files?.file as UploadedFile;
-    const fileData = file.data as Buffer;
-    const retval = await convertFlipperProjectToPython(fileData, {});
-    _debug('::FILE::', file.name);
+  asyncLocalStorage.run(context.createContext(), async () => {
+    try {
+      const file = req?.files?.file as UploadedFile;
+      const fileData = file.data as Buffer;
+      const retval = await convertFlipperProjectToPython(fileData, {});
 
-    const format = req.query['format'];
-    switch (format) {
-      case 'json':
-        return res.send(retval);
-      default:
-      case 'py':
-        return res.send(retval.pycode);
-      case 'plain':
-        return res.send(retval.plaincode);
-      case 'svg':
-        return res.send(retval.svg);
+      const format = req.query['format'];
+      switch (format) {
+        case 'json':
+          return res.send(retval);
+        default:
+        case 'py':
+          return res.send(retval.pycode);
+        case 'plain':
+          return res.send(retval.plaincode);
+        case 'svg':
+          return res.send(retval.svg);
+      }
+    } catch (err) {
+      return res.status(400).send(err);
+      //res.status(500).send('Error processing the zip file.');
     }
-  } catch (err) {
-    return res.status(400).send(err);
-    //res.status(500).send('Error processing the zip file.');
-  }
+  });
 };
 app.post('/upload', handleFileUpload);
 

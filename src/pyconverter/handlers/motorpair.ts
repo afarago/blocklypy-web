@@ -1,8 +1,8 @@
 import { Block } from '../block';
 import { BlockValue, num_eval } from '../blockvalue';
+import context from '../context';
 import { calc_stop } from '../converters';
 import { DeviceDriveBase } from '../devicedrivebase';
-import getContext from '../context';
 import {
   _debug,
   AWAIT_PLACEHOLDER,
@@ -38,9 +38,7 @@ function _process_flippermove(
     //=== CM and INCHES
     let distance;
     if (unit === CONST_CM || unit === CONST_INCHES) {
-      distance = getContext()
-        .helpers.use('convert_distance')
-        ?.call(value, unit);
+      distance = context.helpers.use('convert_distance')?.call(value, unit);
     } else if (unit === CONST_ROTATIONS || unit === CONST_DEGREES) {
       const factor =
         device.rotation_distance * (unit === CONST_ROTATIONS ? 1 : 1 / 360);
@@ -64,8 +62,8 @@ function _process_flippermove(
         direction_sign = direction === 'clockwise' ? '' : '-';
         // rot_deg = distance / (axle_track * PI)
         // NOTE: not using variable for axle_track - we assume this is constant for the complete program
-        const rot_deg = getContext()
-          .helpers.use('round')
+        const rot_deg = context.helpers
+          .use('round')
           ?.call(
             num_eval([distance, '*', 360], '/', device.axle_track * Math.PI),
             2
@@ -96,7 +94,7 @@ function _process_flippermove(
   }
 
   function _move_seconds() {
-    const time = getContext().helpers.use('convert_time')?.call(value);
+    const time = context.helpers.use('convert_time')?.call(value);
     const stop_fn =
       device.get_then() === 'Stop.COAST'
         ? `${AWAIT_PLACEHOLDER}${d}.stop()`
@@ -116,7 +114,7 @@ function _process_flippermove(
       }
     } else if (steer) {
       steer_value = num_eval(
-        getContext().helpers.use('int_safe').call(steer),
+        context.helpers.use('int_safe').call(steer),
         '/',
         100
       );
@@ -165,8 +163,8 @@ function flippermoremove_steerDistanceAtSpeed(block: Block) {
   const steer_adjusted = steer; // TODO
   const value = block.get_input('DISTANCE');
   const unit = block.get_field('UNIT')?.toString();
-  const speed = getContext()
-    .helpers.use('convert_speed')
+  const speed = context.helpers
+    .use('convert_speed')
     .call(block.get_input('SPEED'));
 
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
@@ -198,7 +196,7 @@ function flippermove_startSteer(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   const d = device.devicename;
   const speed1 = speed
-    ? getContext().helpers.use('convert_speed').call(speed)
+    ? context.helpers.use('convert_speed').call(speed)
     : device.default_speed_variable;
   return [`${AWAIT_PLACEHOLDER}${d}.drive(${speed1}, ${steer_value})`];
 }
@@ -241,7 +239,7 @@ function flippermove_movementSpeed(block: Block) {
   const device = DeviceDriveBase.instance() as DeviceDriveBase;
   // const d = device.devicename;
 
-  const value = getContext().helpers.use('convert_speed')?.call(speed);
+  const value = context.helpers.use('convert_speed')?.call(speed);
   return [`${device.default_speed_variable} = ${value.raw}`];
 }
 
@@ -302,12 +300,12 @@ function flippermove_startMove(block: Block) {
 
 function flippermove_setDistance(block: Block) {
   const unit = block.get_field('UNIT');
-  const distance = getContext()
-    .helpers.use('convert_distance')
+  const distance = context.helpers
+    .use('convert_distance')
     ?.call(block.get_input('DISTANCE'), unit).raw as number;
 
-  const wheel_diameter = getContext()
-    .helpers.use('round')
+  const wheel_diameter = context.helpers
+    .use('round')
     ?.call(distance / Math.PI, 2).raw;
   const device = DeviceDriveBase.instance(
     null,

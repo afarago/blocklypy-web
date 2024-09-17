@@ -1,19 +1,19 @@
 import { Block } from '../block';
 import { BlockValue } from '../blockvalue';
-import getContext from '../context';
+import context from '../context';
 import { AWAIT_PLACEHOLDER } from '../utils';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function flippersound_beepForTime(block: Block) {
   const note = block.get_input('NOTE'); // 48 = C, .. 1-8 = C
-  const duration = getContext()
-    .helpers.use('convert_time')
+  const duration = context.helpers
+    .use('convert_time')
     ?.call(block.get_input('DURATION'));
 
   return [
     AWAIT_PLACEHOLDER +
-      getContext()
-        .helpers.use('hub_speaker_flipper_play')
+      context.helpers
+        .use('hub_speaker_flipper_play')
         ?.call(note, duration)
         .value.toString(),
   ];
@@ -22,11 +22,11 @@ function flippersound_beepForTime(block: Block) {
 function horizontalsound_playMusicSoundUntilDone(block: Block) {
   const note = block.get_input('SOUND'); // "1" = C4, "2" = D4, .. "8" = C5
 
-  getContext().imports.use('urandom', 'randint');
+  context.imports.use('urandom', 'randint');
   return [
     AWAIT_PLACEHOLDER +
-      getContext()
-        .helpers.use('hub_speaker_iconblocks_play')
+      context.helpers
+        .use('hub_speaker_iconblocks_play')
         ?.call(note)
         .value.toString(),
   ];
@@ -40,7 +40,7 @@ function sound_setvolumeto(block: Block) {
 function sound_changevolumeby(block: Block) {
   const volume = block.get_input('VOLUME');
   return [
-    `hub.speaker.volume(hub.speaker.volume() + ${getContext().helpers.use('int_safe').call(volume).raw})`,
+    `hub.speaker.volume(hub.speaker.volume() + ${context.helpers.use('int_safe').call(volume).raw})`,
   ];
 }
 

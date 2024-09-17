@@ -7,7 +7,16 @@ import { HelperEnabledRegistryPayload } from './helpers';
 import { DeviceBase } from './device';
 import { _debug } from './utils';
 
-export class GlobalContext {
+interface Context {
+  imports: RegistryManager<ImportRegistryPayload>;
+  broadcasts: RegistryManager<BroadcastRegistryPayload>;
+  variables: RegistryManager<VariableRegistryPayload>;
+  procedures: RegistryManager<ProcedureRegistryPayload>;
+  helpers: RegistryManager<HelperEnabledRegistryPayload>;
+  setup_devices_registry: Map<string, DeviceBase>;
+}
+
+export class GlobalContext implements Context {
   imports: RegistryManager<ImportRegistryPayload>;
   broadcasts: RegistryManager<BroadcastRegistryPayload>;
   variables: RegistryManager<VariableRegistryPayload>;
@@ -24,12 +33,39 @@ export class GlobalContext {
     this.setup_devices_registry = DeviceBase.createRegistry();
   }
 }
+export class GlobalContextManager {
+  _contextProxyFn: () => Context | undefined;
 
-let context: GlobalContext = undefined;
-export function newContext() {
-  context = new GlobalContext();
-  return context;
+  init(contextProxyFn?: () => Context | undefined) {
+    this._contextProxyFn = contextProxyFn;
+  }
+
+  createContext(): Context {
+    return new GlobalContext();
+  }
+
+  _getContext(): Context {
+    return this._contextProxyFn();
+  }
+  get imports() {
+    return this._getContext().imports;
+  }
+  get broadcasts() {
+    return this._getContext().broadcasts;
+  }
+  get variables() {
+    return this._getContext().variables;
+  }
+  get procedures() {
+    return this._getContext().procedures;
+  }
+  get helpers() {
+    return this._getContext().helpers;
+  }
+  get setup_devices_registry() {
+    return this._getContext().setup_devices_registry;
+  }
 }
-export default function getContext() {
-  return context;
-}
+
+const context = new GlobalContextManager();
+export default context;

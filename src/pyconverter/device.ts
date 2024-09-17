@@ -1,4 +1,4 @@
-import getContext from './context';
+import context from './context';
 
 export class DeviceBase {
   _ports: string[];
@@ -28,7 +28,7 @@ export class DeviceOnPortBase extends DeviceBase {
   constructor(port: string) {
     super();
     this.port = port;
-    getContext().imports.use('pybricks.parameters', 'Port');
+    context.imports.use('pybricks.parameters', 'Port');
   }
   get portString(): string {
     return DeviceOnPortBase.portToString(this.port);

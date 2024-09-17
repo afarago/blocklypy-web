@@ -1,4 +1,4 @@
-import getContext from './context';
+import context from './context';
 
 export class BlockValue {
   private _value: string | number | boolean;
@@ -76,7 +76,7 @@ export function num_eval(
       if (allow_local) {
         return Math.abs(b1);
       } else {
-        getContext().imports.use('umath', null);
+        context.imports.use('umath', null);
         return new BlockValue(`umath.fabs(${BlockValue.raw(b1)})`, true);
       }
     }
@@ -99,7 +99,7 @@ export function num_eval(
     } else {
       const conv_function = isInteger ? 'int_safe' : 'float_safe';
       return new BlockValue(
-        `${getContext().helpers.use(conv_function)?.call(a1).raw} ${b} ${getContext().helpers.use(conv_function)?.call(c1).raw}`,
+        `${context.helpers.use(conv_function)?.call(a1).raw} ${b} ${context.helpers.use(conv_function)?.call(c1).raw}`,
         true
       );
     }
