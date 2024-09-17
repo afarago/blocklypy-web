@@ -20,11 +20,12 @@
     "server": "tsx  ./src/server.ts",
     "server:dev": "nodemon --exec tsx ./src/server.ts",
     "curl1": "curl -X POST -F \"file=@testdata/test4.lms\" http://localhost:3000/upload",
-    "build": "webpack --mode=production --node-env=production",
+    "build": "npm test && npm run build:prod",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
-    "serve": "webpack serve"
+    "serve": "webpack serve",
+    "test": "jest"
   },
   "OLD_scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

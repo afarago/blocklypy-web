@@ -35,6 +35,15 @@ export class GlobalContext implements Context {
 }
 export class GlobalContextManager {
   _contextProxyFn: () => Context | undefined;
+  _defaultContext: Context;
+
+  constructor() {
+    // default single threaded context generator, prone to clashes in multi-threaded environments
+    this._contextProxyFn = () => {
+      if (!this._defaultContext) this._defaultContext = this.createContext();
+      return this._defaultContext;
+    };
+  }
 
   init(contextProxyFn?: () => Context | undefined) {
     this._contextProxyFn = contextProxyFn;

@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import context from './pyconverter/context';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 import PyConverterOptions from './pyconverter/pyconverteroptions';
 
@@ -35,8 +34,6 @@ try {
     },
   };
 
-  const contextData = context.createContext();
-  context.init(() => contextData);
   convertFlipperProjectToPython(file, option).then(retval => {
     if (option.debug?.dumpProjectJSONlocally) {
       // write a project.json to the local dir for debug

@@ -18,7 +18,6 @@ app.use(fileUpload());
 const asyncLocalStorage = new AsyncLocalStorage<GlobalContext>();
 context.init(() => asyncLocalStorage.getStore());
 
-// GET route
 // POST route for file upload
 export const handleFileUpload = async (req: Request, res: Response) => {
   if (!req.files || Object.keys(req.files).length === 0) {

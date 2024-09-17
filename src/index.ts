@@ -1,4 +1,3 @@
-import context from './pyconverter/context';
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
 // import Split from 'split.js';
 //import $ from 'jquery';
@@ -8,8 +7,6 @@ function handleFileUpload(file: File) {
   file.arrayBuffer().then(async input => {
     const options = {};
 
-    const contextData = context.createContext();
-    context.init(() => contextData);
     convertFlipperProjectToPython(input, options).then(retval => {
       // const outputArea = document.getElementById('preview-code');
       // outputArea.innerText = retval.pycode;
