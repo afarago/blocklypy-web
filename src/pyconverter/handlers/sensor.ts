@@ -4,8 +4,8 @@ import context from '../context';
 import { calc_comparator } from '../converters';
 import { DeviceOnPortBase } from '../device';
 import { DeviceSensor } from '../devicesensor';
-import { AWAIT_PLACEHOLDER, CONST_AUTO_PORT } from '../utils';
-import { HandlersType, OperatorHandler } from './handlers';
+import { AWAIT_PLACEHOLDER, CONST_AUTO_PORT, INDENT } from '../utils';
+import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function flippermoresensors_deviceType(block: Block) {
   const port = DeviceOnPortBase.portToString(
@@ -50,24 +50,38 @@ function flippersensors_color(block: Block) {
     ?.call(new BlockValue(`${AWAIT_PLACEHOLDER}${d}.color()`, true));
 }
 
-function flippersensors_isColor(block: Block) {
-  const port = BlockValue.toString(block.get_input('PORT'));
-  const color = block.get_input(
-    block?.opcode === 'flippersensors_isColor' ? 'VALUE' : 'OPTION'
-  );
+function flippersensors_isColor(colorHelper: string, block: Block) {
+  const port = block.get_input('PORT')?.toString();
+  const color =
+    block.get_input('VALUE') ?? // ev3sensors_isEV3ColorSensorColor
+    block.get_input('OPTION');
 
-  return _isColor(block, port, color);
+  return _isColor(block, port, color, colorHelper);
 }
 
 function horizontalevents_whenColor(block: Block) {
   const port = CONST_AUTO_PORT;
   const color = block.get_input('COLOR');
 
-  return _isColor(block, port, color);
+  return _isColor(block, port, color, 'convert_color');
 }
 
-function _isColor(_: Block, port: string, color1: BlockValue) {
-  const color = context.helpers.use('convert_color')?.call(color1);
+function ev3sensors_waitEV3ColorSensorColor(block: Block) {
+  const port = block.get_input('PORT')?.toString();
+  const color = block.get_input('EVENT'); // ev3sensors_waitEV3ColorSensorColor;
+  return [
+    `while not (${_isColor(block, port, color, 'convert_color_ev3')}):`,
+    INDENT + 'pass',
+  ];
+}
+
+function _isColor(
+  _: Block,
+  port: string,
+  color1: BlockValue,
+  colorHelper = 'convert_color'
+) {
+  const color = context.helpers.use(colorHelper)?.call(color1);
 
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
@@ -77,7 +91,7 @@ function _isColor(_: Block, port: string, color1: BlockValue) {
   );
 }
 
-function flippersensors_reflectivity(block: Block) {
+function _sensors_reflectivity(block: Block) {
   const port = block.get_input('PORT').value?.toString();
 
   const device = DeviceSensor.instance(port, 'ColorSensor');
@@ -85,15 +99,34 @@ function flippersensors_reflectivity(block: Block) {
   return new BlockValue(`${AWAIT_PLACEHOLDER}${d}.reflection()`, true);
 }
 
-function flippersensors_isReflectivity(block: Block) {
-  const port = block.get_input('PORT').value?.toString();
+function _sensors_isReflectivity(block: Block) {
+  const asyncside1 = _sensors_reflectivity(block);
+
   const value = block.get_input('VALUE');
   const comparator = calc_comparator(block.get_field('COMPARATOR'));
 
+  return new BlockValue(
+    `${asyncside1.raw} ${comparator.value} ${context.helpers.use('float_safe')?.call(value).raw}`,
+    true
+  );
+}
+
+function ev3sensors_getEV3ColorSensorAmbient(block: Block) {
+  const port = block.get_input('PORT').value?.toString();
+
   const device = DeviceSensor.instance(port, 'ColorSensor');
   const d = device.devicename;
+  return new BlockValue(`${AWAIT_PLACEHOLDER}${d}.ambient()`, true);
+}
+
+function ev3sensors_isEV3ColorSensorAmbient(block: Block) {
+  const asyncside1 = ev3sensors_getEV3ColorSensorAmbient(block);
+
+  const value = block.get_input('VALUE');
+  const comparator = calc_comparator(block.get_field('COMPARATOR'));
+
   return new BlockValue(
-    `${AWAIT_PLACEHOLDER}${d}.reflection() ${comparator.value} ${context.helpers.use('float_safe')?.call(value).raw}`,
+    `${asyncside1.raw} ${comparator.value} ${context.helpers.use('float_safe')?.call(value).raw}`,
     true
   );
 }
@@ -187,7 +220,9 @@ function flippersensors_buttonIsPressed(block: Block) {
 }
 
 export default function sensor(): HandlersType {
-  const blockHandlers: any = null;
+  const blockHandlers = new Map<string, BlockHandler>([
+    ['ev3sensors_waitEV3ColorSensorColor', ev3sensors_waitEV3ColorSensorColor], // port: "3", event: "5"
+  ]);
   const operatorHandlers = new Map<string, OperatorHandler>([
     ['flippermoresensors_deviceType', flippermoresensors_deviceType],
 
@@ -197,15 +232,31 @@ export default function sensor(): HandlersType {
     ['flipperevents_whenOrientation', flippersensors_isorientation],
 
     ['flippersensors_color', flippersensors_color],
-    ['flippersensors_isColor', flippersensors_isColor],
-    ['flipperevents_whenColor', flippersensors_isColor],
+    [
+      'flippersensors_isColor',
+      flippersensors_isColor.bind(this, 'convert_color'),
+    ],
+    [
+      'flipperevents_whenColor',
+      flippersensors_isColor.bind(this, 'convert_color'),
+    ],
     ['horizontalevents_whenColor', horizontalevents_whenColor],
+    [
+      'ev3sensors_isEV3ColorSensorColor',
+      flippersensors_isColor.bind(this, 'convert_color_ev3'),
+    ], // port: "3", value: "5"
 
-    ['flippersensors_reflectivity', flippersensors_reflectivity],
-    ['flippersensors_isReflectivity', flippersensors_isReflectivity],
-    ['flippersensors_whenReflectivity', flippersensors_isReflectivity],
+    ['flippersensors_reflectivity', _sensors_reflectivity],
+    ['ev3sensors_getEV3ColorSensorReflected', _sensors_reflectivity],
+    ['flippersensors_isReflectivity', _sensors_isReflectivity],
+    ['flippersensors_whenReflectivity', _sensors_isReflectivity],
+    ['ev3sensors_isEV3ColorSensorReflected', _sensors_isReflectivity],
 
-    // ["flippersensors_pressed", flippersensors_pressed],
+    ['ev3sensors_isEV3ColorSensorAmbient', ev3sensors_isEV3ColorSensorAmbient],
+    [
+      'ev3sensors_getEV3ColorSensorAmbient',
+      ev3sensors_getEV3ColorSensorAmbient,
+    ],
     ['flippersensors_isPressed', flippersensors_isPressed],
     ['flipperevents_whenPressed', flippersensors_isPressed],
     ['horizontalevents_whenPressed', horizontalevents_whenPressed],

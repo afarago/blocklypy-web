@@ -57,6 +57,28 @@ export const flipperColorsMap = new Map([
   [FLIPPERCOLORS.WHITE, 'Color.WHITE'],
 ]);
 
+enum EV3COLORS {
+  NONE = 0,
+  BLACK = 1,
+  BLUE = 2,
+  GREEN = 3,
+  YELLOW = 4,
+  RED = 5,
+  WHITE = 6,
+  BROWN = 7,
+  CHANGED = -1,
+}
+export const ev3ColorsMap = new Map([
+  [EV3COLORS.NONE, 'Color.NONE'],
+  [EV3COLORS.BLACK, 'Color.BLACK'],
+  [EV3COLORS.BLUE, 'Color.BLUE'],
+  [EV3COLORS.GREEN, 'Color.GREEN'],
+  [EV3COLORS.YELLOW, 'Color.YELLOW'],
+  [EV3COLORS.RED, 'Color.RED'],
+  [EV3COLORS.WHITE, 'Color.WHITE'],
+  [EV3COLORS.BROWN, 'Color.BROWN'],
+]);
+
 export function calc_stop(value = -1) {
   context.imports.use('pybricks.parameters', 'Stop');
 
@@ -72,8 +94,26 @@ export function round2(value: number, ndigits = 0) {
 //!! to be conerted to Helper function
 export function calc_comparator(value: BlockValue) {
   //TODO: if comparator is ==, we should use range, instead of simple comparison (e.g. 1% means x>0% or y<2%)
-  if (value.value === '=') return new BlockValue('==');
-  else return value;
+  // ev3classroom: "042" is used for "=<>"
+  let comparator;
+  switch (value.value) {
+    default:
+    case '<':
+    case '>':
+      comparator = value.value;
+      break;
+    case '2':
+      comparator = '>';
+      break;
+    case '4':
+      comparator = '<';
+      break;
+    case '0':
+    case '=':
+      comparator = '==';
+      break;
+  }
+  return new BlockValue(comparator, true);
 }
 
 export function convert_matrix(value: string, brightness = 100) {

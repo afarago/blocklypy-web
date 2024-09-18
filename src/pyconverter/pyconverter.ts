@@ -551,9 +551,9 @@ export default class PyConverter {
         const headBlock = stack[0];
         const op = headBlock.opcode;
         function get_op_group(op: string) {
-          if (op.match(/(flipper|horizontal)events_whenProgramStarts/)) {
+          if (op.match(/(flipper|horizontal|ev3)events_whenProgramStarts/)) {
             return StackGroupType.Start;
-          } else if (op.match(/(flipper|horizontal)events_when/)) {
+          } else if (op.match(/(flipper|horizontal|ev3)events_when/)) {
             return StackGroupType.Event;
           } else if (
             op === 'event_whenbroadcastreceived' ||

@@ -5,7 +5,7 @@ import { AWAIT_PLACEHOLDER } from '../utils';
 import { BlockHandler, HandlersType, OperatorHandler } from './handlers';
 
 function flippersound_beepForTime(block: Block) {
-  const note = block.get_input('NOTE'); // 48 = C, .. 1-8 = C
+  const note = parseInt(block.get_input('NOTE')?.toString()); // 48 = C, .. 1-8 = C
   const duration = context.helpers
     .use('convert_time')
     ?.call(block.get_input('DURATION'));
@@ -20,7 +20,7 @@ function flippersound_beepForTime(block: Block) {
 }
 
 function horizontalsound_playMusicSoundUntilDone(block: Block) {
-  const note = block.get_input('SOUND'); // "1" = C4, "2" = D4, .. "8" = C5
+  const note = block.get_input('SOUND'); // "1" = C4, "2" = D4, .. "8" = C5, '?' = random
 
   context.imports.use('urandom', 'randint');
   return [
@@ -51,11 +51,13 @@ function sound_volume(_block: Block) {
 export default function sound(): HandlersType {
   const blockHandlers = new Map<string, BlockHandler>([
     ['flippersound_beepForTime', flippersound_beepForTime],
+    ['ev3sound_beepForTime', flippersound_beepForTime],
     [
       'horizontalsound_playMusicSoundUntilDone',
       horizontalsound_playMusicSoundUntilDone,
     ],
     ['sound_setvolumeto', sound_setvolumeto],
+    ['ev3sound_setVolumeTo', sound_setvolumeto],
     ['sound_changevolumeby', sound_changevolumeby],
   ]);
   const operatorHandlers = new Map<string, OperatorHandler>([

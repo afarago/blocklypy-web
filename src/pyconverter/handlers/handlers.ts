@@ -46,4 +46,6 @@ function getHandlers(): HandlersType {
 
   return retval;
 }
-export const handlers = getHandlers();
+
+const handlers = getHandlers();
+export { handlers };

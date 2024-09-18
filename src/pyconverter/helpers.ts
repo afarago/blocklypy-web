@@ -1,6 +1,6 @@
 import { BlockValue } from './blockvalue';
 import context from './context';
-import { flipperColorsMap, round2 } from './converters';
+import { ev3ColorsMap, flipperColorsMap, round2 } from './converters';
 import { RegistryManager, RegistryPayloadWithId } from './registrymanager';
 import { _debug, AWAIT_PLACEHOLDER, CONST_CM, CONST_INCHES } from './utils';
 
@@ -276,28 +276,34 @@ def convert_distance(value, unit):
       'convert_color',
       {
         local_fn: value => {
-          // const COLORS = [
-          //   'BLACK',
-          //   'MAGENTA',
-          //   'VIOLET',
-          //   'BLUE',
-          //   'CYAN',
-          //   'GREEN',
-          //   'GREEN',
-          //   'YELLOW',
-          //   'ORANGE',
-          //   'RED',
-          //   'WHITE',
-          // ];
           const colors = Array.from(flipperColorsMap.values());
           const color_value = value in colors ? colors[value] : 'Color.NONE';
 
           context.imports.use('pybricks.parameters', 'Color');
           return color_value;
         },
+
         py_fn: `
 def convert_color(value):
     COLORS = [Color.BLACK, Color.MAGENTA, Color.VIOLET, Color.BLUE, Color.CYAN, Color.GREEN, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.RED, Color.WHITE]
+    return COLORS[int_safe(value)]`,
+        py_dependencies: ['int_safe'],
+      },
+    ],
+    [
+      'convert_color_ev3',
+      {
+        local_fn: value => {
+          const colors = Array.from(ev3ColorsMap.values());
+          const color_value = value in colors ? colors[value] : 'Color.NONE';
+
+          context.imports.use('pybricks.parameters', 'Color');
+          return color_value;
+        },
+
+        py_fn: `
+def convert_color_ev3(value):
+    COLORS = [Color.NONE, Color.BLACK, Color.BLUE, Color.GREEN, Color.YELLOW, Color.RED, Color.WHITE, Color.ORANGE]
     return COLORS[int_safe(value)]`,
         py_dependencies: ['int_safe'],
       },

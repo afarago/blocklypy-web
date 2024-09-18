@@ -75,6 +75,22 @@ function flipperdisplay_centerButtonLight(block: Block) {
   return [`hub.light.on(${color.value})`];
 }
 
+function ev3display_setStatusLight(block: Block) {
+  const option = parseInt(block.get_field('OPTION')?.toString());
+
+  if (option === 0) return ['hub.light.off()'];
+  const color =
+    (option - 1) % 3 === 0
+      ? 'Color.GREEN'
+      : (option - 1) % 3 === 1
+        ? 'Color.RED'
+        : 'Color.ORANGE';
+  const simple = option < 4;
+
+  if (simple) return [`hub.light.on(${color})`];
+  else return [`hub.light.blink(${color}, [100, 100, 100, 500])`];
+}
+
 function flipperdisplay_displayOff(_: Block) {
   {
     return ['hub.display.off()'];
@@ -85,8 +101,12 @@ export default function display(): HandlersType {
   const blockHandlers = new Map<string, BlockHandler>([
     ['flipperdisplay_displayOff', flipperdisplay_displayOff],
     ['flipperlight_lightDisplayOff', flipperdisplay_displayOff],
+    ['ev3display_displayClear', flipperdisplay_displayOff],
+
     ['flipperdisplay_centerButtonLight', flipperdisplay_centerButtonLight],
     ['flipperlight_centerButtonLight', flipperdisplay_centerButtonLight],
+    ['ev3display_setStatusLight', ev3display_setStatusLight],
+
     ['flipperdisplay_ledImage', flipperdisplay_ledImage],
     ['horizontaldisplay_ledImage', flipperdisplay_ledImage], // a 0.2 sec delay should be added to horizontaldisplay_ledImage
     ['horizontaldisplay_ledRandom', horizontaldisplay_ledRandom],
@@ -94,8 +114,11 @@ export default function display(): HandlersType {
     ['flipperdisplay_ledMatrixFor', flipperdisplay_ledImageFor], //SPIKEV2
     ['flipperdisplay_ledImageFor', flipperdisplay_ledImageFor],
     ['flipperlight_lightDisplayImageOnForTime', flipperdisplay_ledImageFor],
+
     ['flipperdisplay_ledText', flipperdisplay_ledText],
     ['flipperlight_lightDisplayText', flipperdisplay_ledText],
+    ['ev3display_displayText', flipperdisplay_ledText],
+
     ['flipperdisplay_ledOn', flipperdisplay_ledOn],
     ['flipperlight_lightDisplaySetPixel', flipperdisplay_ledOn],
     ['flipperdisplay_ledSetBrightness', flipperdisplay_ledSetBrightness],
