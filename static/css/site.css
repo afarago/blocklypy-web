@@ -154,6 +154,7 @@ a {
   border-radius: 5px;
   border: 1px #ccc solid;
   margin: 0.5em;
+  z-index: 999;
 }
 
 .copy-button.success {
@@ -174,17 +175,22 @@ a {
 }
 
 #preview-svg-map {
+  width: 30%;
   position: absolute;
-  width: 10em;
   right: 0;
   top: 0;
   opacity: 0.3;
+  z-index: 998;
+}
+
+#preview-svg-map:hover {
+  opacity: 1;
+}
+
+#preview-svg {
+  overflow: hidden;
 }
 
 #tabs-wrapper {
   width: 100%;
-}
-
-#preview-svg-map {
-  width: 30%;
 }
