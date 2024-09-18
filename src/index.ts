@@ -1,7 +1,11 @@
 import { convertFlipperProjectToPython } from './pyconverter/projectconverter';
+import { Tab, Tooltip } from 'bootstrap';
+// import Tooltip from 'bootstrap/js/dist/tooltip';
 // import Split from 'split.js';
 //import $ from 'jquery';
 // import 'jqueryui';
+// import svgPanZoom from 'svg-pan-zoom';
+import panzoom from 'panzoom';
 
 function handleFileUpload(file: File) {
   file.arrayBuffer().then(async input => {
@@ -9,6 +13,7 @@ function handleFileUpload(file: File) {
 
     const retval = await convertFlipperProjectToPython(input, options);
     $('#preview-svg').html(retval.svg);
+
     $('#preview-svg-map').html(retval.svg).removeClass('d-none');
     $('#preview-pycode').html(retval.pycode);
     $('#preview-pseudocode').html(retval.plaincode);
@@ -23,8 +28,19 @@ function handleFileUpload(file: File) {
   });
 }
 
+$(() => {
+  new MutationObserver(_ => {
+    panzoom($('#preview-svg svg')[0], { bounds: true });
+    // instance.on('zoom', function (e) {
+    //   console.log('Fired when `element` is zoomed', e);
+    // });
+  }).observe($('#preview-svg').get(0), {
+    childList: true,
+  });
+});
+
 function updateMapVisibility() {
-  const visible = $("a[data-bs-toggle='tab'].active").attr('id') !== 'svg';
+  const visible = $("a[data-bs-toggle='tab'].active").attr('id') !== 'svg-tab';
   $('#preview-svg-map').toggleClass('d-none', !visible);
 }
 
@@ -43,7 +59,7 @@ $('.example-content-button').on('click', event => {
       handleFileUpload(file);
     })
     .catch((error: any) => {
-      console.error('>>> error', error);
+      console.error('::ERROR::', error);
     });
 });
 
@@ -79,19 +95,31 @@ $('.copy-button').on('click', event => {
   event.stopPropagation();
   event.preventDefault();
 
-  const copyButton = $(this).parent();
-  const dataTarget = $(this).parent().data('target');
+  const copyButton = $('.copy-button');
+  const dataTarget = $('.copy-button').data('target');
   const content = $('#' + dataTarget).text();
   navigator.clipboard.writeText(content);
 
   copyButton.addClass('success');
   copyButton.children().toggleClass('bi-clipboard-check bi-copy');
+  const tooltip = new Tooltip(copyButton[0], {
+    // NOTE: consider this as popper adds 68k
+    title: 'Copied!',
+    trigger: 'manual',
+  });
+  tooltip.show();
   setTimeout(() => {
     copyButton.removeClass('success');
     copyButton.children().toggleClass('bi-clipboard-check bi-copy');
+    tooltip.dispose();
   }, 2000);
 });
 
 $("a[data-bs-toggle='tab']").on('shown.bs.tab', _ => {
   updateMapVisibility();
+});
+
+$('#preview-svg-map').on('click', _ => {
+  const tabTrigger = new Tab($('#svg-tab')[0]);
+  tabTrigger.show();
 });
