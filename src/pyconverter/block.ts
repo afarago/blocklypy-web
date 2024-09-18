@@ -179,7 +179,9 @@ export class Block {
 
   get_field(name: string) {
     const field = this.get_fieldObject(name);
-    return new BlockValue(field[0], false, false, typeof field[0] !== 'number');
+    return field
+      ? new BlockValue(field[0], false, false, typeof field[0] !== 'number')
+      : null;
   }
 
   get_fieldObject(name: string) {
