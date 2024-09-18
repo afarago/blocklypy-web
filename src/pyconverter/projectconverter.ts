@@ -1,11 +1,13 @@
 import JSZip from 'jszip';
 import PyConverter from './pyconverter';
 import PyConverterOptions from './pyconverteroptions';
+import context from './context';
 
 export async function convertFlipperProjectToPython(
   filedata: ArrayBuffer | Buffer,
   options: PyConverterOptions
 ) {
+  context.clear();
   const retval = {
     pycode: null as string,
     plaincode: null as string,
